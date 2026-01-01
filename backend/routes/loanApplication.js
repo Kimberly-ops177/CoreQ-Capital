@@ -154,6 +154,13 @@ router.post('/', auth, async (req, res) => {
       // Generate PDF
       const result = await generateLoanAgreementPDF(newLoan, newLoan.borrower, newLoan.collateral);
       pdfPath = result.filepath;
+
+      // Save the PDF path to the database
+      await newLoan.update({
+        unsignedAgreementPath: result.filepath,
+        unsignedAgreementFilename: result.filename
+      });
+
       console.log(`Loan agreement PDF generated at ${pdfPath} for loan #${newLoan.id}`);
     } catch (pdfError) {
       console.error('Error generating agreement PDF:', pdfError);
@@ -289,13 +296,18 @@ router.get('/:id/download-agreement', auth, async (req, res) => {
       return res.status(404).send({ error: 'Loan not found' });
     }
 
-    const pdfPath = path.join(__dirname, '../uploads/agreements', `loan_${loan.id}_unsigned.pdf`);
-
-    if (!fs.existsSync(pdfPath)) {
-      return res.status(404).send({ error: 'Agreement PDF not found' });
+    // Check if unsigned agreement path is stored in database
+    if (!loan.unsignedAgreementPath) {
+      return res.status(404).send({ error: 'Agreement PDF has not been generated yet' });
     }
 
-    res.download(pdfPath, `Loan_Agreement_${loan.id}_${loan.borrower.fullName.replace(/\s+/g, '_')}.pdf`);
+    // Verify the file exists
+    if (!fs.existsSync(loan.unsignedAgreementPath)) {
+      return res.status(404).send({ error: 'Agreement PDF file not found on server' });
+    }
+
+    // Send the file for download
+    res.download(loan.unsignedAgreementPath, `Loan_Agreement_${loan.id}_${loan.borrower.fullName.replace(/\s+/g, '_')}.pdf`);
   } catch (error) {
     console.error('Error downloading agreement:', error);
     res.status(500).send({ error: error.message });
