@@ -1,0 +1,5 @@
+node_modules/
+.env
+uploads/agreements/*
+!uploads/agreements/.gitkeep
+*.log

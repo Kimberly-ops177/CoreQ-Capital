@@ -1,0 +1,149 @@
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+
+const Loan = sequelize.define('Loan', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  borrowerId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'borrowers',
+      key: 'id'
+    }
+  },
+  collateralId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'collaterals',
+      key: 'id'
+    }
+  },
+  amountIssued: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
+  dateIssued: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  },
+  loanPeriod: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  interestRate: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: false
+  },
+  dueDate: {
+    type: DataTypes.DATE,
+    allowNull: false
+  },
+  status: {
+    type: DataTypes.ENUM('active', 'due', 'pastDue', 'paid', 'defaulted'),
+    defaultValue: 'active'
+  },
+  totalAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
+  amountRepaid: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  lastPaymentDate: {
+    type: DataTypes.DATE
+  },
+  penalties: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  isNegotiable: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  gracePeriodEnd: {
+    type: DataTypes.DATE
+  },
+  lastPenaltyDate: {
+    type: DataTypes.DATE
+  },
+  branchId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'branches',
+      key: 'id'
+    }
+  },
+  // Loan Agreement Fields
+  signedAgreementPath: {
+    type: DataTypes.STRING(500),
+    allowNull: true
+  },
+  signedAgreementFilename: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
+  signedAgreementUploadedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  signedAgreementUploadedBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
+  agreementStatus: {
+    type: DataTypes.ENUM('pending_upload', 'pending_approval', 'approved', 'rejected'),
+    defaultValue: 'pending_upload'
+  },
+  agreementApprovedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  agreementApprovedBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
+  agreementRejectedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  agreementRejectedBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
+  agreementNotes: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  tableName: 'loans',
+  timestamps: false
+});
+
+module.exports = Loan;
