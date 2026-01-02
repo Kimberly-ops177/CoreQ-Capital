@@ -68,7 +68,7 @@ const AdminDashboard = () => {
                   💰 Total Loaned Principal
                 </Typography>
                 <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
-                  Ksh {(data.totalLoanedPrincipal || 0).toLocaleString()}
+                  Ksh {Number(data.totalLoanedPrincipal || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Typography>
               </CardContent>
             </Card>
@@ -87,7 +87,7 @@ const AdminDashboard = () => {
                   📊 Outstanding Receivables
                 </Typography>
                 <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
-                  Ksh {(data.totalOutstandingReceivables || 0).toLocaleString()}
+                  Ksh {Number(data.totalOutstandingReceivables || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Typography>
               </CardContent>
             </Card>
@@ -150,7 +150,7 @@ const AdminDashboard = () => {
                     fontWeight: 'bold'
                   }}
                 >
-                  Ksh {(data.monthToDateProfitLoss || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  Ksh {Number(data.monthToDateProfitLoss || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Typography>
               </CardContent>
             </Card>
@@ -169,7 +169,7 @@ const AdminDashboard = () => {
                   💸 Month-to-Date Expenses
                 </Typography>
                 <Typography variant="h4" sx={{ color: 'warning.main', fontWeight: 'bold' }}>
-                  Ksh {(data.monthToDateExpenses || 0).toLocaleString()}
+                  Ksh {Number(data.monthToDateExpenses || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Typography>
               </CardContent>
             </Card>
