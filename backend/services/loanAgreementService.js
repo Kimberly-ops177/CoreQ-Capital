@@ -168,9 +168,9 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
 
       // Interest rates
       doc.text('If the period is within one week then there will be an interest of 20% on the principal amount loaned.');
-      doc.text('If the period is within two weeks there will be an interest of 15% on the principal amount loaned.');
-      doc.text('If the period is within three weeks then there will be an interest of 12% on the principal amount loaned.');
-      doc.text('If the period is within four weeks (one month) then there will be an interest of 10% on the principal amount loaned.');
+      doc.text('If the period is within two weeks there will be an interest of 28% on the principal amount loaned.');
+      doc.text('If the period is within three weeks then there will be an interest of 32% on the principal amount loaned.');
+      doc.text('If the period is within four weeks (one month) then there will be an interest of 35% on the principal amount loaned.');
       if (loan.isNegotiable) {
         doc.text(`If the period exceeds one month, the interest is negotiated to ${loan.interestRate}% of the principal amount.`);
       }
