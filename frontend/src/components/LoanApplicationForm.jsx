@@ -27,17 +27,20 @@ import {
 import { ArrowBack, ArrowForward, Save, Calculate, Print } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const steps = ['Borrower Information', 'Collateral Details', 'Loan Terms', 'Review & Generate'];
 
 const LoanApplicationForm = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editLoanId = searchParams.get('edit');
   const [activeStep, setActiveStep] = useState(0);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [createdLoanId, setCreatedLoanId] = useState(null);
   const [interestRates, setInterestRates] = useState({});
   const [businessRules, setBusinessRules] = useState({});
@@ -79,6 +82,74 @@ const LoanApplicationForm = () => {
   useEffect(() => {
     fetchInterestRates();
   }, []);
+
+  // Load loan data if in edit mode
+  useEffect(() => {
+    if (editLoanId) {
+      loadLoanData(editLoanId);
+    }
+  }, [editLoanId]);
+
+  const loadLoanData = async (loanId) => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`/api/loan-applications/agreements`);
+      const loan = res.data.find(l => l.id === parseInt(loanId));
+
+      if (!loan) {
+        setError('Loan not found');
+        return;
+      }
+
+      // Check if loan can be edited
+      if (loan.agreementStatus !== 'pending_upload') {
+        setError('This loan cannot be edited');
+        return;
+      }
+
+      // Populate borrower data
+      setBorrowerData({
+        fullName: loan.borrower?.fullName || '',
+        idNumber: loan.borrower?.idNumber || '',
+        phoneNumber: loan.borrower?.phoneNumber || '',
+        email: loan.borrower?.email || '',
+        location: loan.borrower?.location || '',
+        apartment: loan.borrower?.apartment || '',
+        houseNumber: loan.borrower?.houseNumber || '',
+        isStudent: loan.borrower?.isStudent || false,
+        institution: loan.borrower?.institution || '',
+        registrationNumber: loan.borrower?.registrationNumber || '',
+        emergencyNumber: loan.borrower?.emergencyNumber || ''
+      });
+
+      // Populate collateral data
+      setCollateralData({
+        itemName: loan.collateral?.itemName || '',
+        category: loan.collateral?.category || '',
+        serialNumber: loan.collateral?.serialNumber || '',
+        estimatedValue: loan.collateral?.estimatedValue || '',
+        condition: loan.collateral?.condition || '',
+        description: loan.collateral?.description || ''
+      });
+
+      // Populate loan data
+      setLoanData({
+        amountIssued: loan.amountIssued || '',
+        dateIssued: loan.dateIssued ? new Date(loan.dateIssued).toISOString().split('T')[0] : '',
+        loanPeriod: loan.loanPeriod || '',
+        interestRate: loan.interestRate || '',
+        isNegotiable: loan.isNegotiable || false
+      });
+
+      setIsEditMode(true);
+      setCreatedLoanId(loan.id);
+    } catch (err) {
+      console.error('Error loading loan data:', err);
+      setError(err.response?.data?.error || 'Failed to load loan data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Auto-calculate loan terms
   useEffect(() => {
@@ -185,7 +256,6 @@ const LoanApplicationForm = () => {
       setLoading(true);
       setError(null);
 
-      // Create everything in one transaction
       const payload = {
         borrower: borrowerData,
         collateral: collateralData,
@@ -198,21 +268,34 @@ const LoanApplicationForm = () => {
         }
       };
 
-      const res = await axios.post('/api/loan-applications', payload);
-
-      setCreatedLoanId(res.data.loan.id);
-      setSuccess(
-        `Loan application created successfully!\n\n` +
-        `Loan ID: #${res.data.loan.id}\n` +
-        `Borrower: ${borrowerData.fullName}\n` +
-        `Amount: KSH ${parseFloat(loanData.amountIssued).toLocaleString()}\n` +
-        `Total Due: KSH ${loanCalculation.totalAmount}\n\n` +
-        `Click the button below to download the loan agreement, print it, and have it signed by the borrower.`
-      );
+      if (isEditMode) {
+        // Update existing loan
+        const res = await axios.put(`/api/loan-applications/${createdLoanId}`, payload);
+        setSuccess(
+          `Loan application updated successfully!\n\n` +
+          `Loan ID: #${createdLoanId}\n` +
+          `Borrower: ${borrowerData.fullName}\n` +
+          `Amount: KSH ${parseFloat(loanData.amountIssued).toLocaleString()}\n` +
+          `Total Due: KSH ${loanCalculation.totalAmount}\n\n` +
+          `The loan agreement has been regenerated with the updated information.`
+        );
+      } else {
+        // Create new loan
+        const res = await axios.post('/api/loan-applications', payload);
+        setCreatedLoanId(res.data.loan.id);
+        setSuccess(
+          `Loan application created successfully!\n\n` +
+          `Loan ID: #${res.data.loan.id}\n` +
+          `Borrower: ${borrowerData.fullName}\n` +
+          `Amount: KSH ${parseFloat(loanData.amountIssued).toLocaleString()}\n` +
+          `Total Due: KSH ${loanCalculation.totalAmount}\n\n` +
+          `Click the button below to download the loan agreement, print it, and have it signed by the borrower.`
+        );
+      }
 
     } catch (err) {
-      console.error('Error creating loan application:', err);
-      setError(err.response?.data?.error || 'Failed to create loan application');
+      console.error(`Error ${isEditMode ? 'updating' : 'creating'} loan application:`, err);
+      setError(err.response?.data?.error || `Failed to ${isEditMode ? 'update' : 'create'} loan application`);
     } finally {
       setLoading(false);
     }
@@ -605,7 +688,7 @@ const LoanApplicationForm = () => {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            Core Q Capital - New Loan Application
+            Core Q Capital - {isEditMode ? 'Edit' : 'New'} Loan Application
           </Typography>
           <Button color="inherit" onClick={() => navigate(user.role === 'admin' ? '/admin' : '/employee')}>
             Dashboard
@@ -713,7 +796,10 @@ const LoanApplicationForm = () => {
                       disabled={loading}
                       startIcon={loading ? <CircularProgress size={20} /> : <Save />}
                     >
-                      {loading ? 'Creating...' : 'Create Loan Application'}
+                      {loading
+                        ? (isEditMode ? 'Updating...' : 'Creating...')
+                        : (isEditMode ? 'Update Loan Application' : 'Create Loan Application')
+                      }
                     </Button>
                   ) : (
                     <Button
