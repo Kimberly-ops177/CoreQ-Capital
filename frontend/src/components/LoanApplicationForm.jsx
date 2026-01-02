@@ -648,14 +648,28 @@ const LoanApplicationForm = () => {
                       const response = await axios.get(`/api/loan-applications/${createdLoanId}/download-agreement`, {
                         responseType: 'blob'
                       });
-                      const url = window.URL.createObjectURL(new Blob([response.data]));
-                      const iframe = document.createElement('iframe');
-                      iframe.style.display = 'none';
-                      iframe.src = url;
-                      document.body.appendChild(iframe);
-                      iframe.onload = () => {
-                        iframe.contentWindow.print();
-                      };
+                      // Create blob with correct PDF MIME type
+                      const blob = new Blob([response.data], { type: 'application/pdf' });
+                      const url = window.URL.createObjectURL(blob);
+
+                      // Open in new window for printing
+                      const printWindow = window.open(url, '_blank');
+                      if (printWindow) {
+                        printWindow.onload = () => {
+                          printWindow.print();
+                          // Clean up the URL after a delay
+                          setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+                        };
+                      } else {
+                        // Fallback: download the PDF if popup blocked
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `Loan_Agreement_${createdLoanId}.pdf`;
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                        window.URL.revokeObjectURL(url);
+                      }
                     } catch (err) {
                       console.error('Error printing agreement:', err);
                       setError('Failed to print agreement');
