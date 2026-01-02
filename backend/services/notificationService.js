@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer');
-const twilio = require('twilio');
+const smsService = require('./smsService');
 
 // Email configuration using nodemailer
 const createEmailTransporter = () => {
@@ -13,14 +13,7 @@ const createEmailTransporter = () => {
   });
 };
 
-// SMS configuration using Twilio
-const createSMSClient = () => {
-  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
-    console.warn('Twilio credentials not configured. SMS notifications will be skipped.');
-    return null;
-  }
-  return twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-};
+// SMS sending now handled by smsService (Africa's Talking)
 
 /**
  * Send email notification
@@ -51,25 +44,19 @@ const sendEmail = async (to, subject, htmlContent) => {
 };
 
 /**
- * Send SMS notification
+ * Send SMS notification using Africa's Talking
  */
 const sendSMS = async (to, message) => {
   try {
-    const client = createSMSClient();
+    // Use the smsService (Africa's Talking)
+    const result = await smsService.sendSMS(to, message);
 
-    if (!client) {
+    if (result.skipped) {
       console.log(`[SMS SIMULATION] To: ${to}, Message: ${message}`);
       return { success: true, simulated: true };
     }
 
-    const result = await client.messages.create({
-      body: message,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to
-    });
-
-    console.log(`SMS sent successfully to ${to}: ${result.sid}`);
-    return { success: true, sid: result.sid };
+    return result;
   } catch (error) {
     console.error(`Error sending SMS to ${to}:`, error.message);
     return { success: false, error: error.message };
@@ -143,7 +130,7 @@ const send3DaysBeforeReminder = async (loan, borrower) => {
     </html>
   `;
 
-  const smsMessage = `Core Q Capital: Your loan payment of KSH ${outstandingAmount.toLocaleString()} is due in 3 days (${formattedDueDate}). Please ensure timely payment to avoid penalties.`;
+  const smsMessage = `CORE Q CAPITAL: Your loan of KSH ${parseFloat(loan.amountIssued).toLocaleString()} is due in 3 days (${formattedDueDate}). Paybill: 522533, Account: 7862638. Thank you.`;
 
   const results = { email: null, sms: null };
 
@@ -237,7 +224,7 @@ const sendDueDateReminder = async (loan, borrower) => {
   `;
 
   // SMS content (shorter version)
-  const smsMessage = `Core Q Capital: REMINDER - Your loan payment of KSH ${outstandingAmount.toLocaleString()} is due tomorrow (${formattedDueDate}). A 3% daily penalty applies during the 7-day grace period. Please pay on time to avoid penalties.`;
+  const smsMessage = `CORE Q CAPITAL: REMINDER - Your loan of KSH ${parseFloat(loan.amountIssued).toLocaleString()} is due tomorrow. Paybill: 522533, Account: 7862638. Pay on time to avoid penalties.`;
 
   // Send both email and SMS as per instructions
   const results = {
@@ -334,7 +321,7 @@ const sendOnDueDateReminder = async (loan, borrower) => {
     </html>
   `;
 
-  const smsMessage = `Core Q Capital: Your loan payment of KSH ${outstandingAmount.toLocaleString()} is DUE TODAY (${formattedDueDate}). Pay now to avoid daily penalties during the grace period.`;
+  const smsMessage = `CORE Q CAPITAL: Reminder - Your loan of KSH ${parseFloat(loan.amountIssued).toLocaleString()} is due TODAY. Please pay via Paybill 522533, Account: 7862638. Thank you.`;
 
   const results = { email: null, sms: null };
 
@@ -422,7 +409,7 @@ const send1WeekPastDueReminder = async (loan, borrower) => {
     </html>
   `;
 
-  const smsMessage = `Core Q Capital URGENT: Your loan is 1 WEEK OVERDUE. Outstanding: KSH ${outstandingAmount.toLocaleString()} including penalties. Contact us immediately to avoid default and collateral seizure.`;
+  const smsMessage = `CORE Q CAPITAL: Your loan of KSH ${parseFloat(loan.amountIssued).toLocaleString()} is now 7 days overdue. Total due: KSH ${outstandingAmount.toLocaleString()}. Please contact us or pay via Paybill 522533, Account: 7862638.`;
 
   const results = { email: null, sms: null };
 
@@ -502,7 +489,7 @@ const sendDefaultNotification = async (loan, borrower) => {
     </html>
   `;
 
-  const smsMessage = `Core Q Capital URGENT: Your loan has been DEFAULTED. Outstanding amount: KSH ${outstandingAmount.toLocaleString()}. Contact us immediately to avoid collateral seizure.`;
+  const smsMessage = `CORE Q CAPITAL URGENT: Your loan has been DEFAULTED. Outstanding amount: KSH ${outstandingAmount.toLocaleString()}. Contact us immediately to avoid collateral seizure.`;
 
   const results = {
     email: null,
