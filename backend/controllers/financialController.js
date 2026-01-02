@@ -40,7 +40,7 @@ const getPnL = async (req, res) => {
         date: { [Op.between]: [start, end] }
       }
     });
-    const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+    const totalExpenses = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
 
     const netProfitLoss = totalRevenue - totalExpenses;
 
@@ -78,7 +78,14 @@ const getAdminDashboardData = async (req, res) => {
         agreementStatus: 'approved'
       }
     });
-    const totalOutstanding = outstandingLoans.reduce((sum, loan) => sum + parseFloat(loan.totalAmount) + parseFloat(loan.penalties || 0), 0);
+    const totalOutstanding = outstandingLoans.reduce((sum, loan) => {
+      const principalPlusInterest = parseFloat(loan.totalAmount) || 0;
+      const penalties = parseFloat(loan.penalties || 0);
+      const repaid = parseFloat(loan.amountRepaid || 0);
+      const totalDue = principalPlusInterest + penalties;
+      const outstanding = Math.max(0, totalDue - repaid);
+      return sum + outstanding;
+    }, 0);
 
     // Active Loans
     const activeLoansCount = await Loan.count({ where: { status: 'active', agreementStatus: 'approved' } });
@@ -95,7 +102,7 @@ const getAdminDashboardData = async (req, res) => {
         date: { [Op.between]: [monthStart, now] }
       }
     });
-    const totalMonthExpenses = monthExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+    const totalMonthExpenses = monthExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
 
     res.send({
       totalLoanedPrincipal,
@@ -227,7 +234,14 @@ const getEmployeeDashboardData = async (req, res) => {
         as: 'borrower'
       }]
     });
-    const totalOutstanding = outstandingLoans.reduce((sum, loan) => sum + parseFloat(loan.totalAmount) + parseFloat(loan.penalties || 0), 0);
+    const totalOutstanding = outstandingLoans.reduce((sum, loan) => {
+      const principalPlusInterest = parseFloat(loan.totalAmount) || 0;
+      const penalties = parseFloat(loan.penalties || 0);
+      const repaid = parseFloat(loan.amountRepaid || 0);
+      const totalDue = principalPlusInterest + penalties;
+      const outstanding = Math.max(0, totalDue - repaid);
+      return sum + outstanding;
+    }, 0);
 
     // Active Loans (filtered by location for employees)
     const activeLoansCount = await Loan.count({
@@ -261,14 +275,14 @@ const getEmployeeDashboardData = async (req, res) => {
           date: { [Op.between]: [monthStart, now] }
         }
       });
-      totalMonthExpenses = monthExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+      totalMonthExpenses = monthExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
     } else {
       const monthExpenses = await Expense.findAll({
         where: {
           date: { [Op.between]: [monthStart, now] }
         }
       });
-      totalMonthExpenses = monthExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+      totalMonthExpenses = monthExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
     }
 
     // Month-to-Date Revenue (filtered by location for employees)
