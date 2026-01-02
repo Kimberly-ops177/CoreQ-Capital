@@ -42,7 +42,7 @@ async function autoCleanTestData() {
     await connection.query('DELETE FROM collaterals');
     await connection.query('DELETE FROM borrowers');
     await connection.query('DELETE FROM expenses');
-    await connection.query("DELETE FROM users WHERE role != 'admin' OR email != 'admin@coreqcapital.com'");
+    await connection.query("DELETE FROM users WHERE role != 'admin' AND email != 'admin@coreqcapital.com'");
     await connection.query('DELETE FROM branch_capital');
     await connection.query('DELETE FROM user_branch_access');
     await connection.query('DELETE FROM branches');

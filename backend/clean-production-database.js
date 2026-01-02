@@ -53,7 +53,7 @@ async function cleanProductionDatabase() {
 
     // 6. Delete non-admin users (keep admin)
     const [usersResult] = await connection.query(
-      "DELETE FROM users WHERE role != 'admin' OR email != 'admin@coreqcapital.com'"
+      "DELETE FROM users WHERE role != 'admin' AND email != 'admin@coreqcapital.com'"
     );
     console.log(`✓ Deleted ${usersResult.affectedRows} non-admin users`);
 
