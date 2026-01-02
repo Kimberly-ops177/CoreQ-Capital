@@ -41,28 +41,62 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
         });
       };
 
-      // Header
-      doc.fontSize(20).font('Helvetica-Bold')
-        .text('A PARTNER YOU CAN TRUST', { align: 'center' });
+      // ===== PAGE 1: COVER PAGE =====
 
-      doc.moveDown();
-      doc.fontSize(24).text('LOAN AGREEMENT', { align: 'center' });
-      doc.moveDown(2);
+      // Top right: Borrower Photo Placeholder Box
+      const photoBoxX = doc.page.width - 150;
+      const photoBoxY = 60;
+      const photoBoxSize = 100;
+
+      doc.rect(photoBoxX, photoBoxY, photoBoxSize, photoBoxSize)
+        .stroke();
+      doc.fontSize(8).font('Helvetica')
+        .text('BORROWER PHOTO', photoBoxX, photoBoxY + photoBoxSize + 5, {
+          width: photoBoxSize,
+          align: 'center'
+        });
+
+      // Header - Company Branding
+      doc.fontSize(10).font('Helvetica')
+        .text('A PARTNER YOU CAN TRUST', 50, 50, { align: 'left' });
+
+      doc.moveDown(0.5);
+      doc.fontSize(18).font('Helvetica-Bold')
+        .text('CORE Q CAPITAL', { align: 'left' });
+
+      doc.fontSize(10).font('Helvetica')
+        .text('LOAN AGREEMENT', { align: 'left' });
+
+      doc.moveDown(3);
 
       // Between section
-      doc.fontSize(14).text('Between', { align: 'center' });
-      doc.moveDown();
+      doc.fontSize(14).font('Helvetica').text('Between', { align: 'center' });
+      doc.moveDown(0.5);
       doc.fontSize(16).font('Helvetica-Bold')
         .text('CORE Q CAPITAL ENTERPRISES', { align: 'center' });
       doc.fontSize(14).font('Helvetica')
         .text('&', { align: 'center' });
+      doc.moveDown(0.5);
+      doc.fontSize(12).text(`NAME: ${borrower.fullName.toUpperCase()}    OF ID`, { align: 'center', continued: true });
       doc.moveDown();
-      doc.fontSize(12).text(`NAME: ${borrower.fullName.toUpperCase()}`, { align: 'center' });
-      doc.text(`OF ID: ${borrower.idNumber}`, { align: 'center' });
+      doc.fontSize(12).text(`OF ID: ${borrower.idNumber}`, { align: 'center' });
       doc.moveDown();
+
+      // Borrower's Photo section
+      doc.fontSize(10).text('BORROWER\'S PHOTO', { align: 'center' });
+      doc.moveDown(2);
+
       doc.fontSize(14).text(`DATED: ${formatDate(issueDate)}`, { align: 'center' });
 
       doc.addPage();
+
+      // ===== PAGE 2: AGREEMENT DETAILS =====
+      // Page header
+      doc.fontSize(10).font('Helvetica-Bold')
+        .text('CORE Q CAPITAL', 50, 50);
+      doc.fontSize(8).font('Helvetica')
+        .text('LOAN AGREEMENT', 50, 65);
+      doc.moveDown(2);
 
       // Agreement details
       doc.fontSize(11).font('Helvetica');
@@ -134,10 +168,11 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
 
       // Interest rates
       doc.text('If the period is within one week then there will be an interest of 20% on the principal amount loaned.');
-      doc.text('If the period is within two weeks there will be an interest of 28% on the principal amount loaned.');
-      doc.text('If the period is within One Month then there will be an interest of 35% on the principal amount loaned.');
+      doc.text('If the period is within two weeks there will be an interest of 15% on the principal amount loaned.');
+      doc.text('If the period is within three weeks then there will be an interest of 12% on the principal amount loaned.');
+      doc.text('If the period is within four weeks (one month) then there will be an interest of 10% on the principal amount loaned.');
       if (loan.isNegotiable) {
-        doc.text(`If the period exceeds one Month, the interest negotiated to ${loan.interestRate}% of the principal amount.`);
+        doc.text(`If the period exceeds one month, the interest is negotiated to ${loan.interestRate}% of the principal amount.`);
       }
       doc.moveDown(2);
 
@@ -157,6 +192,14 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
       doc.moveDown(2);
 
       doc.addPage();
+
+      // ===== PAGE 3: TERMS AND CONDITIONS =====
+      // Page header
+      doc.fontSize(10).font('Helvetica-Bold')
+        .text('CORE Q CAPITAL', 50, 50);
+      doc.fontSize(8).font('Helvetica')
+        .text('LOAN AGREEMENT', 50, 65);
+      doc.moveDown(2);
 
       // D. BREACH AND TERMINATION
       doc.font('Helvetica-Bold').text('D. BREACH AND TERMINATION');
@@ -207,6 +250,14 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
       doc.moveDown(3);
 
       doc.addPage();
+
+      // ===== PAGE 4: SIGNATURES =====
+      // Page header
+      doc.fontSize(10).font('Helvetica-Bold')
+        .text('CORE Q CAPITAL', 50, 50);
+      doc.fontSize(8).font('Helvetica')
+        .text('LOAN AGREEMENT', 50, 65);
+      doc.moveDown(2);
 
       // Signatures
       doc.fontSize(12).font('Helvetica-Bold').text('IN WITNESS WHEREOF the parties hereto have hereunto set their respective hands the day, month and year first hereinbefore written:');
