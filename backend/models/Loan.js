@@ -44,7 +44,7 @@ const Loan = sequelize.define('Loan', {
     allowNull: false
   },
   status: {
-    type: DataTypes.ENUM('active', 'due', 'pastDue', 'paid', 'defaulted'),
+    type: DataTypes.ENUM('active', 'due', 'pastDue', 'paid', 'defaulted', 'closed'),
     defaultValue: 'active'
   },
   totalAmount: {

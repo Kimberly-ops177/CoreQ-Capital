@@ -266,9 +266,10 @@ const UserManagement = () => {
                       <TextField
                         fullWidth label="Assigned Location" required
                         value={formData.assignedLocation}
-                        onChange={(e) => setFormData({...formData, assignedLocation: e.target.value})}
-                        placeholder="e.g., Nairobi, Kisumu, Mombasa"
-                        helperText="Employee can only view/edit borrowers from this location"
+                        onChange={(e) => setFormData({...formData, assignedLocation: e.target.value.toUpperCase()})}
+                        placeholder="e.g., NAIROBI, KISUMU, MOMBASA"
+                        helperText="Employee can only view/edit borrowers from this location (automatically converted to uppercase)"
+                        inputProps={{ style: { textTransform: 'uppercase' } }}
                       />
                     </Grid>
                     <Grid item xs={12}>

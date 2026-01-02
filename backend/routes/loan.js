@@ -1,5 +1,5 @@
 const express = require('express');
-const { createLoan, getLoans, getLoan, updateLoan, deleteLoan, makePayment, getInterestRates } = require('../controllers/loanController');
+const { createLoan, getLoans, getLoan, updateLoan, deleteLoan, makePayment, closeLoan, getInterestRates } = require('../controllers/loanController');
 const { auth, employeeOrAdmin, adminOnly } = require('../middleware/auth');
 
 const router = express.Router();
@@ -16,5 +16,8 @@ router.delete('/:id', auth, adminOnly, deleteLoan);
 
 // Payment
 router.post('/:id/payment', auth, employeeOrAdmin, makePayment);
+
+// Close loan (admin only)
+router.post('/:id/close', auth, adminOnly, closeLoan);
 
 module.exports = router;

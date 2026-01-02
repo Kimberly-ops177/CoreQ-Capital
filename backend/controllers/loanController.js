@@ -454,6 +454,45 @@ const makePayment = async (req, res) => {
 };
 
 /**
+ * Mark loan as closed - for preserving completed loans without deletion
+ */
+const closeLoan = async (req, res) => {
+  try {
+    // Only admin can close loans
+    if (req.user.role !== 'admin') {
+      return res.status(403).send({
+        error: 'Access denied',
+        message: 'Only administrators can close loans'
+      });
+    }
+
+    const loan = await Loan.findByPk(req.params.id);
+    if (!loan) {
+      return res.status(404).send({ error: 'Loan not found' });
+    }
+
+    // Update status to closed
+    await loan.update({ status: 'closed' });
+
+    const updatedLoan = await Loan.findByPk(loan.id, {
+      include: [
+        { model: Borrower, as: 'borrower' },
+        { model: Collateral, as: 'collateral' }
+      ]
+    });
+
+    res.send({
+      success: true,
+      message: 'Loan marked as closed successfully',
+      loan: updatedLoan
+    });
+  } catch (e) {
+    console.error('Error closing loan:', e);
+    res.status(500).send({ error: e.message });
+  }
+};
+
+/**
  * Get standard interest rates (for frontend display)
  */
 const getInterestRates = (req, res) => {
@@ -473,5 +512,6 @@ module.exports = {
   updateLoan,
   deleteLoan,
   makePayment,
+  closeLoan,
   getInterestRates
 };

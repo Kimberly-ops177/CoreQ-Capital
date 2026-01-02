@@ -284,7 +284,9 @@ const BorrowerManagement = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth label="Location" required
-                    value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})}
+                    value={formData.location}
+                    onChange={(e) => setFormData({...formData, location: e.target.value.toUpperCase()})}
+                    inputProps={{ style: { textTransform: 'uppercase' } }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>

@@ -350,7 +350,8 @@ const LoanApplicationForm = () => {
                 required
                 label="Location"
                 value={borrowerData.location}
-                onChange={(e) => setBorrowerData({...borrowerData, location: e.target.value})}
+                onChange={(e) => setBorrowerData({...borrowerData, location: e.target.value.toUpperCase()})}
+                inputProps={{ style: { textTransform: 'uppercase' } }}
               />
             </Grid>
             <Grid item xs={12} sm={4}>
