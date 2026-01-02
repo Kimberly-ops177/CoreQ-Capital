@@ -24,7 +24,7 @@ import {
   Toolbar,
   CircularProgress
 } from '@mui/material';
-import { ArrowBack, ArrowForward, Save, Calculate, Download } from '@mui/icons-material';
+import { ArrowBack, ArrowForward, Save, Calculate, Print } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -642,26 +642,27 @@ const LoanApplicationForm = () => {
                   variant="contained"
                   color="primary"
                   size="large"
-                  startIcon={<Download />}
+                  startIcon={<Print />}
                   onClick={async () => {
                     try {
                       const response = await axios.get(`/api/loan-applications/${createdLoanId}/download-agreement`, {
                         responseType: 'blob'
                       });
                       const url = window.URL.createObjectURL(new Blob([response.data]));
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.setAttribute('download', `Loan_Agreement_${createdLoanId}.pdf`);
-                      document.body.appendChild(link);
-                      link.click();
-                      link.remove();
+                      const iframe = document.createElement('iframe');
+                      iframe.style.display = 'none';
+                      iframe.src = url;
+                      document.body.appendChild(iframe);
+                      iframe.onload = () => {
+                        iframe.contentWindow.print();
+                      };
                     } catch (err) {
-                      console.error('Error downloading agreement:', err);
-                      setError('Failed to download agreement');
+                      console.error('Error printing agreement:', err);
+                      setError('Failed to print agreement');
                     }
                   }}
                 >
-                  Download Agreement
+                  Print Agreement
                 </Button>
                 <Button
                   variant="outlined"
