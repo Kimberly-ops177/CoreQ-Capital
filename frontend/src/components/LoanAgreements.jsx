@@ -346,20 +346,20 @@ const LoanAgreements = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell><strong>Loan ID</strong></TableCell>
-                    <TableCell><strong>Borrower</strong></TableCell>
-                    <TableCell><strong>Amount</strong></TableCell>
-                    <TableCell><strong>Uploaded At</strong></TableCell>
-                    <TableCell align="center"><strong>Actions</strong></TableCell>
+                    <TableCell sx={{ color: '#000000' }}><strong>Loan ID</strong></TableCell>
+                    <TableCell sx={{ color: '#000000' }}><strong>Borrower</strong></TableCell>
+                    <TableCell sx={{ color: '#000000' }}><strong>Amount</strong></TableCell>
+                    <TableCell sx={{ color: '#000000' }}><strong>Uploaded At</strong></TableCell>
+                    <TableCell align="center" sx={{ color: '#000000' }}><strong>Actions</strong></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {pendingApprovals.map((loan) => (
                     <TableRow key={loan.id} hover>
-                      <TableCell>#{loan.id}</TableCell>
-                      <TableCell>{loan.borrower?.fullName}</TableCell>
-                      <TableCell>KSH {parseFloat(loan.amountIssued).toLocaleString()}</TableCell>
-                      <TableCell>{new Date(loan.signedAgreementUploadedAt).toLocaleString()}</TableCell>
+                      <TableCell sx={{ color: '#000000' }}>#{loan.id}</TableCell>
+                      <TableCell sx={{ color: '#000000' }}>{loan.borrower?.fullName}</TableCell>
+                      <TableCell sx={{ color: '#000000' }}>KSH {parseFloat(loan.amountIssued).toLocaleString()}</TableCell>
+                      <TableCell sx={{ color: '#000000' }}>{new Date(loan.signedAgreementUploadedAt).toLocaleString()}</TableCell>
                       <TableCell align="center">
                         <Tooltip title="Download Signed Agreement">
                           <IconButton
