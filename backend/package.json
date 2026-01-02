@@ -9,6 +9,7 @@
     "seed": "node seed.js",
     "migrate": "node migrate-access-to-mysql.js --migrate",
     "check-access": "node migrate-access-to-mysql.js --check",
+    "clean-db": "node clean-production-database.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
