@@ -67,9 +67,9 @@ router.post('/', auth, async (req, res) => {
     // 3. Get standard interest rates
     const standardRates = {
       1: 20,
-      2: 15,
-      3: 12,
-      4: 10
+      2: 28,
+      3: 32,
+      4: 35
     };
 
     const businessRules = {
@@ -603,7 +603,7 @@ router.put('/:id', auth, async (req, res) => {
       const period = parseInt(loanData.loanPeriod) || loan.loanPeriod;
 
       // Recalculate if amount or period changed
-      const standardRates = { 1: 20, 2: 15, 3: 12, 4: 10 };
+      const standardRates = { 1: 20, 2: 28, 3: 32, 4: 35 };
       const businessRules = { minAmountFor4Weeks: 12000, negotiableThreshold: 50000 };
 
       let interestRate;
