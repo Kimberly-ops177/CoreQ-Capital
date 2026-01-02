@@ -472,4 +472,205 @@ router.get('/:id/download-signed', auth, async (req, res) => {
   }
 });
 
+/**
+ * Delete a loan application (only if status is pending_upload)
+ * DELETE /api/loan-applications/:id
+ */
+router.delete('/:id', auth, async (req, res) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    const loan = await Loan.findByPk(req.params.id, {
+      include: [
+        { model: Borrower, as: 'borrower' },
+        { model: Collateral, as: 'collateral' }
+      ]
+    });
+
+    if (!loan) {
+      await transaction.rollback();
+      return res.status(404).send({ error: 'Loan not found' });
+    }
+
+    // Only allow deletion if agreement status is pending_upload
+    if (loan.agreementStatus !== 'pending_upload') {
+      await transaction.rollback();
+      return res.status(400).send({
+        error: 'Can only delete loans with pending upload status'
+      });
+    }
+
+    // Check permissions for employees
+    if (req.user.role === 'employee' && req.user.assignedLocation) {
+      const locations = req.user.assignedLocation.split(',').map(loc => loc.trim());
+      if (!locations.includes(loan.borrower.location)) {
+        await transaction.rollback();
+        return res.status(403).send({
+          error: 'You do not have permission to delete this loan'
+        });
+      }
+    }
+
+    // Delete the unsigned agreement PDF if it exists
+    if (loan.unsignedAgreementPath && fs.existsSync(loan.unsignedAgreementPath)) {
+      fs.unlinkSync(loan.unsignedAgreementPath);
+    }
+
+    // Store IDs before deletion
+    const borrowerId = loan.borrowerId;
+    const collateralId = loan.collateralId;
+
+    // Delete the loan
+    await loan.destroy({ transaction });
+
+    // Delete associated collateral
+    if (collateralId) {
+      await Collateral.destroy({ where: { id: collateralId }, transaction });
+    }
+
+    // Delete associated borrower
+    if (borrowerId) {
+      await Borrower.destroy({ where: { id: borrowerId }, transaction });
+    }
+
+    await transaction.commit();
+
+    res.send({
+      success: true,
+      message: `Loan #${req.params.id} and associated records deleted successfully`
+    });
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Error deleting loan application:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+/**
+ * Update loan application details (only if status is pending_upload)
+ * PUT /api/loan-applications/:id
+ */
+router.put('/:id', auth, async (req, res) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    const loan = await Loan.findByPk(req.params.id, {
+      include: [
+        { model: Borrower, as: 'borrower' },
+        { model: Collateral, as: 'collateral' }
+      ]
+    });
+
+    if (!loan) {
+      await transaction.rollback();
+      return res.status(404).send({ error: 'Loan not found' });
+    }
+
+    // Only allow updates if agreement status is pending_upload
+    if (loan.agreementStatus !== 'pending_upload') {
+      await transaction.rollback();
+      return res.status(400).send({
+        error: 'Can only edit loans with pending upload status'
+      });
+    }
+
+    // Check permissions for employees
+    if (req.user.role === 'employee' && req.user.assignedLocation) {
+      const locations = req.user.assignedLocation.split(',').map(loc => loc.trim());
+      if (!locations.includes(loan.borrower.location)) {
+        await transaction.rollback();
+        return res.status(403).send({
+          error: 'You do not have permission to edit this loan'
+        });
+      }
+    }
+
+    const { borrower, collateral, loan: loanData } = req.body;
+
+    // Update borrower if data provided
+    if (borrower && loan.borrower) {
+      await loan.borrower.update(borrower, { transaction });
+    }
+
+    // Update collateral if data provided
+    if (collateral && loan.collateral) {
+      await loan.collateral.update(collateral, { transaction });
+    }
+
+    // Update loan if data provided
+    if (loanData) {
+      const amount = parseFloat(loanData.amountIssued) || loan.amountIssued;
+      const period = parseInt(loanData.loanPeriod) || loan.loanPeriod;
+
+      // Recalculate if amount or period changed
+      const standardRates = { 1: 20, 2: 15, 3: 12, 4: 10 };
+      const businessRules = { minAmountFor4Weeks: 12000, negotiableThreshold: 50000 };
+
+      let interestRate;
+      if (amount > businessRules.negotiableThreshold) {
+        interestRate = parseFloat(loanData.interestRate) || loan.interestRate;
+      } else {
+        interestRate = standardRates[period];
+      }
+
+      const interestAmount = amount * (interestRate / 100);
+      const totalAmount = amount + interestAmount;
+
+      const dateIssued = loanData.dateIssued ? new Date(loanData.dateIssued) : loan.dateIssued;
+      const dueDate = new Date(dateIssued);
+      dueDate.setDate(dueDate.getDate() + (period * 7));
+
+      const gracePeriodEnd = new Date(dueDate);
+      gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 3);
+
+      await loan.update({
+        amountIssued: amount,
+        dateIssued: dateIssued,
+        loanPeriod: period,
+        interestRate: interestRate,
+        dueDate: dueDate,
+        totalAmount: totalAmount,
+        gracePeriodEnd: gracePeriodEnd,
+        isNegotiable: amount > businessRules.negotiableThreshold
+      }, { transaction });
+    }
+
+    await transaction.commit();
+
+    // Regenerate PDF with updated data
+    try {
+      await loan.reload({
+        include: [
+          { model: Borrower, as: 'borrower' },
+          { model: Collateral, as: 'collateral' }
+        ]
+      });
+
+      // Delete old PDF if exists
+      if (loan.unsignedAgreementPath && fs.existsSync(loan.unsignedAgreementPath)) {
+        fs.unlinkSync(loan.unsignedAgreementPath);
+      }
+
+      // Generate new PDF
+      const result = await generateLoanAgreementPDF(loan, loan.borrower, loan.collateral);
+      await loan.update({
+        unsignedAgreementPath: result.filepath,
+        unsignedAgreementFilename: result.filename
+      });
+    } catch (pdfError) {
+      console.error('Error regenerating PDF:', pdfError);
+    }
+
+    res.send({
+      success: true,
+      message: 'Loan application updated successfully',
+      loan: loan
+    });
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Error updating loan application:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
 module.exports = router;

@@ -32,7 +32,9 @@ import {
   Cancel,
   PendingActions,
   Refresh,
-  Print
+  Print,
+  Edit,
+  Delete
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
@@ -48,6 +50,7 @@ const LoanAgreements = () => {
   const [success, setSuccess] = useState(null);
   const [uploadDialog, setUploadDialog] = useState(false);
   const [approvalDialog, setApprovalDialog] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [uploadFile, setUploadFile] = useState(null);
   const [notes, setNotes] = useState('');
@@ -239,6 +242,32 @@ const LoanAgreements = () => {
     }
   };
 
+  const handleDeleteClick = (loan) => {
+    setSelectedLoan(loan);
+    setDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      setLoading(true);
+      await axios.delete(`/api/loan-applications/${selectedLoan.id}`);
+
+      setSuccess(`Loan #${selectedLoan.id} deleted successfully!`);
+      setDeleteDialog(false);
+      fetchAgreements();
+    } catch (err) {
+      console.error('Error deleting loan:', err);
+      setError(err.response?.data?.error || 'Failed to delete loan');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditClick = (loan) => {
+    // Navigate to new loan page with loan ID for editing
+    navigate(`/new-loan?edit=${loan.id}`);
+  };
+
   const getStatusChip = (status) => {
     const statusConfig = {
       pending_upload: { label: 'Pending Upload', color: 'warning', icon: <PendingActions /> },
@@ -420,16 +449,39 @@ const LoanAgreements = () => {
                           </Tooltip>
 
                           {loan.agreementStatus === 'pending_upload' && (
-                            <Button
-                              size="small"
-                              variant="contained"
-                              color="primary"
-                              startIcon={<Upload />}
-                              onClick={() => handleUploadClick(loan)}
-                              sx={{ ml: 1 }}
-                            >
-                              Upload Signed
-                            </Button>
+                            <>
+                              <Tooltip title="Edit Loan">
+                                <IconButton
+                                  size="small"
+                                  color="info"
+                                  onClick={() => handleEditClick(loan)}
+                                  sx={{ ml: 1 }}
+                                >
+                                  <Edit />
+                                </IconButton>
+                              </Tooltip>
+
+                              <Tooltip title="Delete Loan">
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => handleDeleteClick(loan)}
+                                >
+                                  <Delete />
+                                </IconButton>
+                              </Tooltip>
+
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="primary"
+                                startIcon={<Upload />}
+                                onClick={() => handleUploadClick(loan)}
+                                sx={{ ml: 1 }}
+                              >
+                                Upload Signed
+                              </Button>
+                            </>
                           )}
 
                           {loan.agreementStatus === 'pending_approval' && (
@@ -548,6 +600,36 @@ const LoanAgreements = () => {
             disabled={loading}
           >
             {loading ? <CircularProgress size={20} /> : 'Approve'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Delete Loan Application</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" gutterBottom>
+            Are you sure you want to delete this loan application?
+          </Typography>
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            Loan ID: #{selectedLoan?.id} - {selectedLoan?.borrower?.fullName}
+          </Typography>
+          <Typography variant="body2" gutterBottom>
+            Amount: KSH {parseFloat(selectedLoan?.amountIssued || 0).toLocaleString()}
+          </Typography>
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            This action will permanently delete the loan, borrower, and collateral records. This cannot be undone.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialog(false)}>Cancel</Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            variant="contained"
+            color="error"
+            disabled={loading}
+          >
+            {loading ? <CircularProgress size={20} /> : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>
