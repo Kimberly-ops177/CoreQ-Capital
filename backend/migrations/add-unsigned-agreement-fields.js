@@ -9,19 +9,32 @@ async function migrate() {
   try {
     console.log('Starting migration: Adding unsigned agreement fields to loans table...');
 
-    // Add unsignedAgreementPath column
-    await sequelize.query(`
-      ALTER TABLE loans
-      ADD COLUMN IF NOT EXISTS unsignedAgreementPath VARCHAR(500) NULL
+    // Check if unsignedAgreementPath column exists
+    const [columns] = await sequelize.query(`
+      SELECT COLUMN_NAME
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'loans'
+      AND COLUMN_NAME = 'unsignedAgreementPath'
     `);
-    console.log('✓ Added unsignedAgreementPath column');
 
-    // Add unsignedAgreementFilename column
-    await sequelize.query(`
-      ALTER TABLE loans
-      ADD COLUMN IF NOT EXISTS unsignedAgreementFilename VARCHAR(255) NULL
-    `);
-    console.log('✓ Added unsignedAgreementFilename column');
+    if (columns.length === 0) {
+      // Add unsignedAgreementPath column
+      await sequelize.query(`
+        ALTER TABLE loans
+        ADD COLUMN unsignedAgreementPath VARCHAR(500) NULL
+      `);
+      console.log('✓ Added unsignedAgreementPath column');
+
+      // Add unsignedAgreementFilename column
+      await sequelize.query(`
+        ALTER TABLE loans
+        ADD COLUMN unsignedAgreementFilename VARCHAR(255) NULL
+      `);
+      console.log('✓ Added unsignedAgreementFilename column');
+    } else {
+      console.log('✓ Columns already exist, skipping migration');
+    }
 
     console.log('Migration completed successfully!');
     process.exit(0);
