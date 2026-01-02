@@ -353,7 +353,7 @@ const getPnLData = async (start, end) => {
       date: { [Op.between]: [start, end] }
     }
   });
-  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const totalExpenses = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
 
   const netProfitLoss = totalRevenue - totalExpenses;
   return { totalRevenue, interestEarned, penaltiesCollected, collateralRevenue, totalExpenses, netProfitLoss };
