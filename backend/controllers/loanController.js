@@ -341,16 +341,59 @@ const updateLoan = async (req, res) => {
       return res.status(404).send({ error: 'Loan not found' });
     }
 
-    // If updating negotiable loan terms, re-validate
-    if (req.body.interestRate || req.body.loanPeriod) {
-      if (!loan.isNegotiable) {
-        return res.status(400).send({
-          error: 'Cannot modify interest rate or period for non-negotiable loans'
-        });
-      }
+    // Determine new values (fall back to existing loan fields)
+    const newAmountIssued = req.body.amountIssued !== undefined
+      ? parseFloat(req.body.amountIssued)
+      : parseFloat(loan.amountIssued);
+    const newLoanPeriod = req.body.loanPeriod !== undefined
+      ? parseInt(req.body.loanPeriod, 10)
+      : loan.loanPeriod;
+    const newDateIssued = req.body.dateIssued
+      ? new Date(req.body.dateIssued)
+      : new Date(loan.dateIssued);
+
+    // Validate business rules for the updated values
+    const validationErrors = validateLoanRules(
+      newAmountIssued,
+      newLoanPeriod,
+      loan.isNegotiable,
+      req.user.role
+    );
+    if (validationErrors.length > 0) {
+      return res.status(400).send({
+        error: 'Loan validation failed',
+        details: validationErrors
+      });
     }
 
-    await loan.update(req.body);
+    // Decide interest rate
+    const finalInterestRate = loan.isNegotiable
+      ? (req.body.interestRate !== undefined ? parseFloat(req.body.interestRate) : parseFloat(loan.interestRate))
+      : calculateInterestRate(newAmountIssued, newLoanPeriod, false, null);
+
+    // Recompute totals based on updated principal and rate
+    const interestAmount = newAmountIssued * (finalInterestRate / 100);
+    const totalAmount = newAmountIssued + interestAmount;
+
+    // Recompute due date if period/date changed
+    const dueDate = new Date(newDateIssued);
+    dueDate.setDate(dueDate.getDate() + (newLoanPeriod * 7));
+
+    // Grace period end: keep existing delta (defaults to 7 days) if present
+    const graceDays = 7;
+    const gracePeriodEnd = new Date(dueDate);
+    gracePeriodEnd.setDate(gracePeriodEnd.getDate() + graceDays);
+
+    await loan.update({
+      ...req.body,
+      amountIssued: newAmountIssued,
+      loanPeriod: newLoanPeriod,
+      interestRate: finalInterestRate,
+      totalAmount,
+      dueDate,
+      gracePeriodEnd,
+      dateIssued: newDateIssued
+    });
 
     const updatedLoan = await Loan.findByPk(loan.id, {
       include: [
@@ -383,6 +426,11 @@ const deleteLoan = async (req, res) => {
     if (!loan) {
       return res.status(404).send({ error: 'Loan not found' });
     }
+
+    // Delete associated payments first to avoid foreign key constraint errors
+    await Payment.destroy({
+      where: { loanId: req.params.id }
+    });
 
     await loan.destroy();
     res.send({ message: 'Loan deleted successfully' });
