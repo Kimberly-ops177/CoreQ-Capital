@@ -5,7 +5,7 @@ const { sendEmail } = require('./notificationService');
 
 /**
  * Generate loan agreement PDF with borrower and loan details
- * Based on the Core Q Capital loan agreement template
+ * Based on the exact Core Q Capital loan agreement template
  */
 const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
   return new Promise((resolve, reject) => {
@@ -29,339 +29,426 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
       // Calculate loan details
       const issueDate = new Date(loan.dateIssued);
       const dueDate = new Date(loan.dueDate);
-      const interestAmount = parseFloat(loan.amountIssued) * (parseFloat(loan.interestRate) / 100);
       const totalAmount = parseFloat(loan.totalAmount);
 
-      // Format dates
-      const formatDate = (date) => {
-        return date.toLocaleDateString('en-KE', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        });
+      // Format dates to match template (e.g., "03-Jan-26")
+      const formatDateShort = (date) => {
+        const day = String(date.getDate()).padStart(2, '0');
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const month = monthNames[date.getMonth()];
+        const year = String(date.getFullYear()).slice(-2);
+        return `${day}-${month}-${year}`;
+      };
+
+      // Helper function to add page footer
+      const addPageFooter = (pageNum) => {
+        const bottomY = doc.page.height - 40;
+        doc.rect(50, bottomY - 5, doc.page.width - 100, 30)
+          .fillAndStroke('#4A90A4', '#4A90A4');
+        doc.fillColor('#FFFFFF')
+          .fontSize(10)
+          .font('Helvetica-Bold')
+          .text('CORE Q CAPITAL', 60, bottomY, { continued: false });
+        doc.fillColor('#FFFFFF')
+          .fontSize(8)
+          .text(String(pageNum), doc.page.width - 80, bottomY, { width: 20, align: 'right' });
+        doc.fillColor('#000000'); // Reset to black
+      };
+
+      // Helper function to add stamp placeholder
+      const addStampPlaceholder = (x, y, text = 'AWUOR CATE SHEILA\nADVOCATE\nEmail katesheila23@gmail.com') => {
+        doc.save();
+        doc.rect(x, y, 120, 60)
+          .stroke('#4169E1');
+        doc.fontSize(8)
+          .fillColor('#4169E1')
+          .font('Helvetica-Bold')
+          .text(text, x + 5, y + 20, { width: 110, align: 'center' });
+        doc.restore();
+        doc.fillColor('#000000').font('Helvetica'); // Reset
       };
 
       // ===== PAGE 1: COVER PAGE =====
 
-      // Loan ID at top left
+      // Loan ID at top left (large, bold number)
+      doc.fontSize(28).font('Helvetica-Bold')
+        .fillColor('#000000')
+        .text(loan.loanId || loan.id.toString(), 50, 50, { align: 'left' });
+
+      // Logo and company name (centered)
+      doc.moveDown(2);
+      const centerX = doc.page.width / 2;
       doc.fontSize(24).font('Helvetica-Bold')
-        .text(loan.loanId || 'N/A', 50, 50, { align: 'left' });
-
-      // Top right: Borrower Photo Placeholder Box
-      const photoBoxX = doc.page.width - 150;
-      const photoBoxY = 60;
-      const photoBoxSize = 100;
-
-      doc.rect(photoBoxX, photoBoxY, photoBoxSize, photoBoxSize)
-        .stroke();
-      doc.fontSize(8).font('Helvetica')
-        .text('BORROWER PHOTO', photoBoxX, photoBoxY + photoBoxSize + 5, {
-          width: photoBoxSize,
-          align: 'center'
-        });
-
-      // Header - Company Branding
-      doc.fontSize(10).font('Helvetica')
-        .text('A PARTNER YOU CAN TRUST', 50, 90, { align: 'left' });
-
-      doc.moveDown(0.5);
-      doc.fontSize(18).font('Helvetica-Bold')
-        .text('CORE Q CAPITAL', { align: 'left' });
+        .text('CQ', centerX - 50, 120, { width: 100, align: 'center', continued: true })
+        .text(' CORE Q CAPITAL');
 
       doc.fontSize(10).font('Helvetica')
-        .text('LOAN AGREEMENT', { align: 'left' });
+        .text('A PARTNER YOU CAN TRUST', centerX - 100, 150, { width: 200, align: 'center' });
 
       doc.moveDown(3);
+
+      // LOAN AGREEMENT title
+      doc.fontSize(14).font('Helvetica-Bold')
+        .text('LOAN AGREEMENT', { align: 'center', underline: true });
+
+      doc.moveDown(1);
+      doc.moveTo(100, doc.y).lineTo(doc.page.width - 100, doc.y).stroke();
+      doc.moveDown(2);
 
       // Between section
-      doc.fontSize(14).font('Helvetica').text('Between', { align: 'center' });
-      doc.moveDown(0.5);
-      doc.fontSize(16).font('Helvetica-Bold')
+      doc.fontSize(12).font('Helvetica').text('Between', { align: 'center' });
+      doc.fontSize(14).font('Helvetica-Bold')
         .text('CORE Q CAPITAL ENTERPRISES', { align: 'center' });
-      doc.fontSize(14).font('Helvetica')
-        .text('&', { align: 'center' });
+      doc.fontSize(12).font('Helvetica').text('&', { align: 'center' });
       doc.moveDown(0.5);
-      doc.fontSize(12).text(`NAME: ${borrower.fullName.toUpperCase()}    OF ID`, { align: 'center', continued: true });
-      doc.moveDown();
-      doc.fontSize(12).text(`OF ID: ${borrower.idNumber}`, { align: 'center' });
-      doc.moveDown();
 
-      // Borrower's Photo section
-      doc.fontSize(10).text('BORROWER\'S PHOTO', { align: 'center' });
+      // Borrower info
+      doc.fontSize(11).font('Helvetica-Bold');
+      doc.text(`NAME:  ${borrower.fullName.toUpperCase()}`, { align: 'center', continued: true });
+      doc.text(`           OF ID:  ${borrower.idNumber}`);
+
+      doc.moveDown(1);
+      doc.moveTo(100, doc.y).lineTo(doc.page.width - 100, doc.y).stroke();
+      doc.moveDown(1);
+
+      // Date
+      doc.fontSize(11).font('Helvetica-Bold')
+        .text('DATED', { align: 'center', continued: false });
+      doc.fontSize(12).font('Helvetica-Bold')
+        .text(formatDateShort(issueDate), { align: 'center' });
+
+      doc.moveDown(1);
+      doc.moveTo(100, doc.y).lineTo(doc.page.width - 100, doc.y).stroke();
       doc.moveDown(2);
 
-      doc.fontSize(14).text(`DATED: ${formatDate(issueDate)}`, { align: 'center' });
+      // BORROWER PHOTO section
+      doc.fontSize(10).font('Helvetica-Bold')
+        .text('BORROWER PHOTO', { align: 'center' });
 
-      doc.addPage();
+      doc.moveDown(6);
+
+      // Drawn by section at bottom
+      doc.fontSize(10).font('Helvetica-Bold').text('Drawn by:', 50, doc.page.height - 150);
+      doc.fontSize(10).font('Helvetica')
+        .text('ORIRI & ASSOCIATE LAW', 50, doc.page.height - 135)
+        .text('ADVOCATES.', 50, doc.page.height - 122)
+        .text('P.O BOX 37367-00100', 50, doc.page.height - 109)
+        .text('NAIROBI', 50, doc.page.height - 96);
+
+      // Page footer
+      addPageFooter(1);
 
       // ===== PAGE 2: AGREEMENT DETAILS =====
-      // Page header
-      doc.fontSize(10).font('Helvetica-Bold')
-        .text('CORE Q CAPITAL', 50, 50);
-      doc.fontSize(8).font('Helvetica')
-        .text('LOAN AGREEMENT', 50, 65);
-      doc.moveDown(2);
+      doc.addPage();
 
-      // Agreement details
       doc.fontSize(11).font('Helvetica');
+      doc.text(`THIS AGREEMENT is made on ………………….${formatDateShort(issueDate)}…………………... between:`, 50, 50);
+      doc.moveDown(1);
 
-      doc.text(`THIS AGREEMENT is made on ${formatDate(issueDate)} between:`);
-      doc.moveDown();
+      doc.text('1.  ', { continued: true });
+      doc.font('Helvetica-Bold').text('CORE Q CAPITAL ', { continued: true });
+      doc.font('Helvetica').text('(represented by the directors ', { continued: true });
+      doc.font('Helvetica-Bold').text('MR. Fidelis Simati-MD, and MR. Mukonzo', { continued: false });
+      doc.text('     ', { continued: true });
+      doc.font('Helvetica-Bold').text('Evans ', { continued: true });
+      doc.font('Helvetica').text('resident within Nairobi in the Republic of Kenya (hereinafter called "', { continued: true });
+      doc.font('Helvetica-Bold').text('Lender', { continued: true });
+      doc.font('Helvetica').text('").', { continued: false });
 
-      doc.text('CORE Q CAPITAL (represented by the directors MR. Fidelis Simati-MD, and MR. Mukonzo Evans resident within Nairobi in the Republic of Kenya (hereinafter called "Lender").');
-      doc.moveDown();
-      doc.text('AND');
-      doc.moveDown();
-      doc.text(`${borrower.fullName} of ID number ${borrower.idNumber}, Phone Number ${borrower.phoneNumber}${borrower.email ? `, Email ${borrower.email}` : ''} within the Republic of Kenya (hereinafter called "borrower).`);
+      doc.moveDown(1);
+      doc.font('Helvetica-Bold').text('AND', { align: 'center' });
+      doc.moveDown(1);
+
+      doc.font('Helvetica').text('2.  ', 50, doc.y, { continued: true });
+      doc.text('…', { continued: true });
+      doc.font('Helvetica-Bold').text(borrower.fullName.toUpperCase(), { continued: true });
+      doc.font('Helvetica').text(' …….. of ID number: …… ', { continued: true });
+      doc.font('Helvetica-Bold').text(borrower.idNumber, { continued: true });
+      doc.font('Helvetica').text('…… Phone', { continued: false });
+      doc.text(`     Number………${borrower.phoneNumber}………….. within the Republic of Kenya (hereinafter called "`, 50, doc.y, { continued: true });
+      doc.font('Helvetica-Bold').text('borrower', { continued: true });
+      doc.font('Helvetica').text(').', { continued: false });
+
       doc.moveDown(2);
+      doc.fontSize(12).font('Helvetica-Bold').text('WHEREAS', 50, doc.y);
+      doc.moveDown(0.5);
 
-      // WHEREAS clauses
-      doc.fontSize(12).font('Helvetica-Bold').text('WHEREAS');
-      doc.fontSize(11).font('Helvetica').moveDown();
+      doc.fontSize(11).font('Helvetica');
+      doc.text('A.  ', 50, doc.y, { continued: true });
+      doc.font('Helvetica-Bold').text('WHEREAS ', { continued: true });
+      doc.font('Helvetica').text('the lender is a business incorporated under the Company\'s Act of Kenya as Core Q Capital having the legal capacity to enter into a legally binding agreement that is enforceable by law.', { continued: false });
 
-      doc.text('WHEREAS the lender is a business incorporated under the Company\'s Act of Kenya as Core Q Capital having the legal capacity to enter into a legally binding agreement that is enforceable by law.');
-      doc.moveDown();
+      doc.moveDown(1);
+      doc.text('B.  ', 50, doc.y, { continued: true });
+      doc.font('Helvetica-Bold').text('WHEREAS ', { continued: true });
+      doc.font('Helvetica').text(`the second is an adult of sound mind having the legal capacity to enter into a legally binding contract, studying at…………..and of registration no..…… ID number.`, { continued: true });
+      doc.font('Helvetica-Bold').text(borrower.idNumber, { continued: true });
+      doc.font('Helvetica').text(' phone', { continued: false });
+      doc.text(`     Name……House No. ………… ………. No:  ………. I student  within………`, 50, doc.y, { continued: true });
+      doc.font('Helvetica-Bold').text('JUJA', { continued: true });
+      doc.font('Helvetica').text('……   Apartment', { continued: false });
 
-      let whereClause2 = `WHEREAS the second is an adult of sound mind having the legal capacity to enter into a legally binding contract`;
-      if (borrower.isStudent) {
-        whereClause2 += `, studying at ${borrower.institution || '[INSTITUTION]'} and of registration no ${borrower.registrationNumber || '[REG NO]'}`;
-      }
-      whereClause2 += `, ID number ${borrower.idNumber}, phone no ${borrower.phoneNumber}`;
-      if (borrower.emergencyNumber) {
-        whereClause2 += `, Emergency No. ${borrower.emergencyNumber}`;
-      }
-      whereClause2 += `, resident within ${borrower.location}`;
-      if (borrower.apartment) {
-        whereClause2 += `, Apartment Name ${borrower.apartment}`;
-      }
-      if (borrower.houseNumber) {
-        whereClause2 += `, House No. ${borrower.houseNumber}`;
-      }
-      whereClause2 += '.';
+      doc.moveDown(1);
+      doc.text('C.  ', 50, doc.y, { continued: true });
+      doc.font('Helvetica-Bold').text('WHEREAS ', { continued: true });
+      doc.font('Helvetica').text('the parties herein are desirous of entering into a security agreement to secure a loan which the lender will advance to the borrower.', { continued: false });
 
-      doc.text(whereClause2);
-      doc.moveDown();
+      doc.moveDown(1);
+      doc.text('D.  ', 50, doc.y, { continued: true });
+      doc.font('Helvetica-Bold').text('WHEREAS ', { continued: true });
+      doc.font('Helvetica').text('parties have desired to have the agreement reduced into writing with an intention of creating a legally binding and enforceable relationship;', { continued: false });
 
-      doc.text('WHEREAS the parties herein are desirous of entering into a security agreement to secure a loan which the lender will advance to the borrower.');
-      doc.moveDown();
-      doc.text('WHEREAS parties have desired to have the agreement reduced into writing with an intention of creating a legally binding and enforceable relationship;');
       doc.moveDown(2);
+      doc.fontSize(12).font('Helvetica-Bold').text('NOW IT IS HEREBY MUTUALLY AGREED AS FOLLOWS:', 50, doc.y, { underline: true });
+      doc.moveDown(1);
 
-      // NOW IT IS HEREBY MUTUALLY AGREED
-      doc.fontSize(12).font('Helvetica-Bold').text('NOW IT IS HEREBY MUTUALLY AGREED AS FOLLOWS:');
-      doc.fontSize(11).font('Helvetica').moveDown();
+      doc.fontSize(11).font('Helvetica-Bold').text('A.  PARTICULARS OF THE PARTIES', 50, doc.y, { indent: 20 });
+      doc.moveDown(0.5);
+      doc.font('Helvetica').text('1.', 70, doc.y, { continued: true });
+      doc.text('  Core Q is a Company incorporated under the Company\'s Act 2015 dealing in the business of advancing loans in exchange of collateral items.', { indent: 10 });
 
-      // A. PARTICULARS OF THE PARTIES
-      doc.font('Helvetica-Bold').text('A. PARTICULARS OF THE PARTIES');
-      doc.font('Helvetica').moveDown();
-      doc.text('Core Q is a Company incorporated under the Company\'s Act 2015 dealing in the business of advancing loans in exchange of collateral items.');
-      doc.moveDown();
-      doc.text('The Borrower is an adult of sound mind and is desirous of acquiring a loan from the lender in exchange for collateral.');
+      doc.moveDown(0.5);
+      doc.text('2.', 70, doc.y, { continued: true });
+      doc.text('  The Borrower is an adult of sound mind and is desirous of acquiring a loan from the lender in exchange for collateral.', { indent: 10 });
+
+      doc.moveDown(1);
+      doc.fontSize(11).font('Helvetica-Bold').text('B.  CREDIT ADVANCE', 70, doc.y);
+      doc.moveDown(0.5);
+      doc.font('Helvetica').text('a.', 90, doc.y, { continued: true });
+      doc.text(`  The lender has issued to the borrower a loan worth …`, { continued: true });
+      doc.font('Helvetica-Bold').text(`Ksh${parseFloat(loan.amountIssued).toLocaleString()}`, { continued: true });
+      doc.font('Helvetica').text('…only to be repaid before …', { continued: true });
+      doc.font('Helvetica-Bold').text(formatDateShort(dueDate), { continued: true });
+      doc.font('Helvetica').text('... Amount…', { continued: true });
+      doc.font('Helvetica-Bold').text(`Ksh${totalAmount.toLocaleString()}`, { continued: true });
+      doc.font('Helvetica').text('……to the account details provided herein.', { continued: false });
+
+      doc.moveDown(1);
+      doc.font('Helvetica-Bold').text('Payments Details: Pay bill No. 522533', 110, doc.y);
+      doc.text('Account: 7862638', 170, doc.y);
+      doc.font('Helvetica').text(`Loan Period ${loan.loanPeriod} week(s)`, 110, doc.y + 15);
+
       doc.moveDown(2);
+      doc.font('Helvetica').text('b.', 90, doc.y, { continued: true });
+      doc.text('  If the period is within one week then there will be an interest of 20%on the principal amount loaned.', { indent: 10 });
 
-      // B. CREDIT ADVANCE
-      doc.font('Helvetica-Bold').text('B. CREDIT ADVANCE');
-      doc.font('Helvetica').moveDown();
-      doc.text(`The lender has issued to the borrower a loan worth Kshs ${parseFloat(loan.amountIssued).toLocaleString()} only to be repaid before ${formatDate(dueDate)}. Amount KSH ${totalAmount.toLocaleString()} to the account details provided herein.`);
-      doc.moveDown();
-      doc.text('Payments Details: Pay bill No. 522533');
-      doc.text('                  Account: 7862638');
-      doc.moveDown();
-      doc.text(`Loan Period: ${loan.loanPeriod} week(s)`);
-      doc.moveDown();
+      doc.moveDown(0.5);
+      doc.text('c.', 90, doc.y, { continued: true });
+      doc.text('  If the period is within two weeks there will be an interest of 28% on the principal amount loaned.', { indent: 10 });
 
-      // Interest rates
-      doc.text('If the period is within one week then there will be an interest of 20% on the principal amount loaned.');
-      doc.text('If the period is within two weeks there will be an interest of 28% on the principal amount loaned.');
-      doc.text('If the period is within three weeks then there will be an interest of 32% on the principal amount loaned.');
-      doc.text('If the period is within four weeks (one month) then there will be an interest of 35% on the principal amount loaned.');
-      if (loan.isNegotiable) {
-        doc.text(`If the period exceeds one month, the interest is negotiated to ${loan.interestRate}% of the principal amount.`);
-      }
-      doc.moveDown(2);
+      doc.moveDown(0.5);
+      doc.text('d.', 90, doc.y, { continued: true });
+      doc.text('  If the period is within One Month then there will be an interest of 35% on the principal amount loaned.', { indent: 10 });
 
-      // C. COLLATERAL
-      doc.font('Helvetica-Bold').text('C. COLLATERAL');
-      doc.font('Helvetica').moveDown();
-      doc.text('The Borrower is to deposit a collateral item with the following details:');
-      doc.moveDown();
-      doc.text(`- Name of the Item: ${collateral.itemName}`);
-      doc.text(`- Model Number: ${collateral.modelNumber || 'N/A'}`);
-      doc.text(`- Serial Number: ${collateral.serialNumber || 'N/A'}`);
-      doc.text(`- Condition: ${collateral.itemCondition}`);
-      doc.text(`- Category: ${collateral.category || 'N/A'}`);
-      doc.moveDown();
+      doc.moveDown(0.5);
+      doc.text('e.', 90, doc.y, { continued: true });
+      doc.text(`  If the period exceeds one Months, the interest negotiated to…………… of the principal amount.`, { indent: 10 });
 
-      doc.text('The collateral item is to be assessed by the Lender to ensure that the item is in good shape. The borrower should have receipts or any other documents proving ownership of the collateral item. However, in the absence of the receipts, they should sign a statutory declaration/affidavit of ownership stating that the collateral item belongs to them.');
-      doc.moveDown(2);
+      // Add stamp placeholder on page 2 (bottom right)
+      addStampPlaceholder(doc.page.width - 180, doc.page.height - 150);
 
+      // Page footer
+      addPageFooter(2);
+
+      // ===== PAGE 3: COLLATERAL AND TERMS =====
       doc.addPage();
 
-      // ===== PAGE 3: TERMS AND CONDITIONS =====
-      // Page header
-      doc.fontSize(10).font('Helvetica-Bold')
-        .text('CORE Q CAPITAL', 50, 50);
-      doc.fontSize(8).font('Helvetica')
-        .text('LOAN AGREEMENT', 50, 65);
-      doc.moveDown(2);
+      doc.fontSize(11).font('Helvetica-Bold').text('C.  COLLATERAL.', 50, 50);
+      doc.moveDown(0.5);
+      doc.font('Helvetica').text('The Borrower is to deposit a collateral item with the following details:', 50, doc.y);
+      doc.moveDown(0.5);
+      doc.text(`- Name of the Item: `, 70, doc.y, { continued: true });
+      doc.font('Helvetica-Bold').text(collateral.itemName);
+      doc.font('Helvetica').text(`- Model Number: `, 70, doc.y, { continued: true });
+      doc.font('Helvetica-Bold').text(collateral.modelNumber || 'N/A');
+      doc.font('Helvetica').text(`- Serial Number: `, 70, doc.y, { continued: true });
+      doc.font('Helvetica-Bold').text(collateral.serialNumber || 'N/A');
+      doc.font('Helvetica').text(`- Condition: `, 70, doc.y, { continued: true });
+      doc.font('Helvetica-Bold').text(collateral.itemCondition);
 
-      // D. BREACH AND TERMINATION
-      doc.font('Helvetica-Bold').text('D. BREACH AND TERMINATION');
-      doc.font('Helvetica').moveDown();
-      doc.text('It will amount to a breach if either party fails to honour their obligations as listed below:');
-      doc.moveDown();
-      doc.text('The Borrower shall be charged 3% of the borrowed sum daily succeeding the due date for 7 days, Failure to which the lender shall consider it as default of payment.');
-      doc.moveDown();
-      doc.text('The borrower shall be charged 5% of the borrowed sum weekly for storage, succeeding a week of the loan settlement.');
-      doc.moveDown();
-      doc.text('The Borrower shall promptly notify the Lender of any event that is likely to inhibit the disbursement of the sum as agreed in default of which the borrower shall have forfeited ownership of the collateral item.');
-      doc.moveDown(2);
+      doc.moveDown(1);
+      doc.font('Helvetica').text('The collateral item is to be assessed by the Lender to ensure that the item is in good shape. The borrower should have receipts or any other documents proving ownership of the collateral item. However, in the absence of the receipts, they should sign a statutory declaration/affidavit of ownership stating that the collateral item belongs to them.', 50, doc.y);
 
-      // E. SERVICE OF NOTICES
-      doc.font('Helvetica-Bold').text('E. SERVICE OF NOTICES');
-      doc.font('Helvetica').moveDown();
-      doc.text('Notice may be sent by mobile enabled messaging applications to the party\'s last known and used telephone number. Notice shall be deemed served on the day which it is sent. Service shall be deemed to have been affected when the sender receives a delivery report.');
-      doc.moveDown(2);
+      doc.moveDown(1.5);
+      doc.fontSize(11).font('Helvetica-Bold').text('D.BREACH AND TERMINATION', 70, doc.y);
+      doc.moveDown(0.5);
+      doc.font('Helvetica').text('It will amount to a breach if either party fails to honour their obligations as listed below:', 50, doc.y);
 
-      // F. DISPUTE RESOLUTION
-      doc.font('Helvetica-Bold').text('F. DISPUTE RESOLUTION');
-      doc.font('Helvetica').moveDown();
-      doc.text('Any dispute or question in connection with the agreement shall be in the first instance resolved amicably failure to which parties shall be at liberty to seek recourse through Alternative Dispute Resolution, and Arbitration. If these measures fail, then the parties have the right to seek recourse in courts of competent Jurisdiction in the Republic of Kenya.');
-      doc.moveDown(2);
+      doc.moveDown(0.5);
+      doc.text('The Borrower shall be charged 3% of the borrowed sum daily succeeding the due date for 7 days, Failure to which the lender shall consider it as default of payment.', 50, doc.y);
 
-      // G. EXCLUSIVITY OF LIABILITY AND INDEMNITY
-      doc.font('Helvetica-Bold').text('G. EXCLUSIVITY OF LIABILITY AND INDEMNITY');
-      doc.font('Helvetica').moveDown();
-      doc.text('The Lender shall not be liable for any act or omission pertaining to stolen collateral items or causation of the business that results in an action by third party over the activities of the business whether in contract, warranty, tort, or in any other manner and the borrower shall indemnify the lender for any loss suffered and attribute to the Borrower\'s breach of terms of the agreement.');
-      doc.moveDown(2);
+      doc.moveDown(0.5);
+      doc.text('The borrower shall be charged 5% of the borrowed sum weekly for storage, succeeding a week of the loan settlement.', 50, doc.y);
 
-      // H. GOVERNING LAW
-      doc.font('Helvetica-Bold').text('H. GOVERNING LAW');
-      doc.font('Helvetica').moveDown();
-      doc.text('The agreement shall be governed and construed in accordance with the Laws of Kenya.');
-      doc.moveDown(2);
+      doc.moveDown(0.5);
+      doc.text('The Borrower shall promptly notify the Lender of any event that is likely to inhibit the disbursement of the sum as agreed in default of which the borrower shall have forfeited ownership of the collateral item.', 50, doc.y);
 
-      // I. ASSIGNMENT
-      doc.font('Helvetica-Bold').text('I. ASSIGNMENT');
-      doc.font('Helvetica').moveDown();
-      doc.text('The rights of the Lender under this agreement shall be transferred to, assigned and enforced to his or her nominee or personal representative in the event of his /her imprisonment, death, and bankruptcy, mental or physical incapacity.');
-      doc.moveDown(2);
+      doc.moveDown(1);
+      doc.fontSize(11).font('Helvetica-Bold').text('E.  SERVICE OF NOTICES.', 50, doc.y);
+      doc.moveDown(0.5);
+      doc.font('Helvetica').text('Notice may be sent by mobile enabled messaging applications to the party\'s last known and used telephone number or email address . Notice shall be deemed served on the day which it is sent. Service shall be deemed to have been affected when the sender receives a delivery report.', 50, doc.y);
 
-      // J. ENTIRE AGREEMENT
-      doc.font('Helvetica-Bold').text('J. ENTIRE AGREEMENT');
-      doc.font('Helvetica').moveDown();
-      doc.text('This agreement contains the whole agreement and understanding between the parties over the sale of the contract party herein and supersedes all previous agreements whether oral or written between the parties in respect of such matter which previous agreements are hereby expressly excluded.');
-      doc.moveDown(3);
+      doc.moveDown(1);
+      doc.fontSize(11).font('Helvetica-Bold').text('F.  DISPUTE RESOLUTION.', 50, doc.y);
+      doc.moveDown(0.5);
+      doc.font('Helvetica').text('Any dispute or question in connection with the agreement shall be in the first instance resolved amicably failure to which parties shall be at liberty to seek recourse through Alternative Dispute Resolution, and Arbitration. If these measures fail, then the parties have the right to seek recourse in courts of competent Jurisdiction in the Republic of Kenya.', 50, doc.y);
 
-      doc.addPage();
+      doc.moveDown(1);
+      doc.fontSize(11).font('Helvetica-Bold').text('G. EXCLUSIVITY OF LIABILITY AND INDEMNITY.', 50, doc.y);
+      doc.moveDown(0.5);
+      doc.font('Helvetica').text('The Lender shall not be liable for any act or omission pertaining to stolen collateral items or causation of the business that results in an action by third party over the activities of the business whether in contract, warranty, tort, or in any other manner and the borrower shall indemnify the lender for any loss suffered and attribute to the Borrower\'s breach of terms of the agreement.', 50, doc.y);
+
+      doc.moveDown(1);
+      doc.fontSize(11).font('Helvetica-Bold').text('E. GOVERNING LAW.', 50, doc.y);
+      doc.moveDown(0.5);
+      doc.font('Helvetica').text('The agreement shall be governed and construed in accordance with the Laws of Kenya.', 50, doc.y);
+
+      doc.moveDown(1);
+      doc.fontSize(11).font('Helvetica-Bold').text('F.  ASSIGNMENT.', 50, doc.y);
+      doc.moveDown(0.5);
+      doc.font('Helvetica').text('The rights of the Lender under this agreement shall be transferred to, assigned and enforced to his or her nominee or personal representative in the event of his /her imprisonment, death, and bankruptcy, mental or physical incapacity.', 50, doc.y);
+
+      // Add stamp placeholder on page 3 (bottom right)
+      addStampPlaceholder(doc.page.width - 180, doc.page.height - 150);
+
+      // Page footer
+      addPageFooter(3);
 
       // ===== PAGE 4: SIGNATURES =====
-      // Page header
-      doc.fontSize(10).font('Helvetica-Bold')
-        .text('CORE Q CAPITAL', 50, 50);
-      doc.fontSize(8).font('Helvetica')
-        .text('LOAN AGREEMENT', 50, 65);
-      doc.moveDown(2);
-
-      // Signatures
-      doc.fontSize(12).font('Helvetica-Bold').text('IN WITNESS WHEREOF the parties hereto have hereunto set their respective hands the day, month and year first hereinbefore written:');
-      doc.moveDown(2);
-
-      doc.fontSize(11).font('Helvetica');
-      doc.text('Signed by the said CORE Q CAPITAL');
-      doc.moveDown();
-      doc.text('DIRECTORS:');
-      doc.moveDown();
-      doc.text('MUKONZO EVANS       ) ……………………………………');
-      doc.moveDown(0.5);
-      doc.text('FIDELIS SIMATI      ) ……………………………………');
-      doc.moveDown(2);
-
-      doc.text('In the presence of');
-      doc.moveDown(0.5);
-      doc.text('ADVOCATE');
-      doc.moveDown(0.5);
-      doc.text(`I CERTIFY that Simati and Mukonzo appeared before me on ${formatDate(issueDate)} and being`);
-      doc.text(`identified by ${borrower.fullName.toUpperCase()} being known to me acknowledged`);
-      doc.text('the above signature or mark to be theirs and they had freely and voluntarily executed this Agreement');
-      doc.text('and understood its contents');
-      doc.moveDown(1);
-      doc.text('Signed ……………………………………');
-      doc.moveDown(0.5);
-      doc.text('        ADVOCATE');
-      doc.moveDown(3);
-
-      doc.text(`Signed by the said ${borrower.fullName.toUpperCase()}`);
-      doc.moveDown();
-      doc.text('                    ) ……………………………………');
-      doc.moveDown(2);
-
-      doc.text('In the presence of');
-      doc.moveDown();
-      doc.text('Name: Fidelis Simati');
-      doc.moveDown(0.5);
-      doc.text('Sign: ……………………………………');
-      doc.moveDown(3);
-
-      // Footer
-      doc.fontSize(10).font('Helvetica-Bold').text('DRAWN BY');
-      doc.fontSize(11).font('Helvetica').moveDown(0.5);
-      doc.text('ORIRI & ASSOCIATE LAW ADVOCATES');
-      doc.text('P.O.BOX 37367-00100');
-      doc.text('NAIROBI');
-      doc.text('Email: katesheila23@gmail.com');
-
       doc.addPage();
 
-      // ===== PAGE 5: STATUTORY DECLARATION =====
-      // Page header with logo placeholder
-      doc.fontSize(14).font('Helvetica-Bold')
-        .text('CORE Q CAPITAL', 50, 50, { align: 'center' });
-      doc.fontSize(10).font('Helvetica')
-        .text('A PARTNER YOU CAN TRUST', { align: 'center' });
+      doc.fontSize(11).font('Helvetica-Bold').text('G. ENTIRE AGREEMENT.', 50, 50);
+      doc.moveDown(0.5);
+      doc.font('Helvetica').text('This agreement contains the whole agreement and understanding between the parties over the sale of the contract party herein and supersedes all previous agreements whether oral or written between the parties in respect of such matter which previous agreements are hereby expressly excluded.', 50, doc.y);
+
       doc.moveDown(2);
+      doc.fontSize(12).font('Helvetica-Bold').text(`IN WITNESS WHEREOF the parties hereto have hereunto set their respective hands the day, month and year first hereinbefore written:`, 50, doc.y);
+      doc.moveDown(1.5);
 
-      doc.fontSize(12).font('Helvetica-Bold')
-        .text('STATUTORY DECLARATION', { align: 'center' });
-      doc.moveDown(3);
-
+      doc.fontSize(11).font('Helvetica-Bold').text('Signed by ', 50, doc.y, { continued: true });
+      doc.text('the said ', { continued: true });
+      doc.text('CORE Q CAPITAL');
+      doc.font('Helvetica-Bold').text('DIRECTORS:', 50, doc.y);
       doc.fontSize(11).font('Helvetica');
-      doc.text(`I... ${borrower.fullName.toUpperCase()}... Of ID Number... ${borrower.idNumber}...,`);
-      doc.moveDown();
-      doc.text('In the Republic of Kenya, MAKE OATH and declare as follows:');
+      doc.text('MUKONZO EVANS            ) ……………………………………', 50, doc.y);
+      doc.moveDown(0.5);
+      doc.text('FIDELIS SIMATI           ) ……………………………………', 50, doc.y);
+
       doc.moveDown(1.5);
+      doc.text('In the presence of', 50, doc.y);
+      doc.font('Helvetica-Bold').text('ADVOCATE', 50, doc.y);
+      doc.font('Helvetica');
+      doc.text(`I CERTIFY that Simati and Mukonzo appeared before me on ………………${formatDateShort(issueDate)}…………… and being`, 50, doc.y);
+      doc.text(`identified by……`, 50, doc.y, { continued: true });
+      doc.font('Helvetica-Bold').text(borrower.fullName.toUpperCase(), { continued: true });
+      doc.font('Helvetica').text('……..being known to me acknowledged', { continued: false });
+      doc.text('the above signature or mark to be theirs and they had freely and voluntarily executed this Agreement and understood its contents', 50, doc.y);
 
-      doc.text('1. THAT, I am an adult of sound mind and hence competent to swear this statutory declaration.');
-      doc.moveDown();
-      doc.text('2. THAT, I do solemnly and sincerely declare that the particulars contained herein are true to the');
-      doc.text('   best of my knowledge.');
-      doc.moveDown();
-      doc.text('3. THAT, I declare that the collateral herein is mine and the borrower is liable whatsoever for');
-      doc.text('   any undertaking contrary to the agreement.');
-      doc.moveDown();
-      doc.text('4. THAT, I make this declaration conscientiously believing the same to be true and in');
-      doc.text('   accordance with the Oaths and Statutory Declarations Act, (Chapter 15 of the Laws of Kenya)');
+      doc.moveDown(1.5);
+      doc.text('Signed ……………………………………', 90, doc.y);
+      doc.text('        ADVOCATE', 90, doc.y + 15);
+
+      // Add stamp placeholder for advocate
+      addStampPlaceholder(doc.page.width - 220, doc.y - 80);
+
       doc.moveDown(3);
+      doc.fontSize(11).font('Helvetica-Bold').text('Signed by ', 50, doc.y, { continued: true });
+      doc.font('Helvetica').text('the said', { continued: false });
+      doc.text('                    ) ……………………………………', 130, doc.y);
 
-      doc.text('DECLARED AT NAIROBI by the said');
-      doc.moveDown();
+      doc.moveDown(2);
+      doc.text('In the presence of', 50, doc.y);
+      doc.moveDown(1);
+      doc.text('Name: Fidelis Simati', 90, doc.y);
+      doc.moveDown(0.5);
+      doc.text('Sign: ……………………………………', 90, doc.y);
+
+      doc.moveDown(4);
+      doc.fontSize(10).font('Helvetica-Bold').text('DRAWN BY', 50, doc.y);
+      doc.moveDown(0.5);
+      doc.font('Helvetica').text('ORIRI&ASSOCIATE LAW ADVOCATES.', 50, doc.y);
+      doc.text('P.O.BOX 37367-00100', 50, doc.y);
+      doc.text('NAIROBI.', 50, doc.y);
+      doc.moveDown(0.5);
+      doc.text('Email: ', 50, doc.y, { continued: true });
+      doc.fillColor('#0000EE').text('katesheila23@gmail.com', { link: 'mailto:katesheila23@gmail.com', underline: true });
+      doc.fillColor('#000000');
+
+      // Page footer
+      addPageFooter(4);
+
+      // ===== PAGE 5: STATUTORY DECLARATION =====
+      doc.addPage();
+
+      // Logo section at top
+      doc.fontSize(20).font('Helvetica-Bold')
+        .text('CQ', 50, 50, { continued: true })
+        .fontSize(18).text(' CORE Q CAPITAL');
+      doc.fontSize(10).font('Helvetica')
+        .text('A PARTNER YOU CAN TRUST', 50, 75);
+
+      doc.moveDown(1);
+      doc.fontSize(12).font('Helvetica-Bold')
+        .text('STATUTORY DECLARATION.', 50, doc.y, { underline: true });
+
+      doc.moveDown(2);
+      doc.fontSize(11).font('Helvetica');
+      doc.text(`I… `, 50, doc.y, { continued: true });
+      doc.font('Helvetica-Bold').text(borrower.fullName.toUpperCase(), { continued: true });
+      doc.font('Helvetica').text(`…Of ID Number… `, { continued: true });
+      doc.font('Helvetica-Bold').text(borrower.idNumber, { continued: true });
+      doc.font('Helvetica').text('………….,', { continued: false });
+
+      doc.moveDown(0.5);
+      doc.text('In the Republic of Kenya, MAKE OATH and declare as follows:', 50, doc.y);
+      doc.moveDown(1);
+
+      doc.text('1. ', 50, doc.y, { continued: true });
+      doc.font('Helvetica-Bold').text('THAT, ', { continued: true });
+      doc.font('Helvetica').text('I am an adult of sound mind and hence competent to swear this statutory declaration.', { continued: false });
+
+      doc.moveDown(0.5);
+      doc.text('2. ', 50, doc.y, { continued: true });
+      doc.font('Helvetica-Bold').text('THAT, ', { continued: true });
+      doc.font('Helvetica').text('I do solemnly and sincerely declare that the particulars contained herein are true to the best of my knowledge.', { continued: false });
+
+      doc.moveDown(0.5);
+      doc.text('3. ', 50, doc.y, { continued: true });
+      doc.font('Helvetica-Bold').text('THAT, ', { continued: true });
+      doc.font('Helvetica').text('I declare that the collateral herein is mine and the borrower is liable whatsoever for any undertaking contrary to the agreement.', { continued: false });
+
+      doc.moveDown(0.5);
+      doc.text('4. ', 50, doc.y, { continued: true });
+      doc.font('Helvetica-Bold').text('THAT, ', { continued: true });
+      doc.font('Helvetica').text('I make this declaration conscientiously believing the same to be true and in accordance with the Oaths and Statutory Declarations Act, (Chapter 15 of the Laws of Kenya)', { continued: false });
+
+      doc.moveDown(2);
+      doc.font('Helvetica-Bold').text('DECLARED AT NAIROBI by the said', 50, doc.y);
+      doc.moveDown(0.5);
+      doc.font('Helvetica').text('……………………………………………………………………………………….');
       doc.text('……………………………………………………………………………………….');
-      doc.moveDown();
-      doc.text('……………………………………………………………………………………….');
-      doc.moveDown(1.5);
-      doc.text(`This day of ………………${formatDate(issueDate)}………………….`);
-      doc.moveDown(3);
+      doc.moveDown(1);
+      doc.text(`This day of……………${formatDateShort(issueDate)}…………………….`);
 
-      doc.text('BEFORE ME:                             ) ……………………………');
-      doc.moveDown(1.5);
-      doc.text('COMMISSIONER OF OATHS        )');
-      doc.moveDown(3);
+      doc.moveDown(2);
+      doc.text('BEFORE ME:                             ', 50, doc.y, { continued: true });
+      doc.text('( ___________ )');
+      doc.moveDown(2);
+      doc.text('COMMISSIONER OF OATHS        )', 50, doc.y);
+
+      // Add two stamp placeholders on page 5
+      addStampPlaceholder(doc.page.width - 220, 200, 'AWUOR CATE SHEILA\nADVOCATE\nEmail katesheila23@gmail.com');
+      addStampPlaceholder(doc.page.width - 220, 350, 'AWUOR CATE SHEILA\nADVOCATE\nEmail katesheila23@gmail.com');
+
+      // Page footer
+      addPageFooter(5);
 
       // Finalize PDF
       doc.end();
 
       writeStream.on('finish', () => {
         console.log(`Loan agreement PDF generated: ${filename}`);
+        console.log(`Loan agreement PDF generated at ${filepath} for loan #${loan.id}`);
         resolve({ filepath, filename });
       });
 
@@ -402,22 +489,22 @@ const sendLoanAgreementEmail = async (loan, borrower, pdfPath) => {
       <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #FFD700; padding: 20px; text-align: center; }
+        .header { background-color: #4A90A4; padding: 20px; text-align: center; color: white; }
         .content { padding: 20px; background-color: #f9f9f9; }
-        .amount { font-size: 24px; color: #F57F17; font-weight: bold; }
+        .amount { font-size: 24px; color: #4A90A4; font-weight: bold; }
         .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
         .button { background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin: 10px 0; }
-        .important { background-color: #FFF3CD; padding: 15px; border-left: 4px solid: #FFC107; margin: 15px 0; }
+        .important { background-color: #FFF3CD; padding: 15px; border-left: 4px solid #FFC107; margin: 15px 0; }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          <h1>🏦 Core Q Capital</h1>
+          <h1>Core Q Capital</h1>
           <p>A Partner You Can Trust</p>
         </div>
         <div class="content">
-          <h2>Loan Agreement - Action Required</h2>
+          <h2>Loan Agreement Generated</h2>
           <p>Dear ${borrower.fullName},</p>
 
           <p>Your loan has been successfully processed! Please find your loan agreement attached to this email.</p>
@@ -432,24 +519,6 @@ const sendLoanAgreementEmail = async (loan, borrower, pdfPath) => {
               <li><strong>Loan Period:</strong> ${loan.loanPeriod} week(s)</li>
               <li><strong>Due Date:</strong> ${dueDate}</li>
             </ul>
-          </div>
-
-          <h3>⚠️ Important - Next Steps:</h3>
-          <ol>
-            <li><strong>Review the attached loan agreement carefully</strong></li>
-            <li><strong>Print and sign the agreement</strong> on the designated signature lines</li>
-            <li><strong>Scan or take a clear photo</strong> of the signed agreement</li>
-            <li><strong>Send the signed copy back to us via:</strong>
-              <ul>
-                <li>Email: admin@coreqcapital.com</li>
-                <li>WhatsApp: [PHONE NUMBER]</li>
-                <li>Visit our office</li>
-              </ul>
-            </li>
-          </ol>
-
-          <div class="important">
-            <strong>Note:</strong> Your loan is subject to our approval of the signed agreement. Please ensure all signature fields are completed.
           </div>
 
           <h3>Payment Details:</h3>
@@ -479,10 +548,6 @@ const sendLoanAgreementEmail = async (loan, borrower, pdfPath) => {
   `;
 
   try {
-    // In a real implementation, you would attach the PDF file
-    // For now, we'll send the email without attachment
-    // You can use nodemailer's attachment feature: attachments: [{ path: pdfPath }]
-
     const result = await sendEmail(borrower.email, emailSubject, emailHTML);
     console.log(`Loan agreement email sent to ${borrower.email}`);
     return result;
