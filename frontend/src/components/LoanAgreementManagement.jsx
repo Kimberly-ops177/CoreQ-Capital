@@ -29,7 +29,7 @@ import {
   TextField,
   IconButton
 } from '@mui/material';
-import { Upload, CheckCircle, Cancel, Download, Visibility } from '@mui/icons-material';
+import { CheckCircle, Cancel, Download } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -43,14 +43,9 @@ const LoanAgreementManagement = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // Upload dialog state
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [selectedLoan, setSelectedLoan] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
-
   // Reject dialog state
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [selectedLoan, setSelectedLoan] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
 
   useEffect(() => {
@@ -79,8 +74,6 @@ const LoanAgreementManagement = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending_upload':
-        return 'warning';
       case 'pending_approval':
         return 'info';
       case 'approved':
@@ -94,8 +87,6 @@ const LoanAgreementManagement = () => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'pending_upload':
-        return '🟠';
       case 'pending_approval':
         return '🔵';
       case 'approved':
@@ -108,68 +99,10 @@ const LoanAgreementManagement = () => {
   };
 
   const formatStatus = (status) => {
-    if (!status || status === 'pending_upload') return 'Pending Upload';
-    if (status === 'pending_approval') return 'Pending Approval';
+    if (!status || status === 'pending_approval') return 'Pending Approval';
     if (status === 'approved') return 'Approved';
     if (status === 'rejected') return 'Rejected';
     return status;
-  };
-
-  // Upload handlers
-  const handleUploadClick = (loan) => {
-    setSelectedLoan(loan);
-    setSelectedFile(null);
-    setUploadDialogOpen(true);
-  };
-
-  const handleFileSelect = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      // Validate file type
-      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-      if (!allowedTypes.includes(file.type)) {
-        setError('Only PDF, JPG, and PNG files are allowed');
-        return;
-      }
-      // Validate file size (10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        setError('File size must be less than 10MB');
-        return;
-      }
-      setSelectedFile(file);
-      setError(null);
-    }
-  };
-
-  const handleUploadSubmit = async () => {
-    if (!selectedFile) {
-      setError('Please select a file to upload');
-      return;
-    }
-
-    try {
-      setUploading(true);
-      setError(null);
-
-      const formData = new FormData();
-      formData.append('signedAgreement', selectedFile);
-
-      await axios.post(`/api/loan-agreements/${selectedLoan.id}/upload`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-
-      setSuccess('Agreement uploaded successfully! Waiting for admin approval.');
-      setUploadDialogOpen(false);
-      setSelectedFile(null);
-      fetchLoans();
-    } catch (err) {
-      console.error('Error uploading agreement:', err);
-      setError(err.response?.data?.error || 'Failed to upload agreement');
-    } finally {
-      setUploading(false);
-    }
   };
 
   // Approve handler
@@ -278,7 +211,7 @@ const LoanAgreementManagement = () => {
         </Typography>
 
         <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
-          Manage signed loan agreements with upload, approval, and download functionality.
+          Manage loan agreements with approval and download functionality. Agreements are automatically generated when loans are created.
         </Typography>
 
         {error && (
@@ -299,7 +232,6 @@ const LoanAgreementManagement = () => {
               <InputLabel>Filter by Status</InputLabel>
               <Select value={filter} label="Filter by Status" onChange={(e) => setFilter(e.target.value)}>
                 <MenuItem value="all">All Loans</MenuItem>
-                <MenuItem value="pending_upload">🟠 Pending Upload</MenuItem>
                 <MenuItem value="pending_approval">🔵 Pending Approval</MenuItem>
                 <MenuItem value="approved">🟢 Approved</MenuItem>
                 <MenuItem value="rejected">🔴 Rejected</MenuItem>
@@ -331,15 +263,14 @@ const LoanAgreementManagement = () => {
                   </TableRow>
                 ) : (
                   loans.map((loan) => {
-                    const status = loan.agreementStatus || 'pending_upload';
-                    const canUpload = status === 'pending_upload' || status === 'rejected';
+                    const status = loan.agreementStatus || 'pending_approval';
                     const canApprove = user.role === 'admin' && status === 'pending_approval';
                     const canReject = user.role === 'admin' && status === 'pending_approval';
-                    const canDownload = status === 'approved' || (user.role === 'admin' && (status === 'pending_approval' || status === 'rejected'));
+                    const canDownload = true; // Anyone can download system-generated agreements
 
                     return (
                       <TableRow key={loan.id}>
-                        <TableCell>#{loan.id}</TableCell>
+                        <TableCell>{loan.loanId || `#${loan.id}`}</TableCell>
                         <TableCell>{loan.borrower?.fullName || 'N/A'}</TableCell>
                         <TableCell>KSH {parseFloat(loan.totalAmount || 0).toLocaleString()}</TableCell>
                         <TableCell>
@@ -356,18 +287,6 @@ const LoanAgreementManagement = () => {
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                            {canUpload && (
-                              <Button
-                                size="small"
-                                variant="contained"
-                                color="primary"
-                                startIcon={<Upload />}
-                                onClick={() => handleUploadClick(loan)}
-                              >
-                                Upload
-                              </Button>
-                            )}
-
                             {canApprove && (
                               <Button
                                 size="small"
@@ -413,58 +332,6 @@ const LoanAgreementManagement = () => {
           </TableContainer>
         )}
       </Container>
-
-      {/* Upload Dialog */}
-      <Dialog open={uploadDialogOpen} onClose={() => !uploading && setUploadDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Upload Signed Agreement</DialogTitle>
-        <DialogContent>
-          {selectedLoan && (
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="body2" color="textSecondary">
-                <strong>Loan ID:</strong> #{selectedLoan.id}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                <strong>Borrower:</strong> {selectedLoan.borrower?.fullName || 'N/A'}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                <strong>Amount:</strong> KSH {parseFloat(selectedLoan.totalAmount || 0).toLocaleString()}
-              </Typography>
-            </Box>
-          )}
-
-          <Box sx={{ mt: 3 }}>
-            <input
-              accept=".pdf,.jpg,.jpeg,.png"
-              style={{ display: 'none' }}
-              id="agreement-upload-file"
-              type="file"
-              onChange={handleFileSelect}
-              disabled={uploading}
-            />
-            <label htmlFor="agreement-upload-file">
-              <Button variant="outlined" component="span" fullWidth disabled={uploading}>
-                {selectedFile ? selectedFile.name : 'Choose File'}
-              </Button>
-            </label>
-            <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 1 }}>
-              Accepted formats: PDF, JPG, PNG (Max 10MB)
-            </Typography>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setUploadDialogOpen(false)} disabled={uploading}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleUploadSubmit}
-            variant="contained"
-            disabled={!selectedFile || uploading}
-            startIcon={uploading ? <CircularProgress size={20} /> : <Upload />}
-          >
-            {uploading ? 'Uploading...' : 'Upload'}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Reject Dialog */}
       <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)} maxWidth="sm" fullWidth>
