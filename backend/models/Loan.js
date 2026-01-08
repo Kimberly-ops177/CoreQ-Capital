@@ -7,6 +7,11 @@ const Loan = sequelize.define('Loan', {
     primaryKey: true,
     autoIncrement: true
   },
+  loanId: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    unique: true
+  },
   borrowerId: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -113,7 +118,7 @@ const Loan = sequelize.define('Loan', {
   },
   agreementStatus: {
     type: DataTypes.ENUM('pending_upload', 'pending_approval', 'approved', 'rejected'),
-    defaultValue: 'pending_upload'
+    defaultValue: 'pending_approval'
   },
   agreementApprovedAt: {
     type: DataTypes.DATE,

@@ -1,6 +1,9 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
+// Predefined expense categories as requested
+const EXPENSE_CATEGORIES = ['Rent', 'Salary', 'Printing', 'Others'];
+
 const Expense = sequelize.define('Expense', {
   id: {
     type: DataTypes.INTEGER,
@@ -8,7 +11,7 @@ const Expense = sequelize.define('Expense', {
     autoIncrement: true
   },
   category: {
-    type: DataTypes.STRING,
+    type: DataTypes.ENUM(...EXPENSE_CATEGORIES),
     allowNull: false
   },
   name: {
@@ -51,5 +54,8 @@ const Expense = sequelize.define('Expense', {
   tableName: 'expenses',
   timestamps: false
 });
+
+// Export categories for use in other files
+Expense.CATEGORIES = EXPENSE_CATEGORIES;
 
 module.exports = Expense;

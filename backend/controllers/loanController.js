@@ -6,6 +6,38 @@ const { Op } = require('sequelize');
 const { generateLoanAgreementPDF, sendLoanAgreementEmail } = require('../services/loanAgreementService');
 const { getPaginationParams, formatPaginatedResponse } = require('../utils/pagination');
 
+/**
+ * Generate unique loan ID in format: CQC-YYYY-NNNN
+ * Example: CQC-2026-0001
+ */
+const generateUniqueLoanId = async () => {
+  const currentYear = new Date().getFullYear();
+  const prefix = `CQC-${currentYear}-`;
+
+  // Get the count of loans created this year
+  const startOfYear = new Date(currentYear, 0, 1);
+  const count = await Loan.count({
+    where: {
+      dateIssued: {
+        [Op.gte]: startOfYear
+      }
+    }
+  });
+
+  // Generate sequential number (padded to 4 digits)
+  const sequentialNumber = String(count + 1).padStart(4, '0');
+  const loanId = `${prefix}${sequentialNumber}`;
+
+  // Check if this ID already exists (unlikely but safer)
+  const existing = await Loan.findOne({ where: { loanId } });
+  if (existing) {
+    // If exists, use timestamp for uniqueness
+    return `${prefix}${sequentialNumber}-${Date.now()}`;
+  }
+
+  return loanId;
+};
+
 // STRICT INTEREST STRUCTURE FROM INSTRUCTIONS (Section 2.3)
 const STANDARD_INTEREST_RATES = {
   1: 20,  // 1 Week: 20%
@@ -149,8 +181,12 @@ const createLoan = async (req, res) => {
     const gracePeriodEnd = new Date(dueDate);
     gracePeriodEnd.setDate(gracePeriodEnd.getDate() + gracePeriodDays);
 
+    // Generate unique loan ID
+    const uniqueLoanId = await generateUniqueLoanId();
+
     // Create the loan
     const loan = await Loan.create({
+      loanId: uniqueLoanId,
       borrowerId,
       collateralId,
       amountIssued: parseFloat(amountIssued),
@@ -223,9 +259,6 @@ const getLoans = async (req, res) => {
     const { page, limit, offset } = getPaginationParams(req.query);
 
     const whereClause = {};
-
-    // Only show loans with approved agreements
-    whereClause.agreementStatus = 'approved';
 
     if (borrowerId) {
       whereClause.borrowerId = borrowerId;
@@ -553,6 +586,83 @@ const getInterestRates = (req, res) => {
   });
 };
 
+/**
+ * Update interest rate for loans above 50,000
+ * ADMIN ONLY - for loans that meet the negotiable threshold
+ */
+const updateInterestRate = async (req, res) => {
+  try {
+    // Only admin can update interest rates
+    if (req.user.role !== 'admin') {
+      return res.status(403).send({
+        error: 'Access denied',
+        message: 'Only administrators can update interest rates'
+      });
+    }
+
+    const { id } = req.params;
+    const { interestRate } = req.body;
+
+    // Validate interest rate is provided
+    if (!interestRate || interestRate <= 0 || interestRate > 100) {
+      return res.status(400).send({
+        error: 'Invalid interest rate',
+        message: 'Interest rate must be between 0 and 100'
+      });
+    }
+
+    const loan = await Loan.findByPk(id, {
+      include: [
+        { model: Borrower, as: 'borrower' },
+        { model: Collateral, as: 'collateral' }
+      ]
+    });
+
+    if (!loan) {
+      return res.status(404).send({ error: 'Loan not found' });
+    }
+
+    // Check if loan amount is above negotiable threshold
+    if (parseFloat(loan.amountIssued) <= NEGOTIABLE_THRESHOLD) {
+      return res.status(400).send({
+        error: 'Loan not eligible for interest rate changes',
+        message: `Only loans above ${NEGOTIABLE_THRESHOLD.toLocaleString()} KSH can have custom interest rates`
+      });
+    }
+
+    // Mark as negotiable and update interest rate
+    const newInterestRate = parseFloat(interestRate);
+    const newInterestAmount = parseFloat(loan.amountIssued) * (newInterestRate / 100);
+    const newTotalAmount = parseFloat(loan.amountIssued) + newInterestAmount;
+
+    await loan.update({
+      interestRate: newInterestRate,
+      totalAmount: newTotalAmount,
+      isNegotiable: true
+    });
+
+    // Reload with associations
+    await loan.reload();
+
+    res.send({
+      success: true,
+      message: 'Interest rate updated successfully',
+      loan: loan,
+      calculation: {
+        principal: parseFloat(loan.amountIssued),
+        oldInterestRate: parseFloat(req.body.oldInterestRate || 0),
+        newInterestRate: newInterestRate,
+        interestAmount: newInterestAmount.toFixed(2),
+        totalAmount: newTotalAmount.toFixed(2)
+      }
+    });
+
+  } catch (e) {
+    console.error('Error updating interest rate:', e);
+    res.status(500).send({ error: e.message });
+  }
+};
+
 module.exports = {
   createLoan,
   getLoans,
@@ -561,5 +671,6 @@ module.exports = {
   deleteLoan,
   makePayment,
   closeLoan,
-  getInterestRates
+  getInterestRates,
+  updateInterestRate
 };

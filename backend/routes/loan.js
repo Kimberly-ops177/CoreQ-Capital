@@ -1,5 +1,5 @@
 const express = require('express');
-const { createLoan, getLoans, getLoan, updateLoan, deleteLoan, makePayment, closeLoan, getInterestRates } = require('../controllers/loanController');
+const { createLoan, getLoans, getLoan, updateLoan, deleteLoan, makePayment, closeLoan, getInterestRates, updateInterestRate } = require('../controllers/loanController');
 const { auth, employeeOrAdmin, adminOnly } = require('../middleware/auth');
 
 const router = express.Router();
@@ -13,6 +13,9 @@ router.get('/', auth, employeeOrAdmin, getLoans);
 router.get('/:id', auth, employeeOrAdmin, getLoan);
 router.patch('/:id', auth, adminOnly, updateLoan);
 router.delete('/:id', auth, adminOnly, deleteLoan);
+
+// Update interest rate (admin only, loans above 50k)
+router.patch('/:id/interest-rate', auth, adminOnly, updateInterestRate);
 
 // Payment
 router.post('/:id/payment', auth, employeeOrAdmin, makePayment);

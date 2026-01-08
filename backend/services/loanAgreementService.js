@@ -43,6 +43,10 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
 
       // ===== PAGE 1: COVER PAGE =====
 
+      // Loan ID at top left
+      doc.fontSize(24).font('Helvetica-Bold')
+        .text(loan.loanId || 'N/A', 50, 50, { align: 'left' });
+
       // Top right: Borrower Photo Placeholder Box
       const photoBoxX = doc.page.width - 150;
       const photoBoxY = 60;
@@ -58,7 +62,7 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
 
       // Header - Company Branding
       doc.fontSize(10).font('Helvetica')
-        .text('A PARTNER YOU CAN TRUST', 50, 50, { align: 'left' });
+        .text('A PARTNER YOU CAN TRUST', 50, 90, { align: 'left' });
 
       doc.moveDown(0.5);
       doc.fontSize(18).font('Helvetica-Bold')
@@ -269,11 +273,22 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
       doc.text('DIRECTORS:');
       doc.moveDown();
       doc.text('MUKONZO EVANS       ) ……………………………………');
+      doc.moveDown(0.5);
       doc.text('FIDELIS SIMATI      ) ……………………………………');
       doc.moveDown(2);
 
       doc.text('In the presence of');
-      doc.text('ADVOCATE: ……………………………………');
+      doc.moveDown(0.5);
+      doc.text('ADVOCATE');
+      doc.moveDown(0.5);
+      doc.text(`I CERTIFY that Simati and Mukonzo appeared before me on ${formatDate(issueDate)} and being`);
+      doc.text(`identified by ${borrower.fullName.toUpperCase()} being known to me acknowledged`);
+      doc.text('the above signature or mark to be theirs and they had freely and voluntarily executed this Agreement');
+      doc.text('and understood its contents');
+      doc.moveDown(1);
+      doc.text('Signed ……………………………………');
+      doc.moveDown(0.5);
+      doc.text('        ADVOCATE');
       doc.moveDown(3);
 
       doc.text(`Signed by the said ${borrower.fullName.toUpperCase()}`);
@@ -283,17 +298,64 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
 
       doc.text('In the presence of');
       doc.moveDown();
-      doc.text('Name: ……………………………………');
+      doc.text('Name: Fidelis Simati');
+      doc.moveDown(0.5);
       doc.text('Sign: ……………………………………');
       doc.moveDown(3);
 
       // Footer
-      doc.fontSize(10).text('DRAWN BY');
-      doc.moveDown();
+      doc.fontSize(10).font('Helvetica-Bold').text('DRAWN BY');
+      doc.fontSize(11).font('Helvetica').moveDown(0.5);
       doc.text('ORIRI & ASSOCIATE LAW ADVOCATES');
       doc.text('P.O.BOX 37367-00100');
       doc.text('NAIROBI');
       doc.text('Email: katesheila23@gmail.com');
+
+      doc.addPage();
+
+      // ===== PAGE 5: STATUTORY DECLARATION =====
+      // Page header with logo placeholder
+      doc.fontSize(14).font('Helvetica-Bold')
+        .text('CORE Q CAPITAL', 50, 50, { align: 'center' });
+      doc.fontSize(10).font('Helvetica')
+        .text('A PARTNER YOU CAN TRUST', { align: 'center' });
+      doc.moveDown(2);
+
+      doc.fontSize(12).font('Helvetica-Bold')
+        .text('STATUTORY DECLARATION', { align: 'center' });
+      doc.moveDown(3);
+
+      doc.fontSize(11).font('Helvetica');
+      doc.text(`I... ${borrower.fullName.toUpperCase()}... Of ID Number... ${borrower.idNumber}...,`);
+      doc.moveDown();
+      doc.text('In the Republic of Kenya, MAKE OATH and declare as follows:');
+      doc.moveDown(1.5);
+
+      doc.text('1. THAT, I am an adult of sound mind and hence competent to swear this statutory declaration.');
+      doc.moveDown();
+      doc.text('2. THAT, I do solemnly and sincerely declare that the particulars contained herein are true to the');
+      doc.text('   best of my knowledge.');
+      doc.moveDown();
+      doc.text('3. THAT, I declare that the collateral herein is mine and the borrower is liable whatsoever for');
+      doc.text('   any undertaking contrary to the agreement.');
+      doc.moveDown();
+      doc.text('4. THAT, I make this declaration conscientiously believing the same to be true and in');
+      doc.text('   accordance with the Oaths and Statutory Declarations Act, (Chapter 15 of the Laws of Kenya)');
+      doc.moveDown(3);
+
+      doc.text('DECLARED AT NAIROBI by the said');
+      doc.moveDown();
+      doc.text('……………………………………………………………………………………….');
+      doc.moveDown();
+      doc.text('……………………………………………………………………………………….');
+      doc.moveDown(1.5);
+      doc.text(`This day of ………………${formatDate(issueDate)}………………….`);
+      doc.moveDown(3);
+
+      doc.text('BEFORE ME:                             ) ……………………………');
+      doc.moveDown(1.5);
+      doc.text('COMMISSIONER OF OATHS        )');
+      doc.moveDown(3);
 
       // Finalize PDF
       doc.end();
@@ -332,7 +394,7 @@ const sendLoanAgreementEmail = async (loan, borrower, pdfPath) => {
     day: 'numeric'
   });
 
-  const emailSubject = `Your Loan Agreement - Core Q Capital (Loan #${loan.id})`;
+  const emailSubject = `Your Loan Agreement - Core Q Capital (${loan.loanId || `Loan #${loan.id}`})`;
   const emailHTML = `
     <!DOCTYPE html>
     <html>
@@ -363,6 +425,7 @@ const sendLoanAgreementEmail = async (loan, borrower, pdfPath) => {
           <div class="important">
             <h3>Loan Details:</h3>
             <ul>
+              <li><strong>Loan ID:</strong> ${loan.loanId || `#${loan.id}`}</li>
               <li><strong>Loan Amount:</strong> KSH ${parseFloat(loan.amountIssued).toLocaleString()}</li>
               <li><strong>Interest Rate:</strong> ${loan.interestRate}%</li>
               <li><strong>Total Amount Due:</strong> <span class="amount">KSH ${totalAmount.toLocaleString()}</span></li>

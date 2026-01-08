@@ -82,6 +82,24 @@ const getLoansIssuedReport = async (req, res) => {
  */
 const getLoanStatusReport = async (req, res) => {
   try {
+    const { startDate, endDate } = req.query;
+    const whereClause = {};
+
+    // Filter by date range if provided
+    if (startDate && endDate) {
+      whereClause.dateIssued = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    } else if (startDate) {
+      whereClause.dateIssued = {
+        [Op.gte]: new Date(startDate)
+      };
+    } else if (endDate) {
+      whereClause.dateIssued = {
+        [Op.lte]: new Date(endDate)
+      };
+    }
+
     // Build include with location filter for employees
     const includeOptions = [
       { model: Collateral, as: 'collateral' }
@@ -105,6 +123,7 @@ const getLoanStatusReport = async (req, res) => {
     }
 
     const loans = await Loan.findAll({
+      where: whereClause,
       include: includeOptions,
       order: [['status', 'ASC'], ['dueDate', 'ASC']]
     });
@@ -128,6 +147,7 @@ const getLoanStatusReport = async (req, res) => {
 
     res.send({
       report: 'Loan Status Report',
+      period: startDate && endDate ? `${startDate} to ${endDate}` : 'All time',
       summary,
       loans: report
     });
@@ -143,7 +163,23 @@ const getLoanStatusReport = async (req, res) => {
  */
 const getDefaultersReport = async (req, res) => {
   try {
+    const { startDate, endDate } = req.query;
     const whereClause = { status: 'defaulted' };
+
+    // Filter by date range if provided
+    if (startDate && endDate) {
+      whereClause.dateIssued = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    } else if (startDate) {
+      whereClause.dateIssued = {
+        [Op.gte]: new Date(startDate)
+      };
+    } else if (endDate) {
+      whereClause.dateIssued = {
+        [Op.lte]: new Date(endDate)
+      };
+    }
 
     // Build include with location filter for employees
     const includeOptions = [
@@ -207,6 +243,7 @@ const getDefaultersReport = async (req, res) => {
 
     res.send({
       report: 'Defaulters Report',
+      period: startDate && endDate ? `${startDate} to ${endDate}` : 'All time',
       totalDefaulters: defaulters.length,
       totalOutstandingBalance: totalOutstanding,
       defaulters
@@ -223,7 +260,7 @@ const getDefaultersReport = async (req, res) => {
  */
 const getDefaultedItemsReport = async (req, res) => {
   try {
-    const { branchId } = req.query;
+    const { startDate, endDate, branchId } = req.query;
     const whereClause = {};
 
     // Filter by branch if user is not admin
@@ -233,10 +270,27 @@ const getDefaultedItemsReport = async (req, res) => {
       whereClause.branchId = branchId;
     }
 
+    // Date range filter for seized date
+    const dateFilter = {};
+    if (startDate && endDate) {
+      dateFilter.createdAt = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    } else if (startDate) {
+      dateFilter.createdAt = {
+        [Op.gte]: new Date(startDate)
+      };
+    } else if (endDate) {
+      dateFilter.createdAt = {
+        [Op.lte]: new Date(endDate)
+      };
+    }
+
     // Defaulted Items (Unsold) - Items that are seized but not yet sold
     const unsoldItems = await Collateral.findAll({
       where: {
         ...whereClause,
+        ...dateFilter,
         isSeized: true,
         isSold: false
       },
@@ -245,9 +299,25 @@ const getDefaultedItemsReport = async (req, res) => {
     });
 
     // Defaulted Items (Sold) - Items that have been sold
+    const soldDateFilter = {};
+    if (startDate && endDate) {
+      soldDateFilter.soldDate = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    } else if (startDate) {
+      soldDateFilter.soldDate = {
+        [Op.gte]: new Date(startDate)
+      };
+    } else if (endDate) {
+      soldDateFilter.soldDate = {
+        [Op.lte]: new Date(endDate)
+      };
+    }
+
     const soldItems = await Collateral.findAll({
       where: {
         ...whereClause,
+        ...(Object.keys(soldDateFilter).length > 0 ? soldDateFilter : {}),
         isSold: true
       },
       include: [{ model: Borrower, as: 'borrower' }],
@@ -258,6 +328,7 @@ const getDefaultedItemsReport = async (req, res) => {
 
     res.send({
       report: 'Defaulted Items Report',
+      period: startDate && endDate ? `${startDate} to ${endDate}` : 'All time',
       unsold: {
         count: unsoldItems.length,
         items: unsoldItems
@@ -280,10 +351,25 @@ const getDefaultedItemsReport = async (req, res) => {
  */
 const getBalancesReport = async (req, res) => {
   try {
-    const { branchId } = req.query;
+    const { startDate, endDate, branchId } = req.query;
     const whereClause = {
       status: { [Op.ne]: 'paid' }
     };
+
+    // Filter by date range if provided
+    if (startDate && endDate) {
+      whereClause.dateIssued = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    } else if (startDate) {
+      whereClause.dateIssued = {
+        [Op.gte]: new Date(startDate)
+      };
+    } else if (endDate) {
+      whereClause.dateIssued = {
+        [Op.lte]: new Date(endDate)
+      };
+    }
 
     // Filter by branch if user is not admin
     if (req.user.role !== 'admin') {
@@ -323,6 +409,7 @@ const getBalancesReport = async (req, res) => {
 
     res.send({
       report: 'Balances Report',
+      period: startDate && endDate ? `${startDate} to ${endDate}` : 'All time',
       summary: {
         totalOutstandingLoans: outstandingLoans.length,
         totalPrincipalIssued: totalPrincipal,
@@ -353,9 +440,25 @@ const getBalancesReport = async (req, res) => {
  */
 const getNotYetPaidReport = async (req, res) => {
   try {
+    const { startDate, endDate } = req.query;
     const whereClause = {
       status: { [Op.in]: ['active', 'due', 'pastDue'] }
     };
+
+    // Filter by date range if provided
+    if (startDate && endDate) {
+      whereClause.dateIssued = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    } else if (startDate) {
+      whereClause.dateIssued = {
+        [Op.gte]: new Date(startDate)
+      };
+    } else if (endDate) {
+      whereClause.dateIssued = {
+        [Op.lte]: new Date(endDate)
+      };
+    }
 
     // Build include with location filter for employees
     const includeOptions = [
@@ -401,6 +504,7 @@ const getNotYetPaidReport = async (req, res) => {
 
     res.send({
       report: 'Not Yet Paid Loans Report',
+      period: startDate && endDate ? `${startDate} to ${endDate}` : 'All time',
       totalLoans: loansWithBalances.length,
       totalOutstandingBalance: totalBalance,
       loans: loansWithBalances

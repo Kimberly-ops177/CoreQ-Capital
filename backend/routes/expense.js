@@ -1,5 +1,5 @@
 const express = require('express');
-const { createExpense, getExpenses, getExpense, updateExpense, deleteExpense } = require('../controllers/expenseController');
+const { getExpenseCategories, createExpense, getExpenses, getExpense, updateExpense, deleteExpense } = require('../controllers/expenseController');
 const { auth, adminOnly } = require('../middleware/auth');
 
 const router = express.Router();
@@ -11,6 +11,9 @@ const canAddExpense = (req, res, next) => {
     res.status(403).send({ error: 'Access denied.' });
   }
 };
+
+// Get expense categories (available to all authenticated users)
+router.get('/categories', auth, getExpenseCategories);
 
 router.post('/', auth, canAddExpense, createExpense);
 router.get('/', auth, adminOnly, getExpenses);

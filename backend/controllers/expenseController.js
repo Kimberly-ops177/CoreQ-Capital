@@ -8,6 +8,15 @@ const { getPaginationParams, formatPaginatedResponse } = require('../utils/pagin
  */
 
 /**
+ * Get expense categories
+ */
+const getExpenseCategories = (req, res) => {
+  res.send({
+    categories: Expense.CATEGORIES
+  });
+};
+
+/**
  * Create a new expense
  * Required fields per instructions: category, name, date, amount
  */
@@ -20,6 +29,14 @@ const createExpense = async (req, res) => {
       return res.status(400).send({
         error: 'Missing required fields',
         required: ['category', 'name', 'amount']
+      });
+    }
+
+    // Validate category is one of the predefined categories
+    if (!Expense.CATEGORIES.includes(category)) {
+      return res.status(400).send({
+        error: 'Invalid category',
+        message: `Category must be one of: ${Expense.CATEGORIES.join(', ')}`
       });
     }
 
@@ -158,6 +175,7 @@ const deleteExpense = async (req, res) => {
 };
 
 module.exports = {
+  getExpenseCategories,
   createExpense,
   getExpenses,
   getExpense,

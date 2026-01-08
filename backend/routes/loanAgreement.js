@@ -6,6 +6,7 @@ const { auth, adminOnly } = require('../middleware/auth');
 const Loan = require('../models/Loan');
 const Borrower = require('../models/Borrower');
 const Collateral = require('../models/Collateral');
+const { sendCustomSMS } = require('../services/smsService');
 
 const router = express.Router();
 
@@ -117,14 +118,14 @@ router.post('/:loanId/approve', auth, adminOnly, async (req, res) => {
     const { loanId } = req.params;
     const { notes } = req.body;
 
-    const loan = await Loan.findByPk(loanId);
+    const loan = await Loan.findByPk(loanId, {
+      include: [
+        { model: Borrower, as: 'borrower' }
+      ]
+    });
 
     if (!loan) {
       return res.status(404).send({ error: 'Loan not found' });
-    }
-
-    if (!loan.signedAgreementPath) {
-      return res.status(400).send({ error: 'No signed agreement uploaded for this loan' });
     }
 
     // Approve the agreement
@@ -135,9 +136,33 @@ router.post('/:loanId/approve', auth, adminOnly, async (req, res) => {
       agreementNotes: notes || null
     });
 
+    // Send SMS notifications to the client
+    if (loan.borrower && loan.borrower.phoneNumber) {
+      try {
+        const dueDate = new Date(loan.dueDate).toLocaleDateString('en-KE', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        });
+
+        // First SMS: Loan approval notification
+        const approvalMessage = `Your loan of KSH ${parseFloat(loan.amountIssued).toLocaleString()} has been approved! Due date: ${dueDate}. Total repayment: KSH ${parseFloat(loan.totalAmount).toLocaleString()}.`;
+        await sendCustomSMS(loan.borrower.phoneNumber, loan.borrower.fullName, approvalMessage);
+
+        // Second SMS: Payment instructions
+        const paymentMessage = `Payment Details - Paybill: 522533, Account: 7862638. Please pay on or before ${dueDate}. Thank you for choosing Core Q Capital.`;
+        await sendCustomSMS(loan.borrower.phoneNumber, loan.borrower.fullName, paymentMessage);
+
+        console.log(`SMS notifications sent to ${loan.borrower.fullName} for loan ${loanId}`);
+      } catch (smsError) {
+        console.error('Error sending SMS notifications:', smsError);
+        // Don't fail the approval if SMS fails
+      }
+    }
+
     res.send({
       success: true,
-      message: 'Loan agreement approved successfully',
+      message: 'Loan agreement approved successfully. SMS notifications sent to client.',
       loan: {
         id: loan.id,
         agreementStatus: loan.agreementStatus,
