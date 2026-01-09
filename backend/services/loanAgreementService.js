@@ -71,63 +71,61 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
       // ===== PAGE 1: COVER PAGE =====
 
       // Loan ID at top left (large, bold number)
-      doc.fontSize(28).font('Helvetica-Bold')
+      doc.fontSize(32).font('Helvetica-Bold')
         .fillColor('#000000')
-        .text(loan.loanId || loan.id.toString(), 50, 50, { align: 'left' });
+        .text(loan.loanId || loan.id.toString(), 50, 70, { align: 'left' });
 
-      // Logo and company name (centered)
-      doc.moveDown(2);
+      // Center everything else
       const centerX = doc.page.width / 2;
-      doc.fontSize(24).font('Helvetica-Bold')
-        .text('CQ', centerX - 50, 120, { width: 100, align: 'center', continued: true })
-        .text(' CORE Q CAPITAL');
+
+      // CQ logo (centered, large)
+      doc.fontSize(48).font('Helvetica-Bold')
+        .text('CQ', 0, 160, { width: doc.page.width, align: 'center' });
 
       doc.fontSize(10).font('Helvetica')
-        .text('A PARTNER YOU CAN TRUST', centerX - 100, 150, { width: 200, align: 'center' });
+        .text('A PARTNER YOU CAN TRUST', 0, 215, { width: doc.page.width, align: 'center' });
 
-      doc.moveDown(3);
+      // CORE Q CAPITAL stacked vertically
+      doc.fontSize(32).font('Helvetica-Bold')
+        .text('CORE Q', 0, 235, { width: doc.page.width, align: 'center' });
+      doc.fontSize(32).font('Helvetica-Bold')
+        .text('CAPITAL', 0, 270, { width: doc.page.width, align: 'center' });
 
-      // LOAN AGREEMENT title
+      // LOAN AGREEMENT with underline
       doc.fontSize(14).font('Helvetica-Bold')
-        .text('LOAN AGREEMENT', { align: 'center', underline: true });
+        .text('LOAN AGREEMENT', 0, 320, { width: doc.page.width, align: 'center', underline: true });
 
-      doc.moveDown(1);
-      doc.moveTo(100, doc.y).lineTo(doc.page.width - 100, doc.y).stroke();
-      doc.moveDown(2);
+      // Horizontal line
+      doc.moveTo(100, 355).lineTo(doc.page.width - 100, 355).stroke();
 
       // Between section
-      doc.fontSize(12).font('Helvetica').text('Between', { align: 'center' });
+      doc.fontSize(12).font('Helvetica').text('Between', 0, 375, { width: doc.page.width, align: 'center' });
       doc.fontSize(14).font('Helvetica-Bold')
-        .text('CORE Q CAPITAL ENTERPRISES', { align: 'center' });
-      doc.fontSize(12).font('Helvetica').text('&', { align: 'center' });
-      doc.moveDown(0.5);
+        .text('CORE Q CAPITAL ENTERPRISES', 0, 395, { width: doc.page.width, align: 'center' });
+      doc.fontSize(12).font('Helvetica').text('&', 0, 415, { width: doc.page.width, align: 'center' });
 
-      // Borrower info
+      // Borrower name and ID on ONE line
       doc.fontSize(11).font('Helvetica-Bold');
-      doc.text(`NAME:  ${borrower.fullName.toUpperCase()}`, { align: 'center', continued: true });
-      doc.text(`           OF ID:  ${borrower.idNumber}`);
+      const borrowerLine = `NAME:  ${borrower.fullName.toUpperCase()}        OF ID:  ${borrower.idNumber}`;
+      doc.text(borrowerLine, 50, 440, { width: doc.page.width - 100, align: 'center' });
 
-      doc.moveDown(1);
-      doc.moveTo(100, doc.y).lineTo(doc.page.width - 100, doc.y).stroke();
-      doc.moveDown(1);
+      // Horizontal line
+      doc.moveTo(100, 465).lineTo(doc.page.width - 100, 465).stroke();
 
-      // Date
+      // DATED
       doc.fontSize(11).font('Helvetica-Bold')
-        .text('DATED', { align: 'center', continued: false });
+        .text('DATED', 0, 485, { width: doc.page.width, align: 'center' });
       doc.fontSize(12).font('Helvetica-Bold')
-        .text(formatDateShort(issueDate), { align: 'center' });
+        .text(formatDateShort(issueDate), 0, 505, { width: doc.page.width, align: 'center' });
 
-      doc.moveDown(1);
-      doc.moveTo(100, doc.y).lineTo(doc.page.width - 100, doc.y).stroke();
-      doc.moveDown(2);
+      // Horizontal line
+      doc.moveTo(100, 530).lineTo(doc.page.width - 100, 530).stroke();
 
-      // BORROWER PHOTO section
-      doc.fontSize(10).font('Helvetica-Bold')
-        .text('BORROWER PHOTO', { align: 'center' });
+      // BORROWER PHOTO
+      doc.fontSize(11).font('Helvetica-Bold')
+        .text('BORROWER PHOTO', 0, 555, { width: doc.page.width, align: 'center' });
 
-      doc.moveDown(6);
-
-      // Drawn by section at bottom
+      // Drawn by section at bottom left
       doc.fontSize(10).font('Helvetica-Bold').text('Drawn by:', 50, doc.page.height - 150);
       doc.fontSize(10).font('Helvetica')
         .text('ORIRI & ASSOCIATE LAW', 50, doc.page.height - 135)
@@ -135,8 +133,7 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
         .text('P.O BOX 37367-00100', 50, doc.page.height - 109)
         .text('NAIROBI', 50, doc.page.height - 96);
 
-      // Page footer
-      addPageFooter(1);
+      // NO page footer on page 1
 
       // ===== PAGE 2: AGREEMENT DETAILS =====
       doc.addPage();
