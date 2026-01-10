@@ -556,7 +556,7 @@ const LoanApplicationForm = () => {
               </FormControl>
             </Grid>
 
-            {loanData.isNegotiable && user.role === 'admin' && (
+            {loanData.isNegotiable && (
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -669,10 +669,6 @@ const LoanApplicationForm = () => {
                 </Grid>
               </CardContent>
             </Card>
-
-            <Alert severity="info" sx={{ mt: 3 }}>
-              After submitting, you'll need to upload the signed loan agreement before the loan becomes active.
-            </Alert>
           </Box>
         );
 
