@@ -198,6 +198,7 @@ const LoanAgreements = () => {
 
   const getStatusChip = (status) => {
     const statusConfig = {
+      pending_upload: { label: 'Pending Approval', color: 'info', icon: <PendingActions /> },
       pending_approval: { label: 'Pending Approval', color: 'info', icon: <PendingActions /> },
       approved: { label: 'Approved', color: 'success', icon: <CheckCircle /> },
       rejected: { label: 'Rejected', color: 'error', icon: <Cancel /> }
@@ -318,7 +319,7 @@ const LoanAgreements = () => {
                             </IconButton>
                           </Tooltip>
 
-                          {loan.agreementStatus === 'pending_approval' && (
+                          {(loan.agreementStatus === 'pending_approval' || loan.agreementStatus === 'pending_upload') && (
                             <>
                               <Tooltip title="Edit Loan">
                                 <IconButton
@@ -341,7 +342,7 @@ const LoanAgreements = () => {
                                 </IconButton>
                               </Tooltip>
 
-                              {user.role === 'admin' && (
+                              {user.role === 'admin' && loan.agreementStatus === 'pending_approval' && (
                                 <>
                                   <Button
                                     size="small"
