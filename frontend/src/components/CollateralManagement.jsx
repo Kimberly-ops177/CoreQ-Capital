@@ -19,7 +19,7 @@ const CollateralManagement = () => {
   const [open, setOpen] = useState(false);
   const [editingCollateral, setEditingCollateral] = useState(null);
   const [formData, setFormData] = useState({
-    borrowerId: '', category: '', itemName: '', modelNumber: '', serialNumber: '', itemCondition: '', status: 'held'
+    borrowerId: '', category: '', itemName: '', modelNumber: '', serialNumber: '', itemCondition: '', isSold: false
   });
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -83,12 +83,12 @@ const CollateralManagement = () => {
         modelNumber: collateral.modelNumber || '',
         serialNumber: collateral.serialNumber || '',
         itemCondition: collateral.itemCondition,
-        status: collateral.status || 'held'
+        isSold: collateral.isSold || false
       });
     } else {
       setEditingCollateral(null);
       setFormData({
-        borrowerId: '', category: '', itemName: '', modelNumber: '', serialNumber: '', itemCondition: '', status: 'held'
+        borrowerId: '', category: '', itemName: '', modelNumber: '', serialNumber: '', itemCondition: '', isSold: false
       });
     }
     setOpen(true);
@@ -304,13 +304,11 @@ const CollateralManagement = () => {
                   <FormControl fullWidth required>
                     <InputLabel>Status</InputLabel>
                     <Select
-                      value={formData.status}
-                      onChange={(e) => setFormData({...formData, status: e.target.value})}
+                      value={formData.isSold}
+                      onChange={(e) => setFormData({...formData, isSold: e.target.value})}
                     >
-                      <MenuItem value="held">Held (With Lender)</MenuItem>
-                      <MenuItem value="returned">Returned (Loan Repaid)</MenuItem>
-                      <MenuItem value="seized">Seized (Defaulted)</MenuItem>
-                      <MenuItem value="sold">Sold (After Seizure)</MenuItem>
+                      <MenuItem value={false}>Not Sold</MenuItem>
+                      <MenuItem value={true}>Sold</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
