@@ -27,7 +27,6 @@ import {
 } from '@mui/material';
 import {
   Download,
-  Upload,
   CheckCircle,
   Cancel,
   PendingActions,
@@ -48,11 +47,9 @@ const LoanAgreements = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const [uploadDialog, setUploadDialog] = useState(false);
   const [approvalDialog, setApprovalDialog] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState(null);
-  const [uploadFile, setUploadFile] = useState(null);
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
@@ -128,75 +125,6 @@ const LoanAgreements = () => {
     }
   };
 
-  const handleDownloadSigned = async (loanId) => {
-    try {
-      const response = await axios.get(`/api/loan-applications/${loanId}/download-signed`, {
-        responseType: 'blob'
-      });
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `Signed_Loan_Agreement_${loanId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      setSuccess('Signed agreement downloaded successfully!');
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      console.error('Error downloading signed agreement:', err);
-      setError(err.response?.data?.error || 'Failed to download signed agreement');
-    }
-  };
-
-  const handleUploadClick = (loan) => {
-    setSelectedLoan(loan);
-    setUploadFile(null);
-    setUploadDialog(true);
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type === 'application/pdf') {
-      setUploadFile(file);
-      setError(null);
-    } else {
-      setError('Please select a PDF file');
-      setUploadFile(null);
-    }
-  };
-
-  const handleUploadSubmit = async () => {
-    if (!uploadFile) {
-      setError('Please select a file to upload');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const formData = new FormData();
-      formData.append('signedAgreement', uploadFile);
-
-      await axios.post(`/api/loan-applications/${selectedLoan.id}/upload-signed`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-
-      setSuccess('Signed agreement uploaded successfully! Awaiting admin approval.');
-      setUploadDialog(false);
-      fetchAgreements();
-      if (user?.role === 'admin') {
-        fetchPendingApprovals();
-      }
-    } catch (err) {
-      console.error('Error uploading signed agreement:', err);
-      setError(err.response?.data?.error || 'Failed to upload signed agreement');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleApprovalClick = (loan) => {
     setSelectedLoan(loan);
@@ -270,7 +198,6 @@ const LoanAgreements = () => {
 
   const getStatusChip = (status) => {
     const statusConfig = {
-      pending_upload: { label: 'Pending Upload', color: 'warning', icon: <PendingActions /> },
       pending_approval: { label: 'Pending Approval', color: 'info', icon: <PendingActions /> },
       approved: { label: 'Approved', color: 'success', icon: <CheckCircle /> },
       rejected: { label: 'Rejected', color: 'error', icon: <Cancel /> }
@@ -302,11 +229,6 @@ const LoanAgreements = () => {
           <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
             Core Q Capital - Loan Agreements
           </Typography>
-          {user.role === 'admin' && pendingApprovals.length > 0 && (
-            <Badge badgeContent={pendingApprovals.length} color="error" sx={{ mr: 3 }}>
-              <Typography variant="body2">Pending Approvals</Typography>
-            </Badge>
-          )}
           <Button color="inherit" onClick={() => navigate(user.role === 'admin' ? '/admin' : '/employee')}>
             Dashboard
           </Button>
@@ -334,58 +256,6 @@ const LoanAgreements = () => {
           <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess(null)}>
             {success}
           </Alert>
-        )}
-
-        {/* Pending Approvals Section (Admin Only) */}
-        {user.role === 'admin' && pendingApprovals.length > 0 && (
-          <Paper sx={{ p: 3, mb: 3, bgcolor: '#fff3e0' }}>
-            <Typography variant="h6" gutterBottom sx={{ color: '#e65100' }}>
-              Pending Approvals ({pendingApprovals.length})
-            </Typography>
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ color: '#000000' }}><strong>Loan ID</strong></TableCell>
-                    <TableCell sx={{ color: '#000000' }}><strong>Borrower</strong></TableCell>
-                    <TableCell sx={{ color: '#000000' }}><strong>Amount</strong></TableCell>
-                    <TableCell sx={{ color: '#000000' }}><strong>Uploaded At</strong></TableCell>
-                    <TableCell align="center" sx={{ color: '#000000' }}><strong>Actions</strong></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {pendingApprovals.map((loan) => (
-                    <TableRow key={loan.id} hover>
-                      <TableCell sx={{ color: '#000000' }}>#{loan.id}</TableCell>
-                      <TableCell sx={{ color: '#000000' }}>{loan.borrower?.fullName}</TableCell>
-                      <TableCell sx={{ color: '#000000' }}>KSH {parseFloat(loan.amountIssued).toLocaleString()}</TableCell>
-                      <TableCell sx={{ color: '#000000' }}>{new Date(loan.signedAgreementUploadedAt).toLocaleString()}</TableCell>
-                      <TableCell align="center">
-                        <Tooltip title="Download Signed Agreement">
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handleDownloadSigned(loan.id)}
-                          >
-                            <Download />
-                          </IconButton>
-                        </Tooltip>
-                        <Button
-                          size="small"
-                          variant="contained"
-                          color="success"
-                          onClick={() => handleApprovalClick(loan)}
-                          sx={{ ml: 1 }}
-                        >
-                          Review
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
         )}
 
         {/* All Agreements Table */}
@@ -448,7 +318,7 @@ const LoanAgreements = () => {
                             </IconButton>
                           </Tooltip>
 
-                          {loan.agreementStatus === 'pending_upload' && (
+                          {loan.agreementStatus === 'pending_approval' && (
                             <>
                               <Tooltip title="Edit Loan">
                                 <IconButton
@@ -471,30 +341,42 @@ const LoanAgreements = () => {
                                 </IconButton>
                               </Tooltip>
 
-                              <Button
-                                size="small"
-                                variant="contained"
-                                color="primary"
-                                startIcon={<Upload />}
-                                onClick={() => handleUploadClick(loan)}
-                                sx={{ ml: 1 }}
-                              >
-                                Upload Signed
-                              </Button>
+                              {user.role === 'admin' && (
+                                <>
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    color="success"
+                                    onClick={async () => {
+                                      if (window.confirm(`Approve loan agreement #${loan.id}?`)) {
+                                        try {
+                                          await axios.post(`/api/loan-applications/${loan.id}/approve`, { notes: null });
+                                          setSuccess(`Loan agreement #${loan.id} approved!`);
+                                          fetchAgreements();
+                                          fetchPendingApprovals();
+                                        } catch (err) {
+                                          setError(err.response?.data?.error || 'Failed to approve');
+                                        }
+                                      }
+                                    }}
+                                    startIcon={<CheckCircle />}
+                                    sx={{ ml: 1 }}
+                                  >
+                                    Approve
+                                  </Button>
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="error"
+                                    onClick={() => handleApprovalClick(loan)}
+                                    startIcon={<Cancel />}
+                                    sx={{ ml: 1 }}
+                                  >
+                                    Reject
+                                  </Button>
+                                </>
+                              )}
                             </>
-                          )}
-
-                          {loan.agreementStatus === 'pending_approval' && (
-                            <Tooltip title="Download Signed Agreement">
-                              <IconButton
-                                size="small"
-                                color="secondary"
-                                onClick={() => handleDownloadSigned(loan.id)}
-                                sx={{ ml: 1 }}
-                              >
-                                <Download />
-                              </IconButton>
-                            </Tooltip>
                           )}
 
                           {loan.agreementStatus === 'approved' && (
@@ -516,49 +398,6 @@ const LoanAgreements = () => {
           )}
         </Paper>
       </Container>
-
-      {/* Upload Dialog */}
-      <Dialog open={uploadDialog} onClose={() => setUploadDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Upload Signed Agreement</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="textSecondary" gutterBottom>
-            Loan ID: #{selectedLoan?.id} - {selectedLoan?.borrower?.fullName}
-          </Typography>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Please select the signed PDF agreement to upload.
-          </Typography>
-          <Button
-            variant="outlined"
-            component="label"
-            fullWidth
-            sx={{ mb: 2 }}
-          >
-            Choose PDF File
-            <input
-              type="file"
-              hidden
-              accept="application/pdf"
-              onChange={handleFileChange}
-            />
-          </Button>
-          {uploadFile && (
-            <Alert severity="info">
-              Selected: {uploadFile.name}
-            </Alert>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setUploadDialog(false)}>Cancel</Button>
-          <Button
-            onClick={handleUploadSubmit}
-            variant="contained"
-            color="primary"
-            disabled={!uploadFile || loading}
-          >
-            {loading ? <CircularProgress size={20} /> : 'Upload'}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Approval Dialog */}
       <Dialog open={approvalDialog} onClose={() => setApprovalDialog(false)} maxWidth="sm" fullWidth>
