@@ -151,11 +151,10 @@ const LoanApplicationForm = () => {
     }
   };
 
-  // Auto-calculate loan terms
+  // Check if loan is negotiable based on amount
   useEffect(() => {
-    if (loanData.amountIssued && loanData.loanPeriod) {
+    if (loanData.amountIssued) {
       const amount = parseFloat(loanData.amountIssued);
-      const period = parseInt(loanData.loanPeriod);
 
       // Check if negotiable (>50k)
       if (amount > (businessRules.negotiableThreshold || 50000)) {
@@ -164,6 +163,22 @@ const LoanApplicationForm = () => {
         setLoanData(prev => ({
           ...prev,
           isNegotiable: false,
+          interestRate: ''
+        }));
+      }
+    }
+  }, [loanData.amountIssued, businessRules]);
+
+  // Auto-calculate loan terms
+  useEffect(() => {
+    if (loanData.amountIssued && loanData.loanPeriod) {
+      const amount = parseFloat(loanData.amountIssued);
+      const period = parseInt(loanData.loanPeriod);
+
+      // Set default interest rate if not negotiable
+      if (!loanData.isNegotiable) {
+        setLoanData(prev => ({
+          ...prev,
           interestRate: interestRates[period] || ''
         }));
       }
@@ -185,7 +200,7 @@ const LoanApplicationForm = () => {
         });
       }
     }
-  }, [loanData.amountIssued, loanData.loanPeriod, loanData.interestRate, interestRates, businessRules]);
+  }, [loanData.amountIssued, loanData.loanPeriod, loanData.interestRate, loanData.isNegotiable, interestRates]);
 
   const fetchInterestRates = async () => {
     try {
