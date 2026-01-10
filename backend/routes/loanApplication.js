@@ -133,7 +133,7 @@ router.post('/', auth, async (req, res) => {
       isNegotiable: amount > businessRules.negotiableThreshold,
       gracePeriodEnd: gracePeriodEnd,
       branchId: req.user.currentBranchId || null,
-      agreementStatus: 'pending_upload' // NEW: Agreement workflow status
+      agreementStatus: 'pending_approval' // NEW: Agreement workflow status
     }, { transaction });
 
     // Commit transaction
