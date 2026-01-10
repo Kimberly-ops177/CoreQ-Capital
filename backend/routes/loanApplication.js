@@ -372,7 +372,7 @@ router.post('/:id/approve', auth, async (req, res) => {
       return res.status(404).send({ error: 'Loan not found' });
     }
 
-    if (loan.agreementStatus !== 'pending_approval') {
+    if (loan.agreementStatus !== 'pending_approval' && loan.agreementStatus !== 'pending_upload') {
       return res.status(400).send({ error: 'Loan is not pending approval' });
     }
 
@@ -416,7 +416,7 @@ router.post('/:id/reject', auth, async (req, res) => {
       return res.status(404).send({ error: 'Loan not found' });
     }
 
-    if (loan.agreementStatus !== 'pending_approval') {
+    if (loan.agreementStatus !== 'pending_approval' && loan.agreementStatus !== 'pending_upload') {
       return res.status(400).send({ error: 'Loan is not pending approval' });
     }
 

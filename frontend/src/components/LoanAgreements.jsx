@@ -239,7 +239,7 @@ const LoanAgreements = () => {
 
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#000000' }}>
             Loan Agreements
           </Typography>
           <IconButton onClick={fetchAgreements} color="primary">
