@@ -270,35 +270,44 @@ const getDefaultedItemsReport = async (req, res) => {
       whereClause.branchId = branchId;
     }
 
-    // Date range filter for seized date
+    // Date range filter for defaulted date (when loan status became 'defaulted')
     const dateFilter = {};
     if (startDate && endDate) {
-      dateFilter.createdAt = {
+      dateFilter.updatedAt = {
         [Op.between]: [new Date(startDate), new Date(endDate)]
       };
     } else if (startDate) {
-      dateFilter.createdAt = {
+      dateFilter.updatedAt = {
         [Op.gte]: new Date(startDate)
       };
     } else if (endDate) {
-      dateFilter.createdAt = {
+      dateFilter.updatedAt = {
         [Op.lte]: new Date(endDate)
       };
     }
 
-    // Defaulted Items (Unsold) - Items that are seized but not yet sold
-    const unsoldItems = await Collateral.findAll({
+    // Defaulted Items (Unsold) - Query from Loan with collateral relationship
+    const unsoldLoans = await Loan.findAll({
       where: {
         ...whereClause,
         ...dateFilter,
-        isSeized: true,
-        isSold: false
+        status: 'defaulted'
       },
-      include: [{ model: Borrower, as: 'borrower' }],
-      order: [['createdAt', 'DESC']]
+      include: [
+        { model: Borrower, as: 'borrower' },
+        {
+          model: Collateral,
+          as: 'collateral',
+          where: {
+            isSeized: true,
+            isSold: false
+          }
+        }
+      ],
+      order: [['updatedAt', 'DESC']]
     });
 
-    // Defaulted Items (Sold) - Items that have been sold
+    // Defaulted Items (Sold) - Query from Loan with sold collateral
     const soldDateFilter = {};
     if (startDate && endDate) {
       soldDateFilter.soldDate = {
@@ -314,29 +323,63 @@ const getDefaultedItemsReport = async (req, res) => {
       };
     }
 
-    const soldItems = await Collateral.findAll({
+    const soldLoans = await Loan.findAll({
       where: {
         ...whereClause,
-        ...(Object.keys(soldDateFilter).length > 0 ? soldDateFilter : {}),
-        isSold: true
+        status: 'defaulted'
       },
-      include: [{ model: Borrower, as: 'borrower' }],
-      order: [['soldDate', 'DESC']]
+      include: [
+        { model: Borrower, as: 'borrower' },
+        {
+          model: Collateral,
+          as: 'collateral',
+          where: {
+            isSold: true,
+            ...(Object.keys(soldDateFilter).length > 0 ? soldDateFilter : {})
+          }
+        }
+      ],
+      order: [[{ model: Collateral, as: 'collateral' }, 'soldDate', 'DESC']]
     });
 
-    const totalRevenue = soldItems.reduce((sum, item) => sum + parseFloat(item.soldPrice || 0), 0);
+    const totalRevenue = soldLoans.reduce((sum, loan) => sum + parseFloat(loan.collateral.soldPrice || 0), 0);
+
+    // Format the data to match the required columns
+    const unsoldData = unsoldLoans.map(loan => ({
+      defaultedDate: loan.updatedAt,
+      loanId: loan.loanId || `#${loan.id}`,
+      itemId: loan.collateral.id,
+      name: loan.borrower.fullName,
+      idNumber: loan.borrower.idNumber,
+      phoneNumber: loan.borrower.phoneNumber,
+      item: loan.collateral.itemName
+    }));
+
+    const soldData = soldLoans.map(loan => ({
+      defaultedDate: loan.updatedAt,
+      itemId: loan.collateral.id,
+      name: loan.borrower.fullName,
+      idNumber: loan.borrower.idNumber,
+      item: loan.collateral.itemName,
+      modelNumber: loan.collateral.modelNumber || 'N/A',
+      amount: loan.collateral.soldPrice,
+      dateSold: loan.collateral.soldDate,
+      phoneNumber: loan.borrower.phoneNumber,
+      amountIssued: loan.amountIssued,
+      amountPayable: loan.totalAmount
+    }));
 
     res.send({
       report: 'Defaulted Items Report',
       period: startDate && endDate ? `${startDate} to ${endDate}` : 'All time',
       unsold: {
-        count: unsoldItems.length,
-        items: unsoldItems
+        count: unsoldData.length,
+        items: unsoldData
       },
       sold: {
-        count: soldItems.length,
+        count: soldData.length,
         totalRevenue: totalRevenue,
-        items: soldItems
+        items: soldData
       }
     });
   } catch (e) {
