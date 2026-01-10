@@ -76,6 +76,7 @@ const LoanApplicationForm = () => {
     loanPeriod: '',
     dateIssued: new Date().toISOString().split('T')[0],
     interestRate: '',
+    customTotalAmount: '',
     isNegotiable: false
   });
 
@@ -188,19 +189,29 @@ const LoanApplicationForm = () => {
         ? parseFloat(loanData.interestRate)
         : interestRates[period];
 
-      if (rate) {
-        const interestAmount = amount * (rate / 100);
-        const totalAmount = amount + interestAmount;
+      if (rate || loanData.customTotalAmount) {
+        // Use custom total amount if provided, otherwise calculate
+        let totalAmount, interestAmount;
+
+        if (loanData.customTotalAmount) {
+          totalAmount = parseFloat(loanData.customTotalAmount);
+          interestAmount = totalAmount - amount;
+        } else {
+          interestAmount = amount * (rate / 100);
+          totalAmount = amount + interestAmount;
+        }
+
         setLoanCalculation({
           principal: amount,
-          interestRate: rate,
+          interestRate: rate || ((interestAmount / amount) * 100).toFixed(2),
           interestAmount: interestAmount.toFixed(2),
           totalAmount: totalAmount.toFixed(2),
-          period: `${period} week(s)`
+          period: `${period} week(s)`,
+          isCustomTotal: !!loanData.customTotalAmount
         });
       }
     }
-  }, [loanData.amountIssued, loanData.loanPeriod, loanData.interestRate, loanData.isNegotiable, interestRates]);
+  }, [loanData.amountIssued, loanData.loanPeriod, loanData.interestRate, loanData.customTotalAmount, loanData.isNegotiable, interestRates]);
 
   const fetchInterestRates = async () => {
     try {
@@ -279,7 +290,8 @@ const LoanApplicationForm = () => {
           loanPeriod: parseInt(loanData.loanPeriod),
           dateIssued: loanData.dateIssued,
           isNegotiable: loanData.isNegotiable,
-          interestRate: loanData.isNegotiable ? parseFloat(loanData.interestRate) : undefined
+          interestRate: loanData.isNegotiable ? parseFloat(loanData.interestRate) : undefined,
+          customTotalAmount: loanData.customTotalAmount ? parseFloat(loanData.customTotalAmount) : undefined
         }
       };
 
@@ -581,18 +593,31 @@ const LoanApplicationForm = () => {
             </Grid>
 
             {loanData.isNegotiable && (
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
-                  type="number"
-                  step="0.01"
-                  label="Custom Interest Rate (%)"
-                  value={loanData.interestRate}
-                  onChange={(e) => setLoanData({...loanData, interestRate: e.target.value})}
-                  helperText="Enter custom interest rate for this negotiable loan"
-                />
-              </Grid>
+              <>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    required
+                    type="number"
+                    step="0.01"
+                    label="Custom Interest Rate (%)"
+                    value={loanData.interestRate}
+                    onChange={(e) => setLoanData({...loanData, interestRate: e.target.value})}
+                    helperText="Enter custom interest rate for this negotiable loan"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    step="0.01"
+                    label="Custom Total Repayment Amount (KSH)"
+                    value={loanData.customTotalAmount}
+                    onChange={(e) => setLoanData({...loanData, customTotalAmount: e.target.value})}
+                    helperText="Optional: Override calculated total with custom repayment amount"
+                  />
+                </Grid>
+              </>
             )}
 
             {/* Loan Calculation Preview */}
