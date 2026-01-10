@@ -146,11 +146,27 @@ async function sendCustomSMS(phoneNumber, borrowerName, customMessage) {
   return await sendSMS(phoneNumber, message);
 }
 
+/**
+ * Send loan approval notification SMS
+ */
+async function sendLoanApprovalSMS(borrower, loan) {
+  const dueDate = new Date(loan.dueDate).toLocaleDateString('en-KE', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
+
+  const message = `CORE Q CAPITAL: Congratulations ${borrower.fullName}! Your loan of KSH ${loan.amountIssued.toLocaleString()} has been approved. Due date: ${dueDate}. Paybill: 522533, Account: 7862638.`;
+
+  return await sendSMS(borrower.phoneNumber, message);
+}
+
 module.exports = {
   initializeSMS,
   sendSMS,
   sendLoanReminder3Days,
   sendLoanReminderDueDate,
   sendLoanReminderOverdue,
-  sendCustomSMS
+  sendCustomSMS,
+  sendLoanApprovalSMS
 };

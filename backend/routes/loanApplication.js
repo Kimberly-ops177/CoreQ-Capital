@@ -5,6 +5,7 @@ const Collateral = require('../models/Collateral');
 const Loan = require('../models/Loan');
 const sequelize = require('../config/database');
 const { generateLoanAgreementPDF } = require('../services/loanAgreementService');
+const { sendLoanApprovalSMS } = require('../services/smsService');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
@@ -382,6 +383,15 @@ router.post('/:id/approve', auth, async (req, res) => {
       agreementApprovedBy: req.user.id,
       agreementNotes: req.body.notes || null
     });
+
+    // Send SMS notification to borrower
+    try {
+      await sendLoanApprovalSMS(loan.borrower, loan);
+      console.log(`✅ Loan approval SMS sent to ${loan.borrower.phoneNumber}`);
+    } catch (smsError) {
+      console.error('⚠️ Failed to send loan approval SMS:', smsError);
+      // Don't fail the approval if SMS fails
+    }
 
     res.send({
       success: true,
