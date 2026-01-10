@@ -121,9 +121,14 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
       // Horizontal line
       doc.moveTo(100, 530).lineTo(doc.page.width - 100, 530).stroke();
 
-      // BORROWER PHOTO
+      // BORROWER PHOTO with box
       doc.fontSize(11).font('Helvetica-Bold')
         .text('BORROWER PHOTO', 0, 555, { width: doc.page.width, align: 'center' });
+
+      // Draw photo placeholder box
+      const photoBoxX = (doc.page.width - 150) / 2;
+      const photoBoxY = 585;
+      doc.rect(photoBoxX, photoBoxY, 150, 180).stroke();
 
       // Drawn by section at bottom left
       doc.fontSize(10).font('Helvetica-Bold').text('Drawn by:', 50, doc.page.height - 150);
@@ -143,34 +148,30 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
       doc.text(`THIS AGREEMENT is made on ………………….${formatDateShort(issueDate)}…………………... between:`, 50, currentY);
       currentY += 30;
 
-      doc.text('1.  CORE Q CAPITAL (represented by the directors MR. Fidelis Simati-MD, and MR. Mukonzo', 50, currentY, { width: 495 });
-      currentY = doc.y;
-      doc.text('     Evans resident within Nairobi in the Republic of Kenya (hereinafter called "Lender").', 50, currentY, { width: 495 });
-      currentY = doc.y + 20;
+      doc.text('1.  CORE Q CAPITAL (represented by the directors MR. Fidelis Simati-MD, and MR. Mukonzo Evans resident within Nairobi in the Republic of Kenya (hereinafter called "Lender").', 50, currentY, { width: 495 });
+      currentY += 50;
 
       doc.font('Helvetica-Bold').text('AND', 50, currentY, { width: 495, align: 'center' });
       currentY += 30;
 
-      doc.font('Helvetica').text(`2.  …${borrower.fullName.toUpperCase()}…….. of ID number: ……${borrower.idNumber}…… Phone`, 50, currentY, { width: 495 });
-      currentY = doc.y;
-      doc.text(`     Number………${borrower.phoneNumber}………….. within the Republic of Kenya (hereinafter called "borrower").`, 50, currentY, { width: 495 });
-      currentY = doc.y + 30;
+      doc.font('Helvetica').text(`2.  …${borrower.fullName.toUpperCase()}…….. of ID number: ……${borrower.idNumber}…… Phone Number………${borrower.phoneNumber}………….. within the Republic of Kenya (hereinafter called "borrower").`, 50, currentY, { width: 495 });
+      currentY += 50;
 
       doc.fontSize(12).font('Helvetica-Bold').text('WHEREAS', 50, currentY);
       currentY += 25;
 
       doc.fontSize(11).font('Helvetica');
       doc.text('A.  WHEREAS the lender is a business incorporated under the Company\'s Act of Kenya as Core Q Capital having the legal capacity to enter into a legally binding agreement that is enforceable by law.', 50, currentY, { width: 495 });
-      currentY = doc.y + 15;
+      currentY += 45;
 
       doc.text(`B.  WHEREAS the second is an adult of sound mind having the legal capacity to enter into a legally binding contract, studying at…………..and of registration no..…… ID number ${borrower.idNumber} phone Name……House No. ………… ………. No:  ………. I student  within……… JUJA……   Apartment`, 50, currentY, { width: 495 });
-      currentY = doc.y + 15;
+      currentY += 60;
 
       doc.text('C.  WHEREAS the parties herein are desirous of entering into a security agreement to secure a loan which the lender will advance to the borrower.', 50, currentY, { width: 495 });
-      currentY = doc.y + 15;
+      currentY += 40;
 
       doc.text('D.  WHEREAS parties have desired to have the agreement reduced into writing with an intention of creating a legally binding and enforceable relationship;', 50, currentY, { width: 495 });
-      currentY = doc.y + 25;
+      currentY += 45;
 
       doc.fontSize(12).font('Helvetica-Bold').text('NOW IT IS HEREBY MUTUALLY AGREED AS FOLLOWS:', 50, currentY, { underline: true });
       currentY += 25;
@@ -178,15 +179,15 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
       doc.fontSize(11).font('Helvetica-Bold').text('A.  PARTICULARS OF THE PARTIES', 50, currentY);
       currentY += 20;
       doc.font('Helvetica').text('1.  Core Q is a Company incorporated under the Company\'s Act 2015 dealing in the business of advancing loans in exchange of collateral items.', 70, currentY, { width: 475 });
-      currentY = doc.y + 10;
+      currentY += 40;
 
       doc.text('2.  The Borrower is an adult of sound mind and is desirous of acquiring a loan from the lender in exchange for collateral.', 70, currentY, { width: 475 });
-      currentY = doc.y + 20;
+      currentY += 35;
 
       doc.fontSize(11).font('Helvetica-Bold').text('B.  CREDIT ADVANCE', 70, currentY);
       currentY += 20;
       doc.font('Helvetica').text(`a.  The lender has issued to the borrower a loan worth …Ksh${parseFloat(loan.amountIssued).toLocaleString()}…only to be repaid before …${formatDateShort(dueDate)}... Amount…Ksh${totalAmount.toLocaleString()}……to the account details provided herein.`, 90, currentY, { width: 455 });
-      currentY = doc.y + 15;
+      currentY += 50;
 
       doc.font('Helvetica-Bold').text('Payments Details: Pay bill No. 522533', 110, currentY);
       currentY += 15;
@@ -196,16 +197,16 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
       currentY += 30;
 
       doc.font('Helvetica').text('b.  If the period is within one week then there will be an interest of 20% on the principal amount loaned.', 90, currentY, { width: 455 });
-      currentY = doc.y + 10;
+      currentY += 30;
 
       doc.text('c.  If the period is within two weeks there will be an interest of 28% on the principal amount loaned.', 90, currentY, { width: 455 });
-      currentY = doc.y + 10;
+      currentY += 30;
 
       doc.text('d.  If the period is within One Month then there will be an interest of 35% on the principal amount loaned.', 90, currentY, { width: 455 });
-      currentY = doc.y + 10;
+      currentY += 30;
 
       doc.text(`e.  If the period exceeds one Months, the interest negotiated to…………… of the principal amount.`, 90, currentY, { width: 455 });
-      currentY = doc.y;
+      currentY += 30;
 
       // Add stamp placeholder on page 2 (bottom right)
       addStampPlaceholder(doc.page.width - 180, doc.page.height - 150);
