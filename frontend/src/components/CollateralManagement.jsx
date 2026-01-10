@@ -209,11 +209,10 @@ const CollateralManagement = () => {
                     <Chip label={collateral.itemCondition} color={getConditionColor(collateral.itemCondition)} />
                   </TableCell>
                   <TableCell>
-                    {collateral.isSeized ? (
-                      <Chip label={collateral.isSold ? 'Sold' : 'Seized'} color="error" />
-                    ) : (
-                      <Chip label="Active" color="success" />
-                    )}
+                    <Chip
+                      label={collateral.isSold ? 'Sold' : 'Not Sold'}
+                      color={collateral.isSold ? 'error' : 'success'}
+                    />
                   </TableCell>
                   <TableCell>
                     <IconButton onClick={() => handleOpen(collateral)}>
