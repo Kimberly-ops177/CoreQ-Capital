@@ -21,14 +21,14 @@ const Reporting = () => {
 
   // All 8 reports from Section 3.2
   const reports = [
-    { key: 'loans-issued', title: 'Loans Issued Report', requiresDate: true, adminOnly: false },
+    { key: 'loans-issued', title: 'Loans Issued Report', requiresDate: false, adminOnly: false },
     { key: 'loan-status', title: 'Loan Status Report', requiresDate: false, adminOnly: false },
     { key: 'defaulters', title: 'Defaulters Report', requiresDate: false, adminOnly: false },
     { key: 'not-yet-paid', title: 'Not Yet Paid Report', requiresDate: false, adminOnly: false },
     { key: 'defaulted-items', title: 'Defaulted Items Report', requiresDate: false, adminOnly: true },
     { key: 'balances', title: 'Balances Report', requiresDate: false, adminOnly: true },
-    { key: 'expenses', title: 'Expenses Report', requiresDate: true, adminOnly: true },
-    { key: 'profit-loss', title: 'Profit & Loss Report', requiresDate: true, adminOnly: true }
+    { key: 'expenses', title: 'Expenses Report', requiresDate: false, adminOnly: true },
+    { key: 'profit-loss', title: 'Profit & Loss Report', requiresDate: false, adminOnly: true }
   ];
 
   const generateReport = async (type) => {
@@ -137,18 +137,18 @@ const Reporting = () => {
 
       case 'defaulted-items':
         csvContent = 'Defaulted Items Report\n\n';
-        csvContent += 'UNSOLD ITEMS\n';
+        csvContent += 'DEFAULTED ITEMS NOT SOLD\n';
         csvContent += `Total Unsold Items,${reportData.unsold.count}\n\n`;
-        csvContent += 'Item Name,Category,Borrower,Condition,Serial Number\n';
+        csvContent += 'DEFAULTED DATE,LOANID,ITEMID,Name,ID NUMBER,Phone number,ITEM\n';
         reportData.unsold.items?.forEach(item => {
-          csvContent += `"${item.itemName}",${item.category},"${item.borrower?.name || 'N/A'}",${item.itemCondition},"${item.serialNumber || 'N/A'}"\n`;
+          csvContent += `${formatDate(item.defaultedDate)},${item.loanId},${item.itemId},"${item.name}",${item.idNumber},"${item.phoneNumber}","${item.item}"\n`;
         });
-        csvContent += '\n\nSOLD ITEMS\n';
+        csvContent += '\n\nSOLD DEFAULTED ITEMS\n';
         csvContent += `Total Sold Items,${reportData.sold.count}\n`;
         csvContent += `Total Revenue,${reportData.sold.totalRevenue}\n\n`;
-        csvContent += 'Item Name,Category,Sold Price,Sold Date,Borrower\n';
+        csvContent += 'DEFAULTED DATE,ITEMID,Name,ID NUMBER,ITEM,MODEL NUMBER,AMOUNT,DATE SOLD,Phone number,AMOUNT ISSUED,AMOUNT PAYABLE\n';
         reportData.sold.items?.forEach(item => {
-          csvContent += `"${item.itemName}",${item.category},${item.soldPrice},${formatDate(item.soldDate)},"${item.borrower?.name || 'N/A'}"\n`;
+          csvContent += `${formatDate(item.defaultedDate)},${item.itemId},"${item.name}",${item.idNumber},"${item.item}","${item.modelNumber || 'N/A'}",${item.amount},${formatDate(item.dateSold)},"${item.phoneNumber}",${item.amountIssued},${item.amountPayable}\n`;
         });
         break;
 
@@ -481,27 +481,31 @@ const Reporting = () => {
   const renderDefaultedItemsReport = () => (
     <Box>
       <Typography variant="h6" sx={{ mb: 2, color: '#4A5FE8' }}>
-        Unsold Items ({reportData.unsold.count})
+        Defaulted Items Not Sold ({reportData.unsold.count})
       </Typography>
       <TableContainer component={Paper} sx={{ mb: 4 }}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell><strong>Item Name</strong></TableCell>
-              <TableCell><strong>Category</strong></TableCell>
-              <TableCell><strong>Borrower</strong></TableCell>
-              <TableCell><strong>Condition</strong></TableCell>
-              <TableCell><strong>Serial Number</strong></TableCell>
+              <TableCell><strong>DEFAULTED DATE</strong></TableCell>
+              <TableCell><strong>LOANID</strong></TableCell>
+              <TableCell><strong>ITEMID</strong></TableCell>
+              <TableCell><strong>Name</strong></TableCell>
+              <TableCell><strong>ID NUMBER</strong></TableCell>
+              <TableCell><strong>Phone number</strong></TableCell>
+              <TableCell><strong>ITEM</strong></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {reportData.unsold.items?.map((item) => (
-              <TableRow key={item.id} hover>
-                <TableCell>{item.itemName}</TableCell>
-                <TableCell>{item.category}</TableCell>
-                <TableCell>{item.borrower?.name || 'N/A'}</TableCell>
-                <TableCell>{item.itemCondition}</TableCell>
-                <TableCell>{item.serialNumber || 'N/A'}</TableCell>
+            {reportData.unsold.items?.map((item, index) => (
+              <TableRow key={index} hover>
+                <TableCell>{formatDate(item.defaultedDate)}</TableCell>
+                <TableCell>{item.loanId}</TableCell>
+                <TableCell>{item.itemId}</TableCell>
+                <TableCell>{item.name}</TableCell>
+                <TableCell>{item.idNumber}</TableCell>
+                <TableCell>{item.phoneNumber}</TableCell>
+                <TableCell>{item.item}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -509,29 +513,41 @@ const Reporting = () => {
       </TableContainer>
 
       <Typography variant="h6" sx={{ mb: 2, color: '#4A5FE8' }}>
-        Sold Items ({reportData.sold.count}) - Total Revenue: {formatCurrency(reportData.sold.totalRevenue)}
+        Sold Defaulted Items ({reportData.sold.count}) - Total Revenue: {formatCurrency(reportData.sold.totalRevenue)}
       </Typography>
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell><strong>Item Name</strong></TableCell>
-              <TableCell><strong>Category</strong></TableCell>
-              <TableCell><strong>Sold Price</strong></TableCell>
-              <TableCell><strong>Sold Date</strong></TableCell>
-              <TableCell><strong>Borrower</strong></TableCell>
+              <TableCell><strong>DEFAULTED DATE</strong></TableCell>
+              <TableCell><strong>ITEMID</strong></TableCell>
+              <TableCell><strong>Name</strong></TableCell>
+              <TableCell><strong>ID NUMBER</strong></TableCell>
+              <TableCell><strong>ITEM</strong></TableCell>
+              <TableCell><strong>MODEL NUMBER</strong></TableCell>
+              <TableCell><strong>AMOUNT</strong></TableCell>
+              <TableCell><strong>DATE SOLD</strong></TableCell>
+              <TableCell><strong>Phone number</strong></TableCell>
+              <TableCell><strong>AMOUNT ISSUED</strong></TableCell>
+              <TableCell><strong>AMOUNT PAYABLE</strong></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {reportData.sold.items?.map((item) => (
-              <TableRow key={item.id} hover>
-                <TableCell>{item.itemName}</TableCell>
-                <TableCell>{item.category}</TableCell>
+            {reportData.sold.items?.map((item, index) => (
+              <TableRow key={index} hover>
+                <TableCell>{formatDate(item.defaultedDate)}</TableCell>
+                <TableCell>{item.itemId}</TableCell>
+                <TableCell>{item.name}</TableCell>
+                <TableCell>{item.idNumber}</TableCell>
+                <TableCell>{item.item}</TableCell>
+                <TableCell>{item.modelNumber || 'N/A'}</TableCell>
                 <TableCell sx={{ color: '#2E7D32', fontWeight: 'bold' }}>
-                  {formatCurrency(item.soldPrice)}
+                  {formatCurrency(item.amount)}
                 </TableCell>
-                <TableCell>{formatDate(item.soldDate)}</TableCell>
-                <TableCell>{item.borrower?.name || 'N/A'}</TableCell>
+                <TableCell>{formatDate(item.dateSold)}</TableCell>
+                <TableCell>{item.phoneNumber}</TableCell>
+                <TableCell>{formatCurrency(item.amountIssued)}</TableCell>
+                <TableCell>{formatCurrency(item.amountPayable)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
