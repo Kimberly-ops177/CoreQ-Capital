@@ -342,7 +342,7 @@ const LoanAgreements = () => {
                                 </IconButton>
                               </Tooltip>
 
-                              {user.role === 'admin' && loan.agreementStatus === 'pending_approval' && (
+                              {user.role === 'admin' && (
                                 <>
                                   <Button
                                     size="small"
