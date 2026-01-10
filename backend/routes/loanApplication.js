@@ -106,15 +106,8 @@ router.post('/', auth, async (req, res) => {
     }
 
     // 6. Calculate loan totals
-    let totalAmount;
-    if (loan.customTotalAmount) {
-      // Use custom total amount if provided
-      totalAmount = parseFloat(loan.customTotalAmount);
-    } else {
-      // Calculate based on interest rate
-      const interestAmount = amount * (interestRate / 100);
-      totalAmount = amount + interestAmount;
-    }
+    const interestAmount = amount * (interestRate / 100);
+    const totalAmount = amount + interestAmount;
 
     // 7. Calculate due date (add weeks to issue date)
     const dateIssued = new Date(loan.dateIssued);

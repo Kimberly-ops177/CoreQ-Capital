@@ -74,9 +74,9 @@ const LoanApplicationForm = () => {
   const [loanData, setLoanData] = useState({
     amountIssued: '',
     loanPeriod: '',
+    customLoanPeriod: '',
     dateIssued: new Date().toISOString().split('T')[0],
     interestRate: '',
-    customTotalAmount: '',
     isNegotiable: false
   });
 
@@ -189,29 +189,20 @@ const LoanApplicationForm = () => {
         ? parseFloat(loanData.interestRate)
         : interestRates[period];
 
-      if (rate || loanData.customTotalAmount) {
-        // Use custom total amount if provided, otherwise calculate
-        let totalAmount, interestAmount;
-
-        if (loanData.customTotalAmount) {
-          totalAmount = parseFloat(loanData.customTotalAmount);
-          interestAmount = totalAmount - amount;
-        } else {
-          interestAmount = amount * (rate / 100);
-          totalAmount = amount + interestAmount;
-        }
+      if (rate) {
+        const interestAmount = amount * (rate / 100);
+        const totalAmount = amount + interestAmount;
 
         setLoanCalculation({
           principal: amount,
-          interestRate: rate || ((interestAmount / amount) * 100).toFixed(2),
+          interestRate: rate,
           interestAmount: interestAmount.toFixed(2),
           totalAmount: totalAmount.toFixed(2),
-          period: `${period} week(s)`,
-          isCustomTotal: !!loanData.customTotalAmount
+          period: `${period} week(s)`
         });
       }
     }
-  }, [loanData.amountIssued, loanData.loanPeriod, loanData.interestRate, loanData.customTotalAmount, loanData.isNegotiable, interestRates]);
+  }, [loanData.amountIssued, loanData.loanPeriod, loanData.interestRate, loanData.isNegotiable, interestRates]);
 
   const fetchInterestRates = async () => {
     try {
@@ -290,8 +281,7 @@ const LoanApplicationForm = () => {
           loanPeriod: parseInt(loanData.loanPeriod),
           dateIssued: loanData.dateIssued,
           isNegotiable: loanData.isNegotiable,
-          interestRate: loanData.isNegotiable ? parseFloat(loanData.interestRate) : undefined,
-          customTotalAmount: loanData.customTotalAmount ? parseFloat(loanData.customTotalAmount) : undefined
+          interestRate: loanData.isNegotiable ? parseFloat(loanData.interestRate) : undefined
         }
       };
 
@@ -576,24 +566,38 @@ const LoanApplicationForm = () => {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
-                <InputLabel>Loan Period</InputLabel>
-                <Select
-                  value={loanData.loanPeriod}
-                  label="Loan Period"
-                  onChange={(e) => setLoanData({...loanData, loanPeriod: e.target.value})}
-                >
-                  <MenuItem value={1}>1 Week ({interestRates[1]}% interest)</MenuItem>
-                  <MenuItem value={2}>2 Weeks ({interestRates[2]}% interest)</MenuItem>
-                  <MenuItem value={3}>3 Weeks ({interestRates[3]}% interest)</MenuItem>
-                  <MenuItem value={4}>4 Weeks ({interestRates[4]}% interest)</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
+            {!loanData.isNegotiable && (
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel>Loan Period</InputLabel>
+                  <Select
+                    value={loanData.loanPeriod}
+                    label="Loan Period"
+                    onChange={(e) => setLoanData({...loanData, loanPeriod: e.target.value})}
+                  >
+                    <MenuItem value={1}>1 Week ({interestRates[1]}% interest)</MenuItem>
+                    <MenuItem value={2}>2 Weeks ({interestRates[2]}% interest)</MenuItem>
+                    <MenuItem value={3}>3 Weeks ({interestRates[3]}% interest)</MenuItem>
+                    <MenuItem value={4}>4 Weeks ({interestRates[4]}% interest)</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
 
             {loanData.isNegotiable && (
               <>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    required
+                    type="number"
+                    label="Custom Loan Period (Weeks)"
+                    value={loanData.customLoanPeriod}
+                    onChange={(e) => setLoanData({...loanData, customLoanPeriod: e.target.value, loanPeriod: e.target.value})}
+                    helperText="Enter custom loan period in weeks"
+                    inputProps={{ min: 1, step: 1 }}
+                  />
+                </Grid>
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
@@ -604,17 +608,6 @@ const LoanApplicationForm = () => {
                     value={loanData.interestRate}
                     onChange={(e) => setLoanData({...loanData, interestRate: e.target.value})}
                     helperText="Enter custom interest rate for this negotiable loan"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    step="0.01"
-                    label="Custom Total Repayment Amount (KSH)"
-                    value={loanData.customTotalAmount}
-                    onChange={(e) => setLoanData({...loanData, customTotalAmount: e.target.value})}
-                    helperText="Optional: Override calculated total with custom repayment amount"
                   />
                 </Grid>
               </>
