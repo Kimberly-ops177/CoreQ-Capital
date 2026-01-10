@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import {
   Container, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Grid, IconButton, AppBar, Toolbar, Box, Pagination
+  TextField, Grid, IconButton, AppBar, Toolbar, Box, Pagination, Select, MenuItem,
+  FormControl, InputLabel
 } from '@mui/material';
 import { Add, Edit, Delete } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
@@ -183,15 +184,29 @@ const ExpenseManagement = () => {
               <DialogContent>
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
-                    <TextField
-                      fullWidth label="Category" required
-                      value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}
-                    />
+                    <FormControl fullWidth required>
+                      <InputLabel>Category</InputLabel>
+                      <Select
+                        value={formData.category}
+                        onChange={(e) => setFormData({...formData, category: e.target.value})}
+                        label="Category"
+                      >
+                        <MenuItem value="Rent">Rent</MenuItem>
+                        <MenuItem value="Salary">Salary</MenuItem>
+                        <MenuItem value="Printing">Printing</MenuItem>
+                        <MenuItem value="Others">Others</MenuItem>
+                      </Select>
+                    </FormControl>
                   </Grid>
                   <Grid item xs={12}>
                     <TextField
-                      fullWidth label="Name" required
-                      value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      fullWidth
+                      label="Name / Description"
+                      required
+                      placeholder="e.g., Office Rent January, John Doe Salary, Business Cards"
+                      helperText="Provide a specific description of this expense"
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
                     />
                   </Grid>
                   <Grid item xs={12}>
