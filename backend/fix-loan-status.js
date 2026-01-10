@@ -1,16 +1,4 @@
-const { Sequelize } = require('sequelize');
-require('dotenv').config();
-
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-  dialect: 'postgres',
-  dialectOptions: {
-    ssl: process.env.NODE_ENV === 'production' ? {
-      require: true,
-      rejectUnauthorized: false
-    } : false
-  },
-  logging: false
-});
+const sequelize = require('./config/database');
 
 async function fixLoanStatus() {
   try {
@@ -19,16 +7,22 @@ async function fixLoanStatus() {
     console.log('✓ Connected to database');
 
     console.log('Updating loans with pending_upload to pending_approval...');
-    const [results] = await sequelize.query(`
+    await sequelize.query(`
       UPDATE loans
-      SET "agreementStatus" = 'pending_approval'
-      WHERE "agreementStatus" = 'pending_upload'
-      RETURNING id, "loanId", "agreementStatus";
+      SET agreementStatus = 'pending_approval'
+      WHERE agreementStatus = 'pending_upload'
     `);
 
-    console.log(`✓ Updated ${results.length} loan(s):`);
+    // Get updated loans
+    const [results] = await sequelize.query(`
+      SELECT id, agreementStatus
+      FROM loans
+      WHERE agreementStatus = 'pending_approval'
+    `);
+
+    console.log(`✓ Updated loan(s) - now showing ${results.length} loan(s) with pending_approval:`);
     results.forEach(loan => {
-      console.log(`  - Loan #${loan.id} (${loan.loanId || 'N/A'}): status updated to ${loan.agreementStatus}`);
+      console.log(`  - Loan #${loan.id}: status is ${loan.agreementStatus}`);
     });
 
     await sequelize.close();
