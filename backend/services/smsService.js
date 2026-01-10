@@ -76,12 +76,20 @@ async function sendSMS(phoneNumber, message) {
       };
     }
 
-    // Send SMS
-    const result = await smsClient.send({
+    // Send SMS without custom sender ID to avoid InvalidSenderId error
+    // Africa's Talking will use their default approved sender ID
+    const smsOptions = {
       to: [formattedPhone],
-      message: message,
-      from: process.env.AFRICASTALKING_SENDER_ID || 'COREQCAP' // Optional: Short code or sender ID
-    });
+      message: message
+    };
+
+    // Only include 'from' if sender ID is explicitly set and not empty
+    // This prevents InvalidSenderId errors with unapproved sender IDs
+    if (process.env.AFRICASTALKING_SENDER_ID && process.env.AFRICASTALKING_SENDER_ID.trim() !== '') {
+      smsOptions.from = process.env.AFRICASTALKING_SENDER_ID;
+    }
+
+    const result = await smsClient.send(smsOptions);
 
     console.log('✅ SMS sent successfully:', {
       to: formattedPhone,
