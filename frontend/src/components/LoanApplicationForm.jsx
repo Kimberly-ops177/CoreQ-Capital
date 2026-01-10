@@ -522,6 +522,11 @@ const LoanApplicationForm = () => {
                 label="Amount to Issue (KSH)"
                 value={loanData.amountIssued}
                 onChange={(e) => setLoanData({...loanData, amountIssued: e.target.value})}
+                inputProps={{
+                  min: 0,
+                  step: 0.01,
+                  style: { fontSize: '1rem' }
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
