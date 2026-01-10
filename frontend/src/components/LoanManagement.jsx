@@ -377,6 +377,7 @@ const LoanManagement = () => {
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell sx={{ fontWeight: 'bold' }}>Loan ID</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Borrower</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Amount Issued</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Interest Rate</TableCell>
@@ -391,6 +392,7 @@ const LoanManagement = () => {
             <TableBody>
               {filteredLoans.map((loan) => (
                 <TableRow key={loan.id}>
+                  <TableCell>#{loan.id}</TableCell>
                   <TableCell>{loan.borrower?.fullName || 'N/A'}</TableCell>
                   <TableCell>KSH {parseFloat(loan.amountIssued).toLocaleString()}</TableCell>
                   <TableCell>{loan.interestRate}% {loan.isNegotiable && <Chip label="Negotiable" size="small" color="secondary" sx={{ ml: 1 }} />}</TableCell>
