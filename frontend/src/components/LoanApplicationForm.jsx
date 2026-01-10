@@ -544,6 +544,15 @@ const LoanApplicationForm = () => {
                 }}
               />
             </Grid>
+
+            {loanData.isNegotiable && (
+              <Grid item xs={12}>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  💡 This loan amount exceeds KSH {(businessRules.negotiableThreshold || 50000).toLocaleString()} and has negotiable terms. You can set a custom interest rate below.
+                </Alert>
+              </Grid>
+            )}
+
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -581,16 +590,8 @@ const LoanApplicationForm = () => {
                   label="Custom Interest Rate (%)"
                   value={loanData.interestRate}
                   onChange={(e) => setLoanData({...loanData, interestRate: e.target.value})}
-                  helperText="For negotiable loans above 50k"
+                  helperText="Enter custom interest rate for this negotiable loan"
                 />
-              </Grid>
-            )}
-
-            {loanData.isNegotiable && (
-              <Grid item xs={12}>
-                <Alert severity="info">
-                  This loan amount exceeds KSH {(businessRules.negotiableThreshold || 50000).toLocaleString()} and has negotiable terms.
-                </Alert>
               </Grid>
             )}
 
