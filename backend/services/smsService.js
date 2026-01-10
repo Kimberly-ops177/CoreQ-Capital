@@ -85,13 +85,14 @@ async function sendSMS(phoneNumber, message) {
 
     console.log('✅ SMS sent successfully:', {
       to: formattedPhone,
-      status: result.SMSMessageData.Recipients[0].status,
-      messageId: result.SMSMessageData.Recipients[0].messageId
+      status: result?.SMSMessageData?.Recipients?.[0]?.status || 'unknown',
+      messageId: result?.SMSMessageData?.Recipients?.[0]?.messageId || 'unknown',
+      fullResponse: JSON.stringify(result)
     });
 
     return {
       success: true,
-      result: result.SMSMessageData.Recipients[0]
+      result: result?.SMSMessageData?.Recipients?.[0] || result
     };
 
   } catch (error) {
