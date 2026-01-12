@@ -247,29 +247,29 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
     const page5 = pages[4];
     const { height: page5Height } = page5.getSize();
 
-    // Borrower name in declaration - after "I…"
+    // Borrower name in declaration - after "I…" and before "...Of ID Number"
     page5.drawText(borrower.fullName.toUpperCase(), {
-      x: 55,
-      y: page5Height - 148,
-      size: 10,
+      x: 25,
+      y: page5Height - 125,
+      size: 9,
       font: font,
       color: rgb(0, 0, 0)
     });
 
     // ID number in declaration - after "Of ID Number…"
     page5.drawText(borrower.idNumber, {
-      x: 285,
-      y: page5Height - 148,
-      size: 10,
+      x: 245,
+      y: page5Height - 125,
+      size: 9,
       font: font,
       color: rgb(0, 0, 0)
     });
 
     // Date in declaration - after "This day of……"
     page5.drawText(formatDateShort(issueDate), {
-      x: 175,
-      y: page5Height - 495,
-      size: 10,
+      x: 160,
+      y: page5Height - 470,
+      size: 9,
       font: font,
       color: rgb(0, 0, 0)
     });
