@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node auto-migrate.js && node auto-update-admin-password.js && node auto-clean-test-data.js && node index.js",
+    "start": "node auto-migrate.js && node auto-update-admin-password.js && node auto-clean-test-data.js && node sync-database.js && node index.js",
     "dev": "node index.js",
     "seed": "node seed.js",
     "migrate": "node migrate-access-to-mysql.js --migrate",
