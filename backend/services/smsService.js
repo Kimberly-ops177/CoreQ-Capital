@@ -17,11 +17,14 @@ function initializeSMS() {
   try {
     const client = africastalking({
       apiKey: process.env.AFRICASTALKING_API_KEY,
-      username: process.env.AFRICASTALKING_USERNAME
+      username: process.env.AFRICASTALKING_USERNAME,
+      // Use production mode to send SMS to real phone numbers
+      // Sandbox mode blacklists all real numbers
+      format: 'json'
     });
 
     smsClient = client.SMS;
-    console.log('✅ Africa\'s Talking SMS service initialized');
+    console.log('✅ Africa\'s Talking SMS service initialized in production mode');
     return smsClient;
   } catch (error) {
     console.error('❌ Failed to initialize Africa\'s Talking:', error);
