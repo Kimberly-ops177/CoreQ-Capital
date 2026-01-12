@@ -405,22 +405,25 @@ const LoanApplicationForm = () => {
                   severity="success"
                   sx={{
                     backgroundColor: '#e8f5e9',
-                    border: '2px solid #4caf50'
+                    border: '2px solid #4caf50',
+                    '& .MuiAlert-message': {
+                      color: '#1b5e20'
+                    }
                   }}
                 >
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" gutterBottom sx={{ color: '#1b5e20' }}>
                     Welcome Back! 🎉
                   </Typography>
-                  <Typography variant="body2" gutterBottom>
+                  <Typography variant="body2" gutterBottom sx={{ color: '#1b5e20' }}>
                     <strong>{borrowerHistory.borrower.fullName}</strong> - You're a valued customer!
                   </Typography>
-                  <Typography variant="body2">
+                  <Typography variant="body2" sx={{ color: '#1b5e20' }}>
                     • Loan History: {borrowerHistory.loanHistory.loansRepaid} loan(s) successfully repaid
                     {borrowerHistory.loanHistory.tier === 'silver' && ' (Returning Customer)'}
                     {borrowerHistory.loanHistory.tier === 'gold' && ' (Valued Customer) ⭐'}
                     {borrowerHistory.loanHistory.loansDefaulted > 0 && ' (Previous defaults: ' + borrowerHistory.loanHistory.loansDefaulted + ')'}
                   </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#2e7d32', mt: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#1b5e20', mt: 1 }}>
                     ✓ Special Benefit: Interest rates and repayment period are <strong>negotiable</strong> for all your loans!
                   </Typography>
                 </Alert>
