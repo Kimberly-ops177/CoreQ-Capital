@@ -121,6 +121,10 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// ONE-TIME MIGRATION ROUTE - DELETE AFTER USE!
+const migrateRoutes = require('./routes/migrate');
+app.use('/api/migrate', migrateRoutes);
+
 app.use('/api/auth', authRoutes);
 app.use('/api/borrowers', borrowerRoutes);
 app.use('/api/collaterals', collateralRoutes);
