@@ -69,29 +69,29 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
 
     // Borrower name - place after "NAME: "
     page1.drawText(borrower.fullName.toUpperCase(), {
-      x: 185,
-      y: page1Height - 370,
-      size: 10,
+      x: 135,
+      y: page1Height - 368,
+      size: 9,
       font: boldFont,
       color: rgb(0, 0, 0)
     });
 
     // ID number - place after "OF ID: "
     page1.drawText(borrower.idNumber, {
-      x: 410,
-      y: page1Height - 370,
-      size: 10,
+      x: 360,
+      y: page1Height - 368,
+      size: 9,
       font: boldFont,
       color: rgb(0, 0, 0)
     });
 
     // Date (centered below DATED)
     const dateText = formatDateShort(issueDate);
-    const dateTextWidth = boldFont.widthOfTextAtSize(dateText, 11);
+    const dateTextWidth = boldFont.widthOfTextAtSize(dateText, 10);
     page1.drawText(dateText, {
       x: (page1Width - dateTextWidth) / 2,
-      y: page1Height - 432,
-      size: 11,
+      y: page1Height - 430,
+      size: 10,
       font: boldFont,
       color: rgb(0, 0, 0)
     });
