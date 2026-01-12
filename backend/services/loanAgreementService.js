@@ -72,7 +72,7 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
       x: 95,
       y: page1Height - 272,
       size: 10,
-      font: font,
+      font: boldFont,
       color: rgb(0, 0, 0)
     });
 
@@ -81,18 +81,18 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
       x: 330,
       y: page1Height - 272,
       size: 10,
-      font: font,
+      font: boldFont,
       color: rgb(0, 0, 0)
     });
 
     // Date (centered below DATED)
     const dateText = formatDateShort(issueDate);
-    const dateTextWidth = font.widthOfTextAtSize(dateText, 10);
+    const dateTextWidth = boldFont.widthOfTextAtSize(dateText, 10);
     page1.drawText(dateText, {
       x: (page1Width - dateTextWidth) / 2,
       y: page1Height - 306,
       size: 10,
-      font: font,
+      font: boldFont,
       color: rgb(0, 0, 0)
     });
 
