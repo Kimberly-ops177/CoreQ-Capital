@@ -3,6 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const { sendEmail } = require('./notificationService');
 
+// Load PDF coordinates from config file
+const coordsPath = path.join(__dirname, '../config/pdf-coordinates.json');
+const PDF_COORDS = JSON.parse(fs.readFileSync(coordsPath, 'utf8'));
+
 /**
  * Generate loan agreement PDF using the template and filling in borrower details
  * This preserves all existing signatures, stamps, and formatting from the template
@@ -57,42 +61,44 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
     // PAGE 1: Fill in cover page details
     const page1 = pages[0];
     const { width: page1Width, height: page1Height } = page1.getSize();
+    const p1 = PDF_COORDS.page1;
 
     // Loan ID (top left, large)
     page1.drawText(loan.loanId || loan.id.toString(), {
-      x: 50,
-      y: page1Height - 100,
-      size: 28,
+      x: p1.loanId.x,
+      y: page1Height - p1.loanId.y_from_top,
+      size: p1.loanId.size,
       font: boldFont,
       color: rgb(0, 0, 0)
     });
 
-    // Borrower name - right after "NAME:" on the underline
+    // Borrower name
     page1.drawText(borrower.fullName.toUpperCase(), {
-      x: 95,
-      y: 266,
-      size: 9,
-      font: boldFont,
+      x: p1.borrowerName.x,
+      y: p1.borrowerName.y_from_bottom,
+      size: p1.borrowerName.size,
+      font: p1.borrowerName.bold ? boldFont : font,
       color: rgb(0, 0, 0)
     });
 
-    // ID number - right after "OF ID" on the same underline
+    // ID number
     page1.drawText(borrower.idNumber, {
-      x: 330,
-      y: 266,
-      size: 9,
-      font: boldFont,
+      x: p1.idNumber.x,
+      y: p1.idNumber.y_from_bottom,
+      size: p1.idNumber.size,
+      font: p1.idNumber.bold ? boldFont : font,
       color: rgb(0, 0, 0)
     });
 
     // Date (centered below DATED)
     const dateText = formatDateShort(issueDate);
-    const dateTextWidth = boldFont.widthOfTextAtSize(dateText, 9);
+    const dateFont = p1.date.bold ? boldFont : font;
+    const dateTextWidth = dateFont.widthOfTextAtSize(dateText, p1.date.size);
     page1.drawText(dateText, {
-      x: (page1Width - dateTextWidth) / 2,
-      y: 228,
-      size: 9,
-      font: boldFont,
+      x: p1.date.x_centered ? (page1Width - dateTextWidth) / 2 : p1.date.x,
+      y: p1.date.y_from_bottom,
+      size: p1.date.size,
+      font: dateFont,
       color: rgb(0, 0, 0)
     });
 
