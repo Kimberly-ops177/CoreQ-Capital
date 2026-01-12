@@ -67,32 +67,32 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
       color: rgb(0, 0, 0)
     });
 
-    // Borrower name - place after "NAME: "
+    // Borrower name - place on the line after "NAME:"
     page1.drawText(borrower.fullName.toUpperCase(), {
-      x: 135,
-      y: page1Height - 368,
-      size: 9,
-      font: boldFont,
+      x: 95,
+      y: page1Height - 272,
+      size: 10,
+      font: font,
       color: rgb(0, 0, 0)
     });
 
-    // ID number - place after "OF ID: "
+    // ID number - place on the line after "OF ID"
     page1.drawText(borrower.idNumber, {
-      x: 360,
-      y: page1Height - 368,
-      size: 9,
-      font: boldFont,
+      x: 330,
+      y: page1Height - 272,
+      size: 10,
+      font: font,
       color: rgb(0, 0, 0)
     });
 
     // Date (centered below DATED)
     const dateText = formatDateShort(issueDate);
-    const dateTextWidth = boldFont.widthOfTextAtSize(dateText, 10);
+    const dateTextWidth = font.widthOfTextAtSize(dateText, 10);
     page1.drawText(dateText, {
       x: (page1Width - dateTextWidth) / 2,
-      y: page1Height - 430,
+      y: page1Height - 306,
       size: 10,
-      font: boldFont,
+      font: font,
       color: rgb(0, 0, 0)
     });
 
@@ -102,81 +102,81 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
 
     // Date at top of page 2 - after the dots
     page2.drawText(formatDateShort(issueDate), {
-      x: 250,
-      y: page2Height - 52,
-      size: 10,
+      x: 260,
+      y: page2Height - 74,
+      size: 9,
       font: font,
       color: rgb(0, 0, 0)
     });
 
-    // Borrower name in party section - after the dots
+    // Borrower name in party section - on the line with dots
     page2.drawText(borrower.fullName.toUpperCase(), {
-      x: 60,
-      y: page2Height - 122,
-      size: 10,
+      x: 40,
+      y: page2Height - 192,
+      size: 8,
       font: font,
       color: rgb(0, 0, 0)
     });
 
     // ID number - after "of ID number:"
     page2.drawText(borrower.idNumber, {
-      x: 250,
-      y: page2Height - 122,
-      size: 10,
+      x: 290,
+      y: page2Height - 192,
+      size: 8,
       font: font,
       color: rgb(0, 0, 0)
     });
 
     // Phone number - after "Phone Number"
     page2.drawText(borrower.phoneNumber, {
-      x: 310,
-      y: page2Height - 122,
-      size: 10,
+      x: 415,
+      y: page2Height - 192,
+      size: 8,
       font: font,
       color: rgb(0, 0, 0)
     });
 
     // ID number in WHEREAS section B
     page2.drawText(borrower.idNumber, {
-      x: 405,
-      y: page2Height - 212,
-      size: 10,
+      x: 480,
+      y: page2Height - 257,
+      size: 8,
       font: font,
       color: rgb(0, 0, 0)
     });
 
     // Loan amount issued - after "Ksh"
     page2.drawText(amountIssued.toLocaleString(), {
-      x: 360,
-      y: page2Height - 445,
-      size: 10,
+      x: 150,
+      y: page2Height - 540,
+      size: 8,
       font: font,
       color: rgb(0, 0, 0)
     });
 
-    // Due date - before "Amount"
+    // Due date - on the dotted line
     page2.drawText(formatDateShort(dueDate), {
-      x: 445,
-      y: page2Height - 445,
-      size: 10,
+      x: 300,
+      y: page2Height - 540,
+      size: 8,
       font: font,
       color: rgb(0, 0, 0)
     });
 
     // Total amount to be repaid - after "Amount…Ksh"
     page2.drawText(totalAmount.toLocaleString(), {
-      x: 85,
-      y: page2Height - 460,
-      size: 10,
+      x: 60,
+      y: page2Height - 556,
+      size: 8,
       font: font,
       color: rgb(0, 0, 0)
     });
 
-    // Loan period - after "Loan Period"
+    // Loan period - in the dotted space
     page2.drawText(`${loan.loanPeriod} week(s)`, {
-      x: 195,
-      y: page2Height - 518,
-      size: 10,
+      x: 140,
+      y: page2Height - 620,
+      size: 8,
       font: font,
       color: rgb(0, 0, 0)
     });
