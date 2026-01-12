@@ -69,8 +69,8 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
 
     // Borrower name - place on the line after "NAME:"
     page1.drawText(borrower.fullName.toUpperCase(), {
-      x: 95,
-      y: page1Height - 272,
+      x: 100,
+      y: page1Height - 520,
       size: 10,
       font: boldFont,
       color: rgb(0, 0, 0)
@@ -78,8 +78,8 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
 
     // ID number - place on the line after "OF ID"
     page1.drawText(borrower.idNumber, {
-      x: 330,
-      y: page1Height - 272,
+      x: 335,
+      y: page1Height - 520,
       size: 10,
       font: boldFont,
       color: rgb(0, 0, 0)
@@ -90,7 +90,7 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
     const dateTextWidth = boldFont.widthOfTextAtSize(dateText, 10);
     page1.drawText(dateText, {
       x: (page1Width - dateTextWidth) / 2,
-      y: page1Height - 306,
+      y: page1Height - 560,
       size: 10,
       font: boldFont,
       color: rgb(0, 0, 0)
