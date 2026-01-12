@@ -23,12 +23,14 @@ async function syncDatabase() {
     console.log('  - loansRepaid');
     console.log('  - loansDefaulted');
     console.log('  - lastLoanDate');
-
-    process.exit(0);
   } catch (error) {
     console.error('❌ Sync failed:', error);
-    process.exit(1);
+    console.error('Continuing with server startup...');
   }
 }
 
-syncDatabase();
+syncDatabase().then(() => {
+  console.log('Database sync completed, continuing...');
+}).catch(err => {
+  console.error('Database sync error:', err);
+});
