@@ -499,6 +499,7 @@ const makePayment = async (req, res) => {
     const totalDue = parseFloat(loan.totalAmount) + parseFloat(loan.penalties || 0);
 
     let newStatus = loan.status;
+    const wasJustPaid = newAmountRepaid >= totalDue && loan.status !== 'paid';
     if (newAmountRepaid >= totalDue) {
       newStatus = 'paid';
     }
@@ -508,6 +509,17 @@ const makePayment = async (req, res) => {
       lastPaymentDate: paymentDate || new Date(),
       status: newStatus
     });
+
+    // If loan was just paid off, update borrower's repaid count
+    if (wasJustPaid) {
+      const borrower = await Borrower.findByPk(loan.borrowerId);
+      if (borrower) {
+        await borrower.update({
+          loansRepaid: (borrower.loansRepaid || 0) + 1
+        });
+        console.log(`✅ Loan ${loan.id} paid in full. Updated borrower ${borrower.id} repaid count to ${borrower.loansRepaid + 1}`);
+      }
+    }
 
     const updatedLoan = await Loan.findByPk(loan.id, {
       include: [

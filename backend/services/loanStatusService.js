@@ -168,6 +168,14 @@ const processAllLoans = async () => {
             results.defaulted++;
             console.log(`Loan ${loan.id} DEFAULTED - sending notifications...`);
             await sendDefaultNotification(loan, loan.borrower);
+
+            // Update borrower's defaulted loan count
+            if (loan.borrower) {
+              await loan.borrower.update({
+                loansDefaulted: (loan.borrower.loansDefaulted || 0) + 1
+              });
+              console.log(`Updated borrower ${loan.borrower.id} defaulted count to ${loan.borrower.loansDefaulted + 1}`);
+            }
           }
         }
 

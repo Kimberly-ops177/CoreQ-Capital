@@ -46,6 +46,11 @@ const LoanApplicationForm = () => {
   const [businessRules, setBusinessRules] = useState({});
   const [loanCalculation, setLoanCalculation] = useState(null);
 
+  // Second-time borrower tracking
+  const [borrowerHistory, setBorrowerHistory] = useState(null);
+  const [isSecondTimeBorrower, setIsSecondTimeBorrower] = useState(false);
+  const [checkingBorrower, setCheckingBorrower] = useState(false);
+
   // Borrower Data
   const [borrowerData, setBorrowerData] = useState({
     fullName: '',
@@ -152,13 +157,71 @@ const LoanApplicationForm = () => {
     }
   };
 
-  // Check if loan is negotiable based on amount
+  // Check if borrower exists and get their loan history
+  const checkBorrowerHistory = async (idNumber) => {
+    if (!idNumber || idNumber.length < 5) {
+      setBorrowerHistory(null);
+      setIsSecondTimeBorrower(false);
+      return;
+    }
+
+    try {
+      setCheckingBorrower(true);
+      const res = await axios.get(`/api/loan-applications/check-borrower/${idNumber}`);
+
+      if (res.data.exists && res.data.isSecondTimeBorrower) {
+        setBorrowerHistory(res.data);
+        setIsSecondTimeBorrower(true);
+
+        // Pre-fill borrower data if exists
+        if (res.data.borrower) {
+          setBorrowerData(prev => ({
+            ...prev,
+            fullName: res.data.borrower.fullName || prev.fullName,
+            phoneNumber: res.data.borrower.phoneNumber || prev.phoneNumber,
+            email: res.data.borrower.email || prev.email,
+            location: res.data.borrower.location || prev.location,
+            apartment: res.data.borrower.apartment || prev.apartment,
+            houseNumber: res.data.borrower.houseNumber || prev.houseNumber,
+            isStudent: res.data.borrower.isStudent || prev.isStudent,
+            institution: res.data.borrower.institution || prev.institution,
+            registrationNumber: res.data.borrower.registrationNumber || prev.registrationNumber,
+            emergencyNumber: res.data.borrower.emergencyNumber || prev.emergencyNumber
+          }));
+        }
+
+        // Make loan negotiable for second-time borrowers
+        setLoanData(prev => ({ ...prev, isNegotiable: true }));
+      } else {
+        setBorrowerHistory(null);
+        setIsSecondTimeBorrower(false);
+      }
+    } catch (err) {
+      console.error('Error checking borrower:', err);
+      setBorrowerHistory(null);
+      setIsSecondTimeBorrower(false);
+    } finally {
+      setCheckingBorrower(false);
+    }
+  };
+
+  // Check borrower when ID number changes
+  useEffect(() => {
+    if (borrowerData.idNumber && !isEditMode) {
+      const timeoutId = setTimeout(() => {
+        checkBorrowerHistory(borrowerData.idNumber);
+      }, 500); // Debounce to avoid too many API calls
+      return () => clearTimeout(timeoutId);
+    }
+  }, [borrowerData.idNumber, isEditMode]);
+
+  // Check if loan is negotiable based on amount OR second-time borrower status
   useEffect(() => {
     if (loanData.amountIssued) {
       const amount = parseFloat(loanData.amountIssued);
 
-      // Check if negotiable (>50k)
-      if (amount > (businessRules.negotiableThreshold || 50000)) {
+      // Check if negotiable (>50k OR second-time borrower)
+      if (amount > (businessRules.negotiableThreshold || 50000) || isSecondTimeBorrower) {
         setLoanData(prev => ({ ...prev, isNegotiable: true }));
       } else {
         setLoanData(prev => ({
@@ -168,7 +231,7 @@ const LoanApplicationForm = () => {
         }));
       }
     }
-  }, [loanData.amountIssued, businessRules]);
+  }, [loanData.amountIssued, businessRules, isSecondTimeBorrower]);
 
   // Auto-calculate loan terms
   useEffect(() => {
@@ -326,6 +389,48 @@ const LoanApplicationForm = () => {
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>Borrower Information</Typography>
             </Grid>
+
+            {/* Second-time borrower welcome banner */}
+            {checkingBorrower && (
+              <Grid item xs={12}>
+                <Alert severity="info" icon={<CircularProgress size={20} />}>
+                  Checking borrower history...
+                </Alert>
+              </Grid>
+            )}
+
+            {isSecondTimeBorrower && borrowerHistory && (
+              <Grid item xs={12}>
+                <Alert
+                  severity="success"
+                  sx={{
+                    backgroundColor: '#e8f5e9',
+                    border: '2px solid #4caf50'
+                  }}
+                >
+                  <Typography variant="h6" gutterBottom>
+                    Welcome Back! 🎉
+                  </Typography>
+                  <Typography variant="body2" gutterBottom>
+                    <strong>{borrowerHistory.borrower.fullName}</strong> - You're a valued customer!
+                  </Typography>
+                  <Typography variant="body2">
+                    • Loan History: {borrowerHistory.loanHistory.loansRepaid} loan(s) successfully repaid
+                    {borrowerHistory.loanHistory.tier === 'silver' && ' (Silver Tier)'}
+                    {borrowerHistory.loanHistory.tier === 'gold' && ' (Gold Tier) ⭐'}
+                  </Typography>
+                  {borrowerHistory.benefits.discountMessage && (
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#2e7d32', mt: 1 }}>
+                      {borrowerHistory.benefits.discountMessage}
+                    </Typography>
+                  )}
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    • Benefit: Interest rates and repayment period are <strong>negotiable</strong> for you!
+                  </Typography>
+                </Alert>
+              </Grid>
+            )}
+
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -550,7 +655,18 @@ const LoanApplicationForm = () => {
             {loanData.isNegotiable && (
               <Grid item xs={12}>
                 <Alert severity="info" sx={{ mb: 2 }}>
-                  💡 This loan amount exceeds KSH {(businessRules.negotiableThreshold || 50000).toLocaleString()} and has negotiable terms. You can set a custom interest rate below.
+                  {isSecondTimeBorrower ? (
+                    <>
+                      🎉 <strong>Special Terms Available!</strong> As a returning customer, you can negotiate both the interest rate and repayment period for this loan.
+                      {borrowerHistory?.benefits?.discountMessage && (
+                        <><br />{borrowerHistory.benefits.discountMessage}</>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      💡 This loan amount exceeds KSH {(businessRules.negotiableThreshold || 50000).toLocaleString()} and has negotiable terms. You can set a custom interest rate and period below.
+                    </>
+                  )}
                 </Alert>
               </Grid>
             )}

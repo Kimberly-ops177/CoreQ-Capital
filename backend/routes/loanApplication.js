@@ -56,16 +56,60 @@ router.post('/', auth, async (req, res) => {
       });
     }
 
-    // 1. Create Borrower
-    const newBorrower = await Borrower.create(borrower, { transaction });
+    // 1. Check if borrower exists (for second-time loan benefits)
+    let existingBorrower = null;
+    let isSecondTimeLoan = false;
+    let discountPercentage = 0;
 
-    // 2. Create Collateral linked to borrower
+    if (borrower.idNumber) {
+      existingBorrower = await Borrower.findOne({
+        where: { idNumber: borrower.idNumber },
+        include: [{
+          model: Loan,
+          as: 'loans',
+          attributes: ['status']
+        }]
+      });
+    }
+
+    // Determine if this is a second-time loan and calculate discount
+    if (existingBorrower) {
+      const paidLoans = existingBorrower.loans ? existingBorrower.loans.filter(l => l.status === 'paid').length : 0;
+      const defaultedLoans = existingBorrower.loans ? existingBorrower.loans.filter(l => l.status === 'defaulted').length : 0;
+
+      if (paidLoans > 0) {
+        isSecondTimeLoan = true;
+
+        if (defaultedLoans > 0) {
+          discountPercentage = -5; // 5% penalty for previous defaults
+        } else if (paidLoans >= 2) {
+          discountPercentage = 5; // 5% discount for 3+ loans
+        } else if (paidLoans === 1) {
+          discountPercentage = 2; // 2% discount for 2nd loan
+        }
+      }
+    }
+
+    // 2. Create or update Borrower
+    const newBorrower = existingBorrower
+      ? await existingBorrower.update({
+          ...borrower,
+          totalLoans: (existingBorrower.totalLoans || 0) + 1,
+          lastLoanDate: new Date()
+        }, { transaction })
+      : await Borrower.create({
+          ...borrower,
+          totalLoans: 1,
+          lastLoanDate: new Date()
+        }, { transaction });
+
+    // 3. Create Collateral linked to borrower
     const newCollateral = await Collateral.create({
       ...collateral,
       borrowerId: newBorrower.id
     }, { transaction });
 
-    // 3. Get standard interest rates
+    // 4. Get standard interest rates
     const standardRates = {
       1: 20,
       2: 28,
@@ -78,7 +122,7 @@ router.post('/', auth, async (req, res) => {
       negotiableThreshold: 50000
     };
 
-    // 4. Validate loan business rules
+    // 5. Validate loan business rules
     const amount = parseFloat(loan.amountIssued);
     const period = parseInt(loan.loanPeriod);
 
@@ -89,20 +133,40 @@ router.post('/', auth, async (req, res) => {
       });
     }
 
-    // 5. Determine interest rate
+    // 6. Determine interest rate
     let interestRate;
-    if (amount > businessRules.negotiableThreshold) {
+    const isNegotiableLoan = amount > businessRules.negotiableThreshold || isSecondTimeLoan;
+
+    if (isNegotiableLoan) {
       // Negotiable loan - use custom rate if provided
       if (!loan.interestRate) {
         await transaction.rollback();
         return res.status(400).send({
-          error: 'Loans above KSH 50,000 require a custom interest rate'
+          error: isSecondTimeLoan
+            ? 'As a returning customer, please specify your negotiated interest rate'
+            : 'Loans above KSH 50,000 require a custom interest rate'
         });
       }
       interestRate = parseFloat(loan.interestRate);
     } else {
       // Standard loan - use fixed rate
       interestRate = standardRates[period];
+    }
+
+    // 7. Apply discount/penalty for second-time borrowers
+    if (isSecondTimeLoan && discountPercentage !== 0) {
+      const originalRate = interestRate;
+      interestRate = interestRate - discountPercentage;
+
+      // Ensure rate doesn't go negative
+      if (interestRate < 0) interestRate = 0;
+
+      console.log(`📊 Second-time loan discount applied:`, {
+        borrowerId: newBorrower.id,
+        originalRate: `${originalRate}%`,
+        discount: `${discountPercentage}%`,
+        finalRate: `${interestRate}%`
+      });
     }
 
     // 6. Calculate loan totals
@@ -131,10 +195,14 @@ router.post('/', auth, async (req, res) => {
       totalAmount: totalAmount,
       amountRepaid: 0,
       penalties: 0,
-      isNegotiable: amount > businessRules.negotiableThreshold,
+      isNegotiable: isNegotiableLoan,
       gracePeriodEnd: gracePeriodEnd,
       branchId: req.user.currentBranchId || null,
-      agreementStatus: 'pending_approval' // NEW: Agreement workflow status
+      agreementStatus: 'pending_approval', // NEW: Agreement workflow status
+      // Track second-time loan info in notes for reference
+      notes: isSecondTimeLoan
+        ? `Second-time loan. Discount applied: ${discountPercentage}%. Previous paid loans: ${existingBorrower.loans.filter(l => l.status === 'paid').length}`
+        : null
     }, { transaction });
 
     // Commit transaction
@@ -679,6 +747,97 @@ router.put('/:id', auth, async (req, res) => {
   } catch (error) {
     await transaction.rollback();
     console.error('Error updating loan application:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+/**
+ * Check if borrower qualifies for second-time loan benefits
+ * GET /api/loan-applications/check-borrower/:idNumber
+ */
+router.get('/check-borrower/:idNumber', auth, async (req, res) => {
+  try {
+    const { idNumber } = req.params;
+
+    // Find borrower by ID number
+    const borrower = await Borrower.findOne({
+      where: { idNumber },
+      include: [{
+        model: Loan,
+        as: 'loans',
+        attributes: ['id', 'status', 'dateIssued', 'dueDate', 'amountIssued', 'totalAmount', 'amountRepaid']
+      }]
+    });
+
+    if (!borrower) {
+      return res.send({
+        exists: false,
+        isSecondTimeBorrower: false,
+        message: 'New borrower'
+      });
+    }
+
+    // Count completed loans (paid status)
+    const paidLoans = borrower.loans ? borrower.loans.filter(loan => loan.status === 'paid').length : 0;
+    const defaultedLoans = borrower.loans ? borrower.loans.filter(loan => loan.status === 'defaulted').length : 0;
+    const totalLoans = borrower.loans ? borrower.loans.length : 0;
+
+    // Calculate discount tier
+    let discountPercentage = 0;
+    let tier = 'new';
+
+    if (defaultedLoans > 0) {
+      // Penalty for defaulted loans
+      discountPercentage = -5; // 5% penalty (rates increase)
+      tier = 'at-risk';
+    } else if (paidLoans >= 2) {
+      // 3rd+ loan: 5% discount
+      discountPercentage = 5;
+      tier = 'gold';
+    } else if (paidLoans === 1) {
+      // 2nd loan: 2% discount
+      discountPercentage = 2;
+      tier = 'silver';
+    }
+
+    const isSecondTimeBorrower = paidLoans > 0;
+
+    res.send({
+      exists: true,
+      isSecondTimeBorrower,
+      borrower: {
+        id: borrower.id,
+        fullName: borrower.fullName,
+        phoneNumber: borrower.phoneNumber,
+        email: borrower.email,
+        location: borrower.location,
+        apartment: borrower.apartment,
+        houseNumber: borrower.houseNumber,
+        isStudent: borrower.isStudent,
+        institution: borrower.institution,
+        registrationNumber: borrower.registrationNumber,
+        emergencyNumber: borrower.emergencyNumber
+      },
+      loanHistory: {
+        totalLoans,
+        loansRepaid: paidLoans,
+        loansDefaulted: defaultedLoans,
+        tier,
+        discountPercentage
+      },
+      benefits: {
+        negotiableRates: isSecondTimeBorrower,
+        negotiablePeriod: isSecondTimeBorrower,
+        discountMessage: discountPercentage > 0
+          ? `As a returning customer, you get ${discountPercentage}% off interest rates!`
+          : discountPercentage < 0
+          ? `Due to previous defaults, rates have a ${Math.abs(discountPercentage)}% increase.`
+          : null
+      }
+    });
+
+  } catch (error) {
+    console.error('Error checking borrower:', error);
     res.status(500).send({ error: error.message });
   }
 });

@@ -46,6 +46,27 @@ const Borrower = sequelize.define('Borrower', {
   emergencyNumber: {
     type: DataTypes.STRING
   },
+  // Loan history tracking for second-time loan benefits
+  totalLoans: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: 'Total number of loans taken by this borrower'
+  },
+  loansRepaid: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: 'Number of loans successfully repaid'
+  },
+  loansDefaulted: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: 'Number of loans that defaulted'
+  },
+  lastLoanDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Date of most recent loan'
+  },
   createdAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
