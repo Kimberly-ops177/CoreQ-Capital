@@ -44,40 +44,48 @@ async function createFormTemplate() {
     loanIdField.setFontSize(28);
     loanIdField.enableReadOnly();
     loanIdField.setAlignment(0); // Left align
+    loanIdField.disableScrolling();
+    loanIdField.updateAppearances(font);
 
-    // Borrower name on cover page
+    // Borrower name on cover page - adjusted to line up with the NAME: label
     const borrowerNameP1 = form.createTextField('borrower_name_p1');
     borrowerNameP1.addToPage(page1, {
-      x: 95,
-      y: 266,
-      width: 220,
-      height: 12,
+      x: 105,  // After "NAME:"
+      y: 520,  // Adjusted higher on page
+      width: 250,
+      height: 14,
     });
-    borrowerNameP1.setFontSize(9);
+    borrowerNameP1.setFontSize(10);
     borrowerNameP1.enableReadOnly();
+    borrowerNameP1.disableScrolling();
+    borrowerNameP1.updateAppearances(font);
 
-    // ID Number on cover page
+    // ID Number on cover page - adjusted to line up with OF ID label
     const idNumberP1 = form.createTextField('id_number_p1');
     idNumberP1.addToPage(page1, {
-      x: 330,
-      y: 266,
-      width: 150,
-      height: 12,
+      x: 385,  // After "OF ID"
+      y: 520,  // Same line as name
+      width: 170,
+      height: 14,
     });
-    idNumberP1.setFontSize(9);
+    idNumberP1.setFontSize(10);
     idNumberP1.enableReadOnly();
+    idNumberP1.disableScrolling();
+    idNumberP1.updateAppearances(font);
 
-    // Date on cover page (centered)
+    // Date on cover page (centered below DATED)
     const dateP1 = form.createTextField('date_p1');
     dateP1.addToPage(page1, {
-      x: (p1Width - 100) / 2, // Centered
-      y: 228,
-      width: 100,
-      height: 12,
+      x: (p1Width - 120) / 2, // Centered
+      y: 475,  // Below DATED text
+      width: 120,
+      height: 14,
     });
-    dateP1.setFontSize(9);
+    dateP1.setFontSize(10);
     dateP1.enableReadOnly();
     dateP1.setAlignment(1); // Center align
+    dateP1.disableScrolling();
+    dateP1.updateAppearances(font);
 
     console.log('Adding form fields to Page 2...');
     // PAGE 2 FORM FIELDS
@@ -93,6 +101,8 @@ async function createFormTemplate() {
     });
     dateTopP2.setFontSize(9);
     dateTopP2.enableReadOnly();
+    dateTopP2.disableScrolling();
+    dateTopP2.updateAppearances(font);
 
     // Borrower name in parties section
     const borrowerNameP2 = form.createTextField('borrower_name_p2');
@@ -104,6 +114,8 @@ async function createFormTemplate() {
     });
     borrowerNameP2.setFontSize(8);
     borrowerNameP2.enableReadOnly();
+    borrowerNameP2.disableScrolling();
+    borrowerNameP2.updateAppearances(font);
 
     // ID number after "of ID number:"
     const idNumberP2 = form.createTextField('id_number_p2');
@@ -115,6 +127,8 @@ async function createFormTemplate() {
     });
     idNumberP2.setFontSize(8);
     idNumberP2.enableReadOnly();
+    idNumberP2.disableScrolling();
+    idNumberP2.updateAppearances(font);
 
     // Phone number
     const phoneNumber = form.createTextField('phone_number');
@@ -126,6 +140,8 @@ async function createFormTemplate() {
     });
     phoneNumber.setFontSize(8);
     phoneNumber.enableReadOnly();
+    phoneNumber.disableScrolling();
+    phoneNumber.updateAppearances(font);
 
     // ID number in WHEREAS clause
     const idNumberWhereas = form.createTextField('id_number_whereas');
@@ -137,6 +153,8 @@ async function createFormTemplate() {
     });
     idNumberWhereas.setFontSize(8);
     idNumberWhereas.enableReadOnly();
+    idNumberWhereas.disableScrolling();
+    idNumberWhereas.updateAppearances(font);
 
     // Loan amount issued
     const loanAmount = form.createTextField('loan_amount');
@@ -148,6 +166,8 @@ async function createFormTemplate() {
     });
     loanAmount.setFontSize(8);
     loanAmount.enableReadOnly();
+    loanAmount.disableScrolling();
+    loanAmount.updateAppearances(font);
 
     // Due date
     const dueDate = form.createTextField('due_date');
@@ -159,6 +179,8 @@ async function createFormTemplate() {
     });
     dueDate.setFontSize(8);
     dueDate.enableReadOnly();
+    dueDate.disableScrolling();
+    dueDate.updateAppearances(font);
 
     // Total amount to be repaid
     const totalAmount = form.createTextField('total_amount');
@@ -170,6 +192,8 @@ async function createFormTemplate() {
     });
     totalAmount.setFontSize(8);
     totalAmount.enableReadOnly();
+    totalAmount.disableScrolling();
+    totalAmount.updateAppearances(font);
 
     // Loan period
     const loanPeriod = form.createTextField('loan_period');
@@ -181,6 +205,8 @@ async function createFormTemplate() {
     });
     loanPeriod.setFontSize(8);
     loanPeriod.enableReadOnly();
+    loanPeriod.disableScrolling();
+    loanPeriod.updateAppearances(font);
 
     console.log('Adding form fields to Page 3...');
     // PAGE 3 FORM FIELDS (Collateral)
@@ -195,6 +221,8 @@ async function createFormTemplate() {
     });
     itemName.setFontSize(9);
     itemName.enableReadOnly();
+    itemName.disableScrolling();
+    itemName.updateAppearances(font);
 
     const modelNumber = form.createTextField('model_number');
     modelNumber.addToPage(page3, {
@@ -205,6 +233,8 @@ async function createFormTemplate() {
     });
     modelNumber.setFontSize(9);
     modelNumber.enableReadOnly();
+    modelNumber.disableScrolling();
+    modelNumber.updateAppearances(font);
 
     const serialNumber = form.createTextField('serial_number');
     serialNumber.addToPage(page3, {
@@ -215,6 +245,8 @@ async function createFormTemplate() {
     });
     serialNumber.setFontSize(9);
     serialNumber.enableReadOnly();
+    serialNumber.disableScrolling();
+    serialNumber.updateAppearances(font);
 
     const condition = form.createTextField('condition');
     condition.addToPage(page3, {
@@ -225,6 +257,8 @@ async function createFormTemplate() {
     });
     condition.setFontSize(9);
     condition.enableReadOnly();
+    condition.disableScrolling();
+    condition.updateAppearances(font);
 
     console.log('Adding form fields to Page 4...');
     // PAGE 4 FORM FIELDS (Certification)
@@ -239,6 +273,8 @@ async function createFormTemplate() {
     });
     dateP4.setFontSize(9);
     dateP4.enableReadOnly();
+    dateP4.disableScrolling();
+    dateP4.updateAppearances(font);
 
     const borrowerNameP4 = form.createTextField('borrower_name_p4');
     borrowerNameP4.addToPage(page4, {
@@ -249,6 +285,8 @@ async function createFormTemplate() {
     });
     borrowerNameP4.setFontSize(9);
     borrowerNameP4.enableReadOnly();
+    borrowerNameP4.disableScrolling();
+    borrowerNameP4.updateAppearances(font);
 
     console.log('Adding form fields to Page 5...');
     // PAGE 5 FORM FIELDS (Declaration)
@@ -263,6 +301,8 @@ async function createFormTemplate() {
     });
     borrowerNameP5.setFontSize(8);
     borrowerNameP5.enableReadOnly();
+    borrowerNameP5.disableScrolling();
+    borrowerNameP5.updateAppearances(font);
 
     const idNumberP5 = form.createTextField('id_number_p5');
     idNumberP5.addToPage(page5, {
@@ -273,6 +313,8 @@ async function createFormTemplate() {
     });
     idNumberP5.setFontSize(8);
     idNumberP5.enableReadOnly();
+    idNumberP5.disableScrolling();
+    idNumberP5.updateAppearances(font);
 
     const dateP5 = form.createTextField('date_p5');
     dateP5.addToPage(page5, {
@@ -283,6 +325,8 @@ async function createFormTemplate() {
     });
     dateP5.setFontSize(8);
     dateP5.enableReadOnly();
+    dateP5.disableScrolling();
+    dateP5.updateAppearances(font);
 
     // Save the new form-fillable template
     const outputPath = path.join(__dirname, 'templates/loan_agreement_form_template.pdf');
