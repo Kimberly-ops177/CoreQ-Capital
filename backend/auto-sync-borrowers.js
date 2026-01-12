@@ -6,13 +6,18 @@
 const sequelize = require('./config/database');
 
 async function autoSyncBorrowers() {
-  // Only run in production (when DATABASE_URL or MYSQLHOST is set)
-  const isProduction = process.env.DATABASE_URL || process.env.MYSQLHOST;
+  // Only run in production (Railway, Heroku, or other cloud platforms)
+  const isProduction = process.env.DATABASE_URL ||
+                       process.env.MYSQLHOST ||
+                       process.env.RAILWAY_ENVIRONMENT ||
+                       process.env.NODE_ENV === 'production';
 
   if (!isProduction) {
     console.log('Skipping borrowers table sync in non-production environment');
     return;
   }
+
+  console.log('🔄 Running borrowers table sync for production...');
 
   try {
     console.log('Checking borrowers table schema...');
