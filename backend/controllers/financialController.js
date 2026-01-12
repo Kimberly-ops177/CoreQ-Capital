@@ -63,6 +63,10 @@ const getAdminDashboardData = async (req, res) => {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
+    console.log('=== DASHBOARD DEBUG ===');
+    console.log('Current Date:', now.toISOString());
+    console.log('Month Start:', monthStart.toISOString());
+
     // Total Loaned Principal
     const totalLoanedResult = await Loan.findOne({
       attributes: [[fn('SUM', col('amountIssued')), 'total']],
@@ -70,6 +74,7 @@ const getAdminDashboardData = async (req, res) => {
       raw: true
     });
     const totalLoanedPrincipal = parseFloat(totalLoanedResult?.total || 0);
+    console.log('Total Loaned Principal:', totalLoanedPrincipal);
 
     // Total Outstanding Receivables
     const outstandingLoans = await Loan.findAll({
@@ -78,23 +83,30 @@ const getAdminDashboardData = async (req, res) => {
         agreementStatus: 'approved'
       }
     });
+    console.log('Outstanding Loans Count:', outstandingLoans.length);
     const totalOutstanding = outstandingLoans.reduce((sum, loan) => {
       const principalPlusInterest = parseFloat(loan.totalAmount) || 0;
       const penalties = parseFloat(loan.penalties || 0);
       const repaid = parseFloat(loan.amountRepaid || 0);
       const totalDue = principalPlusInterest + penalties;
       const outstanding = Math.max(0, totalDue - repaid);
+      console.log(`  Loan #${loan.loanId}: Total=${principalPlusInterest}, Penalties=${penalties}, Repaid=${repaid}, Outstanding=${outstanding}`);
       return sum + outstanding;
     }, 0);
+    console.log('Total Outstanding Receivables:', totalOutstanding);
 
     // Active Loans
     const activeLoansCount = await Loan.count({ where: { status: 'active', agreementStatus: 'approved' } });
+    console.log('Active Loans Count:', activeLoansCount);
 
     // Defaulted Loans
     const defaultedLoansCount = await Loan.count({ where: { status: 'defaulted', agreementStatus: 'approved' } });
+    console.log('Defaulted Loans Count:', defaultedLoansCount);
 
     // Month-to-Date Profit/Loss
     const monthPnL = await getPnLData(monthStart, now);
+    console.log('Month-to-Date P/L:', monthPnL);
+    console.log('=== END DASHBOARD DEBUG ===');
 
     // Month-to-Date Expenses
     const monthExpenses = await Expense.findAll({
@@ -328,6 +340,8 @@ const getEmployeeDashboardData = async (req, res) => {
 };
 
 const getPnLData = async (start, end) => {
+  console.log('  [P/L Debug] Calculating P/L between:', start.toISOString(), 'and', end.toISOString());
+
   const paidLoans = await Loan.findAll({
     where: {
       status: 'paid',
@@ -335,6 +349,13 @@ const getPnLData = async (start, end) => {
       dateIssued: { [Op.between]: [start, end] }
     }
   });
+
+  console.log('  [P/L Debug] Found', paidLoans.length, 'paid loans issued in this period');
+  paidLoans.forEach(loan => {
+    const interest = loan.totalAmount - loan.amountIssued;
+    console.log(`    Loan #${loan.loanId}: Issued=${loan.dateIssued?.toISOString()}, Principal=${loan.amountIssued}, Interest=${interest}, Penalties=${loan.penalties || 0}`);
+  });
+
   const interestEarned = paidLoans.reduce((sum, loan) => sum + (loan.totalAmount - loan.amountIssued), 0);
   const penaltiesCollected = paidLoans.reduce((sum, loan) => sum + (loan.penalties || 0), 0);
 
@@ -344,6 +365,7 @@ const getPnLData = async (start, end) => {
       createdAt: { [Op.between]: [start, end] }
     }
   });
+  console.log('  [P/L Debug] Found', soldCollaterals.length, 'sold collaterals in this period');
   const collateralRevenue = soldCollaterals.reduce((sum, col) => sum + (col.soldPrice || 0), 0);
 
   const totalRevenue = interestEarned + penaltiesCollected + collateralRevenue;
@@ -353,9 +375,12 @@ const getPnLData = async (start, end) => {
       date: { [Op.between]: [start, end] }
     }
   });
+  console.log('  [P/L Debug] Found', expenses.length, 'expenses in this period');
   const totalExpenses = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
 
   const netProfitLoss = totalRevenue - totalExpenses;
+  console.log('  [P/L Debug] Interest:', interestEarned, 'Penalties:', penaltiesCollected, 'Collateral:', collateralRevenue, 'Expenses:', totalExpenses, 'Net P/L:', netProfitLoss);
+
   return { totalRevenue, interestEarned, penaltiesCollected, collateralRevenue, totalExpenses, netProfitLoss };
 };
 
