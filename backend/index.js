@@ -19,6 +19,7 @@ const loanApplicationRoutes = require('./routes/loanApplication');
 const emergencyCleanupRoutes = require('./routes/emergency-cleanup');
 const { initializeScheduler } = require('./services/scheduler');
 const { initializeNotificationScheduler } = require('./services/loanNotificationScheduler');
+const { ensureBorrowersColumns } = require('./startup-migration');
 
 // Import models for associations
 const User = require('./models/User');
@@ -88,6 +89,9 @@ async function connectDB() {
   try {
     await sequelize.authenticate();
     console.log('MySQL database connected');
+
+    // CRITICAL: Ensure borrowers table has required columns BEFORE syncing
+    await ensureBorrowersColumns();
 
     // Sync all models
     await sequelize.sync({ force: false });
