@@ -1,34 +1,34 @@
 {
   "page1": {
-    "loanId": { "x": 50, "y_from_top": 100, "size": 28, "bold": true },
-    "borrowerName": { "x": 95, "y_from_bottom": 266, "size": 9, "bold": true },
-    "idNumber": { "x": 330, "y_from_bottom": 266, "size": 9, "bold": true },
-    "date": { "x_centered": true, "y_from_bottom": 228, "size": 9, "bold": true }
+    "loanId": { "x": 52, "y_from_top": 108, "size": 11, "bold": false },
+    "borrowerName": { "x": 138, "y_from_bottom": 505, "size": 9, "bold": false },
+    "idNumber": { "x": 475, "y_from_bottom": 505, "size": 9, "bold": false },
+    "date": { "x_centered": true, "y_from_bottom": 465, "size": 9, "bold": false }
   },
   "page2": {
-    "dateTop": { "x": 440, "y_from_bottom": 738, "size": 9 },
-    "borrowerName": { "x": 70, "y_from_bottom": 668, "size": 8 },
-    "idNumber": { "x": 315, "y_from_bottom": 668, "size": 8 },
-    "phoneNumber": { "x": 465, "y_from_bottom": 668, "size": 8 },
-    "idNumberWhereas": { "x": 530, "y_from_bottom": 578, "size": 8 },
-    "loanAmount": { "x": 95, "y_from_bottom": 348, "size": 8 },
-    "dueDate": { "x": 260, "y_from_bottom": 348, "size": 8 },
-    "totalAmount": { "x": 120, "y_from_bottom": 332, "size": 8 },
-    "loanPeriod": { "x": 215, "y_from_bottom": 268, "size": 8 }
+    "dateTop": { "x": 470, "y_from_bottom": 707, "size": 8 },
+    "borrowerName": { "x": 138, "y_from_bottom": 662, "size": 8 },
+    "idNumber": { "x": 465, "y_from_bottom": 662, "size": 8 },
+    "phoneNumber": { "x": 138, "y_from_bottom": 646, "size": 8 },
+    "idNumberWhereas": { "x": 472, "y_from_bottom": 553, "size": 8 },
+    "loanAmount": { "x": 273, "y_from_bottom": 304, "size": 8 },
+    "dueDate": { "x": 245, "y_from_bottom": 288, "size": 8 },
+    "totalAmount": { "x": 360, "y_from_bottom": 271, "size": 8 },
+    "loanPeriod": { "x": 395, "y_from_bottom": 190, "size": 8 }
   },
   "page3": {
-    "itemName": { "x": 195, "y_from_bottom": 690, "size": 9 },
-    "modelNumber": { "x": 195, "y_from_bottom": 674, "size": 9 },
-    "serialNumber": { "x": 195, "y_from_bottom": 658, "size": 9 },
-    "condition": { "x": 145, "y_from_bottom": 642, "size": 9 }
+    "itemName": { "x": 268, "y_from_bottom": 765, "size": 9 },
+    "modelNumber": { "x": 215, "y_from_bottom": 747, "size": 9 },
+    "serialNumber": { "x": 217, "y_from_bottom": 729, "size": 9 },
+    "condition": { "x": 218, "y_from_bottom": 711, "size": 9 }
   },
   "page4": {
-    "date": { "x": 305, "y_from_bottom": 410, "size": 9 },
-    "borrowerName": { "x": 245, "y_from_bottom": 395, "size": 9 }
+    "date": { "x": 475, "y_from_bottom": 417, "size": 9 },
+    "borrowerName": { "x": 255, "y_from_bottom": 359, "size": 9 }
   },
   "page5": {
-    "borrowerName": { "x": 22, "y_from_bottom": 667, "size": 8 },
-    "idNumber": { "x": 285, "y_from_bottom": 667, "size": 8 },
-    "date": { "x": 165, "y_from_bottom": 322, "size": 8 }
+    "borrowerName": { "x": 68, "y_from_bottom": 675, "size": 8 },
+    "idNumber": { "x": 482, "y_from_bottom": 675, "size": 8 },
+    "date": { "x": 250, "y_from_bottom": 365, "size": 8 }
   }
 }
