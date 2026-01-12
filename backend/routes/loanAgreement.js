@@ -7,6 +7,7 @@ const Loan = require('../models/Loan');
 const Borrower = require('../models/Borrower');
 const Collateral = require('../models/Collateral');
 const { sendCustomSMS } = require('../services/smsService');
+const { generateLoanAgreementPDF } = require('../services/loanAgreementService');
 
 const router = express.Router();
 
@@ -283,6 +284,132 @@ router.get('/pending', auth, adminOnly, async (req, res) => {
   } catch (error) {
     console.error('Error fetching pending agreements:', error);
     res.status(500).send({ error: error.message });
+  }
+});
+
+/**
+ * TEST ENDPOINT: Generate sample PDF with test data
+ * GET /api/loan-agreements/test-generate
+ * This helps verify template positioning before using real loan data
+ */
+router.get('/test-generate', auth, adminOnly, async (req, res) => {
+  try {
+    console.log('🧪 Test PDF generation requested');
+
+    // Create test data
+    const testLoan = {
+      id: 999,
+      loanId: 'TEST-001',
+      dateIssued: new Date(),
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 2 weeks from now
+      amountIssued: 10000,
+      totalAmount: 12800,
+      loanPeriod: 2,
+      interestRate: 28
+    };
+
+    const testBorrower = {
+      fullName: 'John Doe Test',
+      idNumber: '12345678',
+      phoneNumber: '0712345678',
+      email: 'test@example.com'
+    };
+
+    const testCollateral = {
+      itemName: 'HP Elitebook',
+      modelNumber: '840 G5',
+      serialNumber: '87h5ou8hro',
+      itemCondition: 'Good'
+    };
+
+    // Generate PDF
+    console.log('🔄 Generating test PDF...');
+    const result = await generateLoanAgreementPDF(testLoan, testBorrower, testCollateral);
+
+    console.log('✅ Test PDF generated:', result.filename);
+
+    // Send the PDF file as response
+    res.download(result.filepath, result.filename, (err) => {
+      if (err) {
+        console.error('Error sending test PDF:', err);
+        res.status(500).send({ error: 'Failed to send test PDF' });
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error generating test PDF:', error);
+    res.status(500).send({
+      error: error.message,
+      details: 'Check if template file exists at backend/templates/loan_agreement_template.pdf'
+    });
+  }
+});
+
+/**
+ * Regenerate PDF for existing loan
+ * POST /api/loan-agreements/:loanId/regenerate
+ * Admin only - useful for fixing loans with missing PDFs
+ */
+router.post('/:loanId/regenerate', auth, adminOnly, async (req, res) => {
+  try {
+    const { loanId } = req.params;
+
+    console.log(`🔄 Regenerating PDF for loan #${loanId}`);
+
+    // Find the loan with all associations
+    const loan = await Loan.findByPk(loanId, {
+      include: [
+        { model: Borrower, as: 'borrower' },
+        { model: Collateral, as: 'collateral' }
+      ]
+    });
+
+    if (!loan) {
+      return res.status(404).send({ error: 'Loan not found' });
+    }
+
+    if (!loan.borrower) {
+      return res.status(400).send({ error: 'Loan has no borrower information' });
+    }
+
+    if (!loan.collateral) {
+      return res.status(400).send({ error: 'Loan has no collateral information' });
+    }
+
+    // Delete old PDF if exists
+    if (loan.unsignedAgreementPath && fs.existsSync(loan.unsignedAgreementPath)) {
+      fs.unlinkSync(loan.unsignedAgreementPath);
+      console.log('✓ Deleted old PDF file');
+    }
+
+    // Generate new PDF
+    const result = await generateLoanAgreementPDF(loan, loan.borrower, loan.collateral);
+
+    // Update database with new path
+    await loan.update({
+      unsignedAgreementPath: result.filepath,
+      unsignedAgreementFilename: result.filename
+    });
+
+    console.log(`✅ PDF regenerated for loan #${loanId}: ${result.filename}`);
+
+    res.send({
+      success: true,
+      message: 'PDF regenerated successfully',
+      filename: result.filename,
+      loan: {
+        id: loan.id,
+        loanId: loan.loanId || loan.id,
+        pdfPath: result.filepath
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error regenerating PDF:', error);
+    res.status(500).send({
+      error: error.message,
+      details: 'Check if template file exists at backend/templates/loan_agreement_template.pdf'
+    });
   }
 });
 
