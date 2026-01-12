@@ -57,17 +57,16 @@ const generateLoanAgreementDOCX = async (loan, borrower, collateral) => {
       borrowerName: borrower.fullName.toUpperCase(),
       idNumber: borrower.idNumber,
       phoneNumber: borrower.phoneNumber,
-      emergencyContact: borrower.emergencyContact || 'N/A',
-      emergencyPhone: borrower.emergencyPhone || 'N/A',
+      emergencyNumber: borrower.emergencyNumber || 'N/A',
 
       // Address information
       location: borrower.location || 'N/A',
-      apartmentName: borrower.apartmentName || 'N/A',
-      houseNo: borrower.houseNo || 'N/A',
+      apartment: borrower.apartment || 'N/A',
+      houseNumber: borrower.houseNumber || 'N/A',
 
       // Student-specific fields (show N/A if not applicable)
       institution: borrower.institution || 'N/A',
-      regNumber: borrower.regNumber || 'N/A',
+      registrationNumber: borrower.registrationNumber || 'N/A',
 
       // Loan details
       date: formatDateShort(issueDate),
