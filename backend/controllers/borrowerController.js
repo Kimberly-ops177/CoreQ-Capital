@@ -35,12 +35,12 @@ const getBorrowers = async (req, res) => {
       whereClause.location = { [Op.in]: locations };
     }
 
-    // Only show borrowers with at least one approved loan
+    // Only show borrowers with at least one loan (any status)
     const includeLoans = {
       model: Loan,
       as: 'loans',
-      where: { agreementStatus: 'approved' },
-      required: true, // Inner join - only borrowers with approved loans
+      // No where clause - show borrowers with any loan status
+      required: true, // Inner join - only borrowers with at least one loan
       attributes: [] // Don't return loan data, just filter
     };
 
