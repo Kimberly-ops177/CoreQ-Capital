@@ -18,10 +18,10 @@ const getPnL = async (req, res) => {
         dateIssued: { [Op.between]: [start, end] }
       }
     });
-    const interestEarned = paidLoans.reduce((sum, loan) => sum + (loan.totalAmount - loan.amountIssued), 0);
+    const interestEarned = paidLoans.reduce((sum, loan) => sum + (parseFloat(loan.totalAmount) - parseFloat(loan.amountIssued)), 0);
 
     // Penalties collected from paid loans
-    const penaltiesCollected = paidLoans.reduce((sum, loan) => sum + (loan.penalties || 0), 0);
+    const penaltiesCollected = paidLoans.reduce((sum, loan) => sum + parseFloat(loan.penalties || 0), 0);
 
     // Revenue from sold collateral
     const soldCollaterals = await Collateral.findAll({
@@ -30,9 +30,9 @@ const getPnL = async (req, res) => {
         createdAt: { [Op.between]: [start, end] }
       }
     });
-    const collateralRevenue = soldCollaterals.reduce((sum, col) => sum + (col.soldPrice || 0), 0);
+    const collateralRevenue = soldCollaterals.reduce((sum, col) => sum + parseFloat(col.soldPrice || 0), 0);
 
-    const totalRevenue = interestEarned + penaltiesCollected + collateralRevenue;
+    const totalRevenue = parseFloat(interestEarned) + parseFloat(penaltiesCollected) + parseFloat(collateralRevenue);
 
     // Total expenses
     const expenses = await Expense.findAll({
@@ -315,8 +315,8 @@ const getEmployeeDashboardData = async (req, res) => {
     });
     const interestEarned = paidLoansThisMonth.reduce((sum, loan) => sum + (parseFloat(loan.totalAmount) - parseFloat(loan.amountIssued)), 0);
     const penaltiesCollected = paidLoansThisMonth.reduce((sum, loan) => sum + parseFloat(loan.penalties || 0), 0);
-    const totalRevenue = interestEarned + penaltiesCollected;
-    const monthToDateProfitLoss = totalRevenue - totalMonthExpenses;
+    const totalRevenue = parseFloat(interestEarned) + parseFloat(penaltiesCollected);
+    const monthToDateProfitLoss = parseFloat(totalRevenue) - parseFloat(totalMonthExpenses);
 
     res.send({
       // Original metrics
@@ -356,8 +356,8 @@ const getPnLData = async (start, end) => {
     console.log(`    Loan #${loan.loanId}: Issued=${loan.dateIssued?.toISOString()}, Principal=${loan.amountIssued}, Interest=${interest}, Penalties=${loan.penalties || 0}`);
   });
 
-  const interestEarned = paidLoans.reduce((sum, loan) => sum + (loan.totalAmount - loan.amountIssued), 0);
-  const penaltiesCollected = paidLoans.reduce((sum, loan) => sum + (loan.penalties || 0), 0);
+  const interestEarned = paidLoans.reduce((sum, loan) => sum + (parseFloat(loan.totalAmount) - parseFloat(loan.amountIssued)), 0);
+  const penaltiesCollected = paidLoans.reduce((sum, loan) => sum + parseFloat(loan.penalties || 0), 0);
 
   const soldCollaterals = await Collateral.findAll({
     where: {
@@ -366,9 +366,9 @@ const getPnLData = async (start, end) => {
     }
   });
   console.log('  [P/L Debug] Found', soldCollaterals.length, 'sold collaterals in this period');
-  const collateralRevenue = soldCollaterals.reduce((sum, col) => sum + (col.soldPrice || 0), 0);
+  const collateralRevenue = soldCollaterals.reduce((sum, col) => sum + parseFloat(col.soldPrice || 0), 0);
 
-  const totalRevenue = interestEarned + penaltiesCollected + collateralRevenue;
+  const totalRevenue = parseFloat(interestEarned) + parseFloat(penaltiesCollected) + parseFloat(collateralRevenue);
 
   const expenses = await Expense.findAll({
     where: {
