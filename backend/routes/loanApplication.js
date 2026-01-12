@@ -59,7 +59,6 @@ router.post('/', auth, async (req, res) => {
     // 1. Check if borrower exists (for second-time loan benefits)
     let existingBorrower = null;
     let isSecondTimeLoan = false;
-    let discountPercentage = 0;
 
     if (borrower.idNumber) {
       existingBorrower = await Borrower.findOne({
@@ -72,21 +71,12 @@ router.post('/', auth, async (req, res) => {
       });
     }
 
-    // Determine if this is a second-time loan and calculate discount
+    // Determine if this is a second-time loan (for negotiable terms)
     if (existingBorrower) {
       const paidLoans = existingBorrower.loans ? existingBorrower.loans.filter(l => l.status === 'paid').length : 0;
-      const defaultedLoans = existingBorrower.loans ? existingBorrower.loans.filter(l => l.status === 'defaulted').length : 0;
 
       if (paidLoans > 0) {
         isSecondTimeLoan = true;
-
-        if (defaultedLoans > 0) {
-          discountPercentage = -5; // 5% penalty for previous defaults
-        } else if (paidLoans >= 2) {
-          discountPercentage = 5; // 5% discount for 3+ loans
-        } else if (paidLoans === 1) {
-          discountPercentage = 2; // 2% discount for 2nd loan
-        }
       }
     }
 
@@ -153,19 +143,16 @@ router.post('/', auth, async (req, res) => {
       interestRate = standardRates[period];
     }
 
-    // 7. Apply discount/penalty for second-time borrowers
-    if (isSecondTimeLoan && discountPercentage !== 0) {
-      const originalRate = interestRate;
-      interestRate = interestRate - discountPercentage;
+    // 7. Log second-time loan info (rates are negotiated)
+    if (isSecondTimeLoan) {
+      const paidLoansCount = existingBorrower.loans.filter(l => l.status === 'paid').length;
+      const tier = paidLoansCount >= 2 ? 'Gold' : 'Silver';
 
-      // Ensure rate doesn't go negative
-      if (interestRate < 0) interestRate = 0;
-
-      console.log(`📊 Second-time loan discount applied:`, {
+      console.log(`📊 Second-time loan created:`, {
         borrowerId: newBorrower.id,
-        originalRate: `${originalRate}%`,
-        discount: `${discountPercentage}%`,
-        finalRate: `${interestRate}%`
+        tier: tier,
+        negotiatedRate: `${interestRate}%`,
+        paidLoansCount: paidLoansCount
       });
     }
 
@@ -201,7 +188,7 @@ router.post('/', auth, async (req, res) => {
       agreementStatus: 'pending_approval', // NEW: Agreement workflow status
       // Track second-time loan info in notes for reference
       notes: isSecondTimeLoan
-        ? `Second-time loan. Discount applied: ${discountPercentage}%. Previous paid loans: ${existingBorrower.loans.filter(l => l.status === 'paid').length}`
+        ? `Second-time loan with negotiable terms. Previous paid loans: ${existingBorrower.loans.filter(l => l.status === 'paid').length}`
         : null
     }, { transaction });
 
@@ -782,22 +769,15 @@ router.get('/check-borrower/:idNumber', auth, async (req, res) => {
     const defaultedLoans = borrower.loans ? borrower.loans.filter(loan => loan.status === 'defaulted').length : 0;
     const totalLoans = borrower.loans ? borrower.loans.length : 0;
 
-    // Calculate discount tier
-    let discountPercentage = 0;
+    // Determine customer tier
     let tier = 'new';
 
     if (defaultedLoans > 0) {
-      // Penalty for defaulted loans
-      discountPercentage = -5; // 5% penalty (rates increase)
       tier = 'at-risk';
     } else if (paidLoans >= 2) {
-      // 3rd+ loan: 5% discount
-      discountPercentage = 5;
-      tier = 'gold';
+      tier = 'gold'; // Valued Customer
     } else if (paidLoans === 1) {
-      // 2nd loan: 2% discount
-      discountPercentage = 2;
-      tier = 'silver';
+      tier = 'silver'; // Returning Customer
     }
 
     const isSecondTimeBorrower = paidLoans > 0;
@@ -822,17 +802,11 @@ router.get('/check-borrower/:idNumber', auth, async (req, res) => {
         totalLoans,
         loansRepaid: paidLoans,
         loansDefaulted: defaultedLoans,
-        tier,
-        discountPercentage
+        tier
       },
       benefits: {
         negotiableRates: isSecondTimeBorrower,
-        negotiablePeriod: isSecondTimeBorrower,
-        discountMessage: discountPercentage > 0
-          ? `As a returning customer, you get ${discountPercentage}% off interest rates!`
-          : discountPercentage < 0
-          ? `Due to previous defaults, rates have a ${Math.abs(discountPercentage)}% increase.`
-          : null
+        negotiablePeriod: isSecondTimeBorrower
       }
     });
 

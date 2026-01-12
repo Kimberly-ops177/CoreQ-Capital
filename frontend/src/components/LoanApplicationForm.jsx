@@ -416,16 +416,12 @@ const LoanApplicationForm = () => {
                   </Typography>
                   <Typography variant="body2">
                     • Loan History: {borrowerHistory.loanHistory.loansRepaid} loan(s) successfully repaid
-                    {borrowerHistory.loanHistory.tier === 'silver' && ' (Silver Tier)'}
-                    {borrowerHistory.loanHistory.tier === 'gold' && ' (Gold Tier) ⭐'}
+                    {borrowerHistory.loanHistory.tier === 'silver' && ' (Returning Customer)'}
+                    {borrowerHistory.loanHistory.tier === 'gold' && ' (Valued Customer) ⭐'}
+                    {borrowerHistory.loanHistory.loansDefaulted > 0 && ' (Previous defaults: ' + borrowerHistory.loanHistory.loansDefaulted + ')'}
                   </Typography>
-                  {borrowerHistory.benefits.discountMessage && (
-                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#2e7d32', mt: 1 }}>
-                      {borrowerHistory.benefits.discountMessage}
-                    </Typography>
-                  )}
-                  <Typography variant="body2" sx={{ mt: 1 }}>
-                    • Benefit: Interest rates and repayment period are <strong>negotiable</strong> for you!
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#2e7d32', mt: 1 }}>
+                    ✓ Special Benefit: Interest rates and repayment period are <strong>negotiable</strong> for all your loans!
                   </Typography>
                 </Alert>
               </Grid>
@@ -657,10 +653,7 @@ const LoanApplicationForm = () => {
                 <Alert severity="info" sx={{ mb: 2 }}>
                   {isSecondTimeBorrower ? (
                     <>
-                      🎉 <strong>Special Terms Available!</strong> As a returning customer, you can negotiate both the interest rate and repayment period for this loan.
-                      {borrowerHistory?.benefits?.discountMessage && (
-                        <><br />{borrowerHistory.benefits.discountMessage}</>
-                      )}
+                      🎉 <strong>Negotiable Terms!</strong> As a returning customer, you can negotiate both the interest rate and repayment period for this loan. Set your custom terms below.
                     </>
                   ) : (
                     <>
