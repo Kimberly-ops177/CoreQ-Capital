@@ -210,7 +210,6 @@ const LoanAgreements = () => {
 
   const getStatusChip = (status) => {
     const statusConfig = {
-      pending_upload: { label: 'Pending Approval', color: 'info', icon: <PendingActions /> },
       pending_approval: { label: 'Pending Approval', color: 'info', icon: <PendingActions /> },
       approved: { label: 'Approved', color: 'success', icon: <CheckCircle /> },
       rejected: { label: 'Rejected', color: 'error', icon: <Cancel /> }

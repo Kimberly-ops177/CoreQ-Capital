@@ -559,7 +559,7 @@ router.get('/:id/download-signed', auth, async (req, res) => {
 });
 
 /**
- * Delete a loan application (only if status is pending_upload)
+ * Delete a loan application (only if status is pending_approval)
  * DELETE /api/loan-applications/:id
  */
 router.delete('/:id', auth, async (req, res) => {
@@ -578,11 +578,11 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(404).send({ error: 'Loan not found' });
     }
 
-    // Only allow deletion if agreement status is pending_upload
-    if (loan.agreementStatus !== 'pending_upload') {
+    // Only allow deletion if agreement status is pending_approval (not yet approved/rejected)
+    if (loan.agreementStatus !== 'pending_approval') {
       await transaction.rollback();
       return res.status(400).send({
-        error: 'Can only delete loans with pending upload status'
+        error: 'Can only delete loans that are pending approval (not yet approved or rejected)'
       });
     }
 
@@ -633,7 +633,7 @@ router.delete('/:id', auth, async (req, res) => {
 });
 
 /**
- * Update loan application details (only if status is pending_upload)
+ * Update loan application details (only if status is pending_approval)
  * PUT /api/loan-applications/:id
  */
 router.put('/:id', auth, async (req, res) => {
@@ -652,11 +652,11 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(404).send({ error: 'Loan not found' });
     }
 
-    // Only allow updates if agreement status is pending_upload
-    if (loan.agreementStatus !== 'pending_upload') {
+    // Only allow updates if agreement status is pending_approval (not yet approved/rejected)
+    if (loan.agreementStatus !== 'pending_approval') {
       await transaction.rollback();
       return res.status(400).send({
-        error: 'Can only edit loans with pending upload status'
+        error: 'Can only edit loans that are pending approval (not yet approved or rejected)'
       });
     }
 
