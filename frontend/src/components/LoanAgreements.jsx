@@ -87,13 +87,18 @@ const LoanAgreements = () => {
         responseType: 'blob'
       });
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // Create blob with correct DOCX MIME type
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Loan_Agreement_${loanId}.pdf`);
+      link.setAttribute('download', `Loan_Agreement_${loanId}.docx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
 
       setSuccess('Agreement downloaded successfully!');
       setTimeout(() => setSuccess(null), 3000);
@@ -109,19 +114,26 @@ const LoanAgreements = () => {
         responseType: 'blob'
       });
 
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      // Create blob with correct DOCX MIME type
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
       const url = window.URL.createObjectURL(blob);
 
-      // Open in new window for printing
-      const printWindow = window.open(url, '_blank');
-      if (printWindow) {
-        printWindow.addEventListener('load', () => {
-          printWindow.print();
-        });
-      }
+      // Download the DOCX file so user can open in Word and print
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Loan_Agreement_${loanId}.docx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      setSuccess('Agreement downloaded! Open in Microsoft Word to print.');
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      console.error('Error printing agreement:', err);
-      setError(err.response?.data?.error || 'Failed to print agreement');
+      console.error('Error downloading agreement:', err);
+      setError(err.response?.data?.error || 'Failed to download agreement');
     }
   };
 

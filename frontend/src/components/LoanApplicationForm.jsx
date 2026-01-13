@@ -879,35 +879,33 @@ const LoanApplicationForm = () => {
                       const response = await axios.get(`/api/loan-applications/${createdLoanId}/download-agreement`, {
                         responseType: 'blob'
                       });
-                      // Create blob with correct PDF MIME type
-                      const blob = new Blob([response.data], { type: 'application/pdf' });
+
+                      // Create blob with correct DOCX MIME type
+                      const blob = new Blob([response.data], {
+                        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                      });
                       const url = window.URL.createObjectURL(blob);
 
-                      // Open in new window for printing
-                      const printWindow = window.open(url, '_blank');
-                      if (printWindow) {
-                        printWindow.onload = () => {
-                          printWindow.print();
-                          // Clean up the URL after a delay
-                          setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-                        };
-                      } else {
-                        // Fallback: download the PDF if popup blocked
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = `Loan_Agreement_${createdLoanId}.pdf`;
-                        document.body.appendChild(link);
-                        link.click();
-                        link.remove();
-                        window.URL.revokeObjectURL(url);
-                      }
+                      // Download the DOCX file so user can open in Word and print
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = `Loan_Agreement_${createdLoanId}.docx`;
+                      document.body.appendChild(link);
+                      link.click();
+                      link.remove();
+
+                      // Clean up the URL
+                      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+
+                      // Show success message
+                      setError('Agreement downloaded! Open it in Microsoft Word to print.');
                     } catch (err) {
-                      console.error('Error printing agreement:', err);
-                      setError('Failed to print agreement');
+                      console.error('Error downloading agreement:', err);
+                      setError('Failed to download agreement');
                     }
                   }}
                 >
-                  Print Agreement
+                  Download & Print Agreement
                 </Button>
                 <Button
                   variant="outlined"
