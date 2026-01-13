@@ -90,11 +90,10 @@ const generateLoanAgreementDOCX = async (loan, borrower, collateral) => {
 
     // Fill the template with data
     console.log('Template data being sent to docxtemplater:', JSON.stringify(templateData, null, 2));
-    doc.setData(templateData);
 
     // Render the document (replace all placeholders)
     try {
-      doc.render();
+      doc.render(templateData);
       console.log('✓ Document rendered successfully');
     } catch (error) {
       console.error('Error rendering document:', error);

@@ -354,16 +354,20 @@ router.get('/:id/download-agreement', auth, async (req, res) => {
 
     // Check if unsigned agreement path is stored in database
     if (!loan.unsignedAgreementPath) {
-      return res.status(404).send({ error: 'Agreement PDF has not been generated yet' });
+      return res.status(404).send({ error: 'Agreement document has not been generated yet' });
     }
 
     // Verify the file exists
     if (!fs.existsSync(loan.unsignedAgreementPath)) {
-      return res.status(404).send({ error: 'Agreement PDF file not found on server' });
+      return res.status(404).send({ error: 'Agreement document file not found on server' });
     }
 
+    // Determine file extension from the stored path
+    const fileExtension = path.extname(loan.unsignedAgreementPath);
+    const downloadFilename = `Loan_Agreement_${loan.id}_${loan.borrower.fullName.replace(/\s+/g, '_')}${fileExtension}`;
+
     // Send the file for download
-    res.download(loan.unsignedAgreementPath, `Loan_Agreement_${loan.id}_${loan.borrower.fullName.replace(/\s+/g, '_')}.pdf`);
+    res.download(loan.unsignedAgreementPath, downloadFilename);
   } catch (error) {
     console.error('Error downloading agreement:', error);
     res.status(500).send({ error: error.message });
