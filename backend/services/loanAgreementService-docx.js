@@ -33,6 +33,11 @@ const generateLoanAgreementDOCX = async (loan, borrower, collateral) => {
     const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,
+      nullGetter: function(part) {
+        // Handle missing data - return empty string instead of leaving placeholder
+        console.warn(`Warning: Missing data for placeholder {${part.value}}`);
+        return '';
+      }
     });
 
     // Format dates
@@ -84,13 +89,16 @@ const generateLoanAgreementDOCX = async (loan, borrower, collateral) => {
     };
 
     // Fill the template with data
+    console.log('Template data being sent to docxtemplater:', JSON.stringify(templateData, null, 2));
     doc.setData(templateData);
 
     // Render the document (replace all placeholders)
     try {
       doc.render();
+      console.log('✓ Document rendered successfully');
     } catch (error) {
       console.error('Error rendering document:', error);
+      console.error('Error details:', error.properties);
       throw new Error(`Template rendering failed: ${error.message}`);
     }
 
