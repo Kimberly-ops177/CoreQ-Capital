@@ -366,6 +366,14 @@ router.get('/:id/download-agreement', auth, async (req, res) => {
     const fileExtension = path.extname(loan.unsignedAgreementPath);
     const downloadFilename = `Loan_Agreement_${loan.id}_${loan.borrower.fullName.replace(/\s+/g, '_')}${fileExtension}`;
 
+    // Set proper content type for DOCX files
+    if (fileExtension === '.docx') {
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    }
+
+    // Force download instead of opening in browser
+    res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+
     // Send the file for download
     res.download(loan.unsignedAgreementPath, downloadFilename);
   } catch (error) {
