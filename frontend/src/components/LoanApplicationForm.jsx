@@ -880,9 +880,9 @@ const LoanApplicationForm = () => {
                         responseType: 'blob'
                       });
 
-                      // Create blob with correct DOCX MIME type
+                      // Create blob with correct PDF MIME type
                       const blob = new Blob([response.data], {
-                        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                        type: 'application/pdf'
                       });
                       const url = window.URL.createObjectURL(blob);
 
