@@ -886,26 +886,18 @@ const LoanApplicationForm = () => {
                       });
                       const url = window.URL.createObjectURL(blob);
 
-                      // Download the DOCX file so user can open in Word and print
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.download = `Loan_Agreement_${createdLoanId}.docx`;
-                      document.body.appendChild(link);
-                      link.click();
-                      link.remove();
+                      // Open in new tab
+                      window.open(url, '_blank');
 
-                      // Clean up the URL
+                      // Clean up the URL after a delay
                       setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-
-                      // Show success message
-                      setError('Agreement downloaded! Open it in Microsoft Word to print.');
                     } catch (err) {
-                      console.error('Error downloading agreement:', err);
-                      setError('Failed to download agreement');
+                      console.error('Error printing agreement:', err);
+                      setError('Failed to print agreement');
                     }
                   }}
                 >
-                  Download & Print Agreement
+                  Print Agreement
                 </Button>
                 <Button
                   variant="outlined"

@@ -120,20 +120,14 @@ const LoanAgreements = () => {
       });
       const url = window.URL.createObjectURL(blob);
 
-      // Download the DOCX file so user can open in Word and print
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `Loan_Agreement_${loanId}.docx`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      // Open in new tab
+      window.open(url, '_blank');
 
-      setSuccess('Agreement downloaded! Open in Microsoft Word to print.');
-      setTimeout(() => setSuccess(null), 3000);
+      // Clean up the URL after a delay
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
     } catch (err) {
-      console.error('Error downloading agreement:', err);
-      setError(err.response?.data?.error || 'Failed to download agreement');
+      console.error('Error printing agreement:', err);
+      setError(err.response?.data?.error || 'Failed to print agreement');
     }
   };
 
