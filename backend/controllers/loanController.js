@@ -3,7 +3,7 @@ const Borrower = require('../models/Borrower');
 const Collateral = require('../models/Collateral');
 const Payment = require('../models/Payment');
 const { Op } = require('sequelize');
-const { generateLoanAgreementDOCX, sendLoanAgreementEmail } = require('../services/loanAgreementService-docx');
+const { generateLoanAgreementPDF, sendLoanAgreementEmail } = require('../services/loanAgreementService');
 const { getPaginationParams, formatPaginatedResponse } = require('../utils/pagination');
 
 /**
@@ -211,10 +211,10 @@ const createLoan = async (req, res) => {
       ]
     });
 
-    // Generate and send loan agreement DOCX via email
+    // Generate and send loan agreement PDF via email
     try {
       console.log(`Generating loan agreement for loan ${loan.id}...`);
-      const { filepath, filename } = await generateLoanAgreementDOCX(
+      const { filepath, filename } = await generateLoanAgreementPDF(
         completeLoan,
         borrower,
         collateral

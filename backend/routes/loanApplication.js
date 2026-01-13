@@ -4,7 +4,7 @@ const Borrower = require('../models/Borrower');
 const Collateral = require('../models/Collateral');
 const Loan = require('../models/Loan');
 const sequelize = require('../config/database');
-const { generateLoanAgreementDOCX, sendLoanAgreementEmail } = require('../services/loanAgreementService-docx');
+const { generateLoanAgreementPDF, sendLoanAgreementEmail } = require('../services/loanAgreementService');
 const { sendLoanApprovalSMS } = require('../services/smsService');
 const path = require('path');
 const fs = require('fs');
@@ -207,8 +207,8 @@ router.post('/', auth, async (req, res) => {
         ]
       });
 
-      // Generate DOCX
-      const result = await generateLoanAgreementDOCX(newLoan, newLoan.borrower, newLoan.collateral);
+      // Generate PDF
+      const result = await generateLoanAgreementPDF(newLoan, newLoan.borrower, newLoan.collateral);
       pdfPath = result.filepath;
 
       // Save the PDF path to the database
@@ -737,8 +737,8 @@ router.put('/:id', auth, async (req, res) => {
         fs.unlinkSync(loan.unsignedAgreementPath);
       }
 
-      // Generate new DOCX
-      const result = await generateLoanAgreementDOCX(loan, loan.borrower, loan.collateral);
+      // Generate new PDF
+      const result = await generateLoanAgreementPDF(loan, loan.borrower, loan.collateral);
       await loan.update({
         unsignedAgreementPath: result.filepath,
         unsignedAgreementFilename: result.filename
