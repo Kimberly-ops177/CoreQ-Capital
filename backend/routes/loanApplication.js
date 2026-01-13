@@ -366,16 +366,25 @@ router.get('/:id/download-agreement', auth, async (req, res) => {
     const fileExtension = path.extname(loan.unsignedAgreementPath);
     const downloadFilename = `Loan_Agreement_${loan.id}_${loan.borrower.fullName.replace(/\s+/g, '_')}${fileExtension}`;
 
-    // Set proper content type for DOCX files
-    if (fileExtension === '.docx') {
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-    }
+    // Use sendFile with proper options for DOCX
+    const options = {
+      headers: {
+        'Content-Type': fileExtension === '.docx'
+          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          : 'application/pdf',
+        'Content-Disposition': `attachment; filename="${downloadFilename}"`
+      }
+    };
 
-    // Force download instead of opening in browser
-    res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
-
-    // Send the file for download
-    res.download(loan.unsignedAgreementPath, downloadFilename);
+    // Send the file
+    res.sendFile(loan.unsignedAgreementPath, options, (err) => {
+      if (err) {
+        console.error('Error sending file:', err);
+        if (!res.headersSent) {
+          res.status(500).send({ error: 'Failed to send file' });
+        }
+      }
+    });
   } catch (error) {
     console.error('Error downloading agreement:', error);
     res.status(500).send({ error: error.message });
