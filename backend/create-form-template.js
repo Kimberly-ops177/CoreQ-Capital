@@ -128,7 +128,7 @@ async function createFormTemplate() {
     // Borrower name in parties section - after "CORE Q CAPITAL... AND"
     const borrowerNameP2 = form.createTextField('borrower_name_p2');
     borrowerNameP2.addToPage(page2, {
-      x: 165,  // Moved slightly left
+      x: 100,  // Moved slightly left
       y: p2Height - 147,  // Lowered more to align with name line
       width: 100,  // Shortened length
       height: 10,
@@ -185,7 +185,7 @@ async function createFormTemplate() {
     const registrationNumber = form.createTextField('registration_number');
     registrationNumber.addToPage(page2, {
       x: 433,
-      y: p2Height - 262,
+      y: p2Height - 280,
       width: 80,
       height: 10,
     });
@@ -369,7 +369,7 @@ async function createFormTemplate() {
     const modelNumber = form.createTextField('model_number');
     modelNumber.addToPage(page3, {
       x: 221,
-      y: 670,
+      y: 656,
       width: 80,
       height: 12,
     });
@@ -397,7 +397,7 @@ async function createFormTemplate() {
       x: 205,
       y: 616,
       width: 80,
-      height: 12,
+      height: 10,
     });
     condition.setFontSize(9);
     condition.enableReadOnly();
