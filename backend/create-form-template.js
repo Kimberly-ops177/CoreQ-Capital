@@ -67,9 +67,9 @@ async function createFormTemplate() {
     const borrowerNameP1 = form.createTextField('borrower_name_p1');
     borrowerNameP1.addToPage(page1, {
       x: 105,  // After "NAME:"
-      y: 520,  // Adjusted higher on page
-      width: 215,  // Reduced to not cover "OF ID:" label
-      height: 14,
+      y: 523,  // Raised to avoid blocking line
+      width: 150,  // Shortened to not cover "OF ID:" label
+      height: 12,
     });
     borrowerNameP1.setFontSize(10);
     borrowerNameP1.enableReadOnly();
@@ -81,9 +81,9 @@ async function createFormTemplate() {
     const idNumberP1 = form.createTextField('id_number_p1');
     idNumberP1.addToPage(page1, {
       x: 385,  // After "OF ID"
-      y: 520,  // Same line as name
+      y: 523,  // Raised to avoid blocking line
       width: 170,
-      height: 14,
+      height: 12,
     });
     idNumberP1.setFontSize(10);
     idNumberP1.enableReadOnly();
