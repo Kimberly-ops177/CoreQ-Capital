@@ -66,7 +66,7 @@ async function createFormTemplate() {
     // Borrower name on cover page - adjusted to line up with the NAME: label
     const borrowerNameP1 = form.createTextField('borrower_name_p1');
     borrowerNameP1.addToPage(page1, {
-      x: 105,  // After "NAME:"
+      x: 115,  // Moved slightly right after "NAME:"
       y: 523,  // Raised to avoid blocking line
       width: 150,  // Shortened to not cover "OF ID:" label
       height: 12,
