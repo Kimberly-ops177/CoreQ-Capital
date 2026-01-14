@@ -70,11 +70,43 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
     form.getTextField('borrower_name_p2').setText(borrower.fullName.toUpperCase());
     form.getTextField('id_number_p2').setText(borrower.idNumber);
     form.getTextField('phone_number').setText(borrower.phoneNumber);
+
+    // WHEREAS B section fields
     form.getTextField('id_number_whereas').setText(borrower.idNumber);
+    form.getTextField('phone_number_whereas').setText(borrower.phoneNumber);
+
+    // Student information (if applicable)
+    if (borrower.institution) {
+      form.getTextField('institution').setText(borrower.institution);
+    }
+    if (borrower.registrationNumber) {
+      form.getTextField('registration_number').setText(borrower.registrationNumber);
+    }
+
+    // Contact and address information
+    if (borrower.emergencyNumber) {
+      form.getTextField('emergency_number').setText(borrower.emergencyNumber);
+    }
+    if (borrower.location) {
+      form.getTextField('location').setText(borrower.location);
+    }
+    if (borrower.apartment) {
+      form.getTextField('apartment').setText(borrower.apartment);
+    }
+    if (borrower.houseNumber) {
+      form.getTextField('house_number').setText(borrower.houseNumber);
+    }
+
+    // Loan details
     form.getTextField('loan_amount').setText(amountIssued.toLocaleString());
     form.getTextField('due_date').setText(formatDateShort(dueDate));
     form.getTextField('total_amount').setText(totalAmount.toLocaleString());
     form.getTextField('loan_period').setText(`${loan.loanPeriod} week(s)`);
+
+    // Interest rate (for loans > 50k or if specified)
+    if (loan.interestRate) {
+      form.getTextField('interest_rate').setText(`${loan.interestRate}%`);
+    }
 
     // PAGE 3 FIELDS (Collateral)
     form.getTextField('item_name').setText(collateral.itemName);
