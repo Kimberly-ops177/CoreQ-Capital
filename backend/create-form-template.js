@@ -68,7 +68,7 @@ async function createFormTemplate() {
     borrowerNameP1.addToPage(page1, {
       x: 105,  // After "NAME:"
       y: 520,  // Adjusted higher on page
-      width: 250,
+      width: 215,  // Reduced to not cover "OF ID:" label
       height: 14,
     });
     borrowerNameP1.setFontSize(10);
