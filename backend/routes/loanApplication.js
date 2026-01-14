@@ -6,6 +6,7 @@ const Loan = require('../models/Loan');
 const sequelize = require('../config/database');
 const { generateLoanAgreementPDF, sendLoanAgreementEmail } = require('../services/loanAgreementService');
 const { sendLoanApprovalSMS } = require('../services/smsService');
+const { sendEmail } = require('../services/notificationService');
 const path = require('path');
 const fs = require('fs');
 
@@ -393,7 +394,82 @@ router.post('/:id/approve', auth, async (req, res) => {
       agreementNotes: req.body.notes || null
     });
 
-    // Send SMS notification to borrower
+    // Send email notification to borrower
+    if (loan.borrower.email) {
+      try {
+        const dueDate = new Date(loan.dueDate).toLocaleDateString('en-KE', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+
+        const emailSubject = `Loan Approved - Core Q Capital`;
+        const emailHTML = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background-color: #4CAF50; padding: 20px; text-align: center; color: white; }
+              .content { padding: 20px; background-color: #f9f9f9; }
+              .amount { font-size: 24px; color: #4CAF50; font-weight: bold; }
+              .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
+              .info { background-color: #E8F5E9; padding: 15px; border-left: 4px solid #4CAF50; margin: 15px 0; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🎉 Loan Approved!</h1>
+              </div>
+              <div class="content">
+                <h2>Congratulations ${loan.borrower.fullName}!</h2>
+                <p>Your loan application has been approved by Core Q Capital.</p>
+
+                <div class="info">
+                  <h3>Loan Details:</h3>
+                  <ul>
+                    <li><strong>Loan Amount:</strong> KSH ${parseFloat(loan.amountIssued).toLocaleString()}</li>
+                    <li><strong>Total Amount Due:</strong> <span class="amount">KSH ${parseFloat(loan.totalAmount).toLocaleString()}</span></li>
+                    <li><strong>Interest Rate:</strong> ${loan.interestRate}%</li>
+                    <li><strong>Loan Period:</strong> ${loan.loanPeriod} week(s)</li>
+                    <li><strong>Due Date:</strong> ${dueDate}</li>
+                  </ul>
+                </div>
+
+                <h3>Payment Instructions:</h3>
+                <p>When making repayments, use these details:</p>
+                <ul>
+                  <li><strong>Paybill Number:</strong> 522533</li>
+                  <li><strong>Account Number:</strong> 7862638</li>
+                </ul>
+
+                <p>Please ensure payment is made on or before the due date to avoid penalties.</p>
+
+                <p>Thank you for choosing Core Q Capital.</p>
+
+                <p>Best regards,<br>
+                <strong>Core Q Capital Team</strong></p>
+              </div>
+              <div class="footer">
+                This is an automated message from Core Q Capital.
+              </div>
+            </div>
+          </body>
+          </html>
+        `;
+
+        await sendEmail(loan.borrower.email, emailSubject, emailHTML);
+        console.log(`✅ Loan approval email sent to ${loan.borrower.email}`);
+      } catch (emailError) {
+        console.error('⚠️ Failed to send loan approval email:', emailError);
+        // Don't fail the approval if email fails
+      }
+    }
+
+    // Send SMS notification to borrower (will be skipped if no SMS configured)
     try {
       await sendLoanApprovalSMS(loan.borrower, loan);
       console.log(`✅ Loan approval SMS sent to ${loan.borrower.phoneNumber}`);
