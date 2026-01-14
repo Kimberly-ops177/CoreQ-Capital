@@ -181,6 +181,104 @@ async function createFormTemplate() {
     idNumberWhereas.updateAppearances(font);
     removeBorders(idNumberWhereas);
 
+    // Institution (for students) in WHEREAS B
+    const institution = form.createTextField('institution');
+    institution.addToPage(page2, {
+      x: 220,
+      y: p2Height - 250,
+      width: 100,
+      height: 10,
+    });
+    institution.setFontSize(8);
+    institution.enableReadOnly();
+    institution.disableScrolling();
+    institution.updateAppearances(font);
+    removeBorders(institution);
+
+    // Registration number (for students) in WHEREAS B
+    const registrationNumber = form.createTextField('registration_number');
+    registrationNumber.addToPage(page2, {
+      x: 420,
+      y: p2Height - 250,
+      width: 80,
+      height: 10,
+    });
+    registrationNumber.setFontSize(8);
+    registrationNumber.enableReadOnly();
+    registrationNumber.disableScrolling();
+    registrationNumber.updateAppearances(font);
+    removeBorders(registrationNumber);
+
+    // Emergency number in WHEREAS B
+    const emergencyNumber = form.createTextField('emergency_number');
+    emergencyNumber.addToPage(page2, {
+      x: 430,
+      y: p2Height - 265,
+      width: 80,
+      height: 10,
+    });
+    emergencyNumber.setFontSize(8);
+    emergencyNumber.enableReadOnly();
+    emergencyNumber.disableScrolling();
+    emergencyNumber.updateAppearances(font);
+    removeBorders(emergencyNumber);
+
+    // Location in WHEREAS B
+    const location = form.createTextField('location');
+    location.addToPage(page2, {
+      x: 150,
+      y: p2Height - 280,
+      width: 80,
+      height: 10,
+    });
+    location.setFontSize(8);
+    location.enableReadOnly();
+    location.disableScrolling();
+    location.updateAppearances(font);
+    removeBorders(location);
+
+    // Apartment name in WHEREAS B
+    const apartment = form.createTextField('apartment');
+    apartment.addToPage(page2, {
+      x: 380,
+      y: p2Height - 280,
+      width: 100,
+      height: 10,
+    });
+    apartment.setFontSize(8);
+    apartment.enableReadOnly();
+    apartment.disableScrolling();
+    apartment.updateAppearances(font);
+    removeBorders(apartment);
+
+    // House number in WHEREAS B
+    const houseNumber = form.createTextField('house_number');
+    houseNumber.addToPage(page2, {
+      x: 150,
+      y: p2Height - 295,
+      width: 60,
+      height: 10,
+    });
+    houseNumber.setFontSize(8);
+    houseNumber.enableReadOnly();
+    houseNumber.disableScrolling();
+    houseNumber.updateAppearances(font);
+    removeBorders(houseNumber);
+
+    // Interest rate (for loans > 50k with negotiable rate)
+    const interestRate = form.createTextField('interest_rate');
+    interestRate.addToPage(page2, {
+      x: 450,
+      y: p2Height - 670,
+      width: 40,
+      height: 10,
+    });
+    interestRate.setFontSize(8);
+    interestRate.enableReadOnly();
+    interestRate.disableScrolling();
+    interestRate.updateAppearances(font);
+    removeBorders(interestRate);
+
     // Loan amount issued (in Credit Advance section)
     const loanAmount = form.createTextField('loan_amount');
     loanAmount.addToPage(page2, {

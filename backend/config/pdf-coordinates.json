@@ -6,15 +6,15 @@
     "date": { "x_centered": true, "y_from_bottom": 465, "size": 9, "bold": false }
   },
   "page2": {
-    "dateTop": { "x": 470, "y_from_bottom": 707, "size": 8 },
-    "borrowerName": { "x": 138, "y_from_bottom": 662, "size": 8 },
-    "idNumber": { "x": 465, "y_from_bottom": 662, "size": 8 },
-    "phoneNumber": { "x": 138, "y_from_bottom": 646, "size": 8 },
+    "dateTop": { "x": 473, "y_from_bottom": 715, "size": 8 },
+    "borrowerName": { "x": 187, "y_from_bottom": 651, "size": 8 },
+    "idNumber": { "x": 434, "y_from_bottom": 650, "size": 8 },
+    "phoneNumber": { "x": 221, "y_from_bottom": 636, "size": 8 },
     "idNumberWhereas": { "x": 472, "y_from_bottom": 553, "size": 8 },
-    "loanAmount": { "x": 273, "y_from_bottom": 304, "size": 8 },
-    "dueDate": { "x": 245, "y_from_bottom": 288, "size": 8 },
-    "totalAmount": { "x": 360, "y_from_bottom": 271, "size": 8 },
-    "loanPeriod": { "x": 395, "y_from_bottom": 190, "size": 8 }
+    "loanAmount": { "x": 447, "y_from_bottom": 350, "size": 8 },
+    "dueDate": { "x": 249, "y_from_bottom": 334, "size": 8 },
+    "totalAmount": { "x": 394, "y_from_bottom": 334, "size": 8 },
+    "loanPeriod": { "x": 364, "y_from_bottom": 282, "size": 8 }
   },
   "page3": {
     "itemName": { "x": 268, "y_from_bottom": 765, "size": 9 },
