@@ -114,9 +114,9 @@ async function createFormTemplate() {
     // Date at top - aligned with "THIS AGREEMENT is made on ... between:"
     const dateTopP2 = form.createTextField('date_top_p2');
     dateTopP2.addToPage(page2, {
-      x: 490,   // Moved to align with the blank space after "between:"
-      y: p2Height - 85,  // Much lower, around where "between:" text is
-      width: 95,
+      x: 250,   // Moved left to align with dots after "made on"
+      y: p2Height - 85,  // Around where "between:" text is
+      width: 70,  // Reduced width to fit in dot space
       height: 11,
     });
     dateTopP2.setFontSize(8);
@@ -129,7 +129,7 @@ async function createFormTemplate() {
     const borrowerNameP2 = form.createTextField('borrower_name_p2');
     borrowerNameP2.addToPage(page2, {
       x: 70,
-      y: p2Height - 130,  // Adjusted to align with actual name line
+      y: p2Height - 138,  // Lowered to better align with name line
       width: 240,
       height: 11,
     });
@@ -143,7 +143,7 @@ async function createFormTemplate() {
     const idNumberP2 = form.createTextField('id_number_p2');
     idNumberP2.addToPage(page2, {
       x: 325,
-      y: p2Height - 130,  // Same line as name
+      y: p2Height - 138,  // Lowered, same line as name
       width: 145,
       height: 11,
     });
@@ -156,8 +156,8 @@ async function createFormTemplate() {
     // Phone number
     const phoneNumber = form.createTextField('phone_number');
     phoneNumber.addToPage(page2, {
-      x: 475,
-      y: p2Height - 130,  // Same line
+      x: 400,  // Moved left
+      y: p2Height - 145,  // Lowered further
       width: 105,
       height: 11,
     });
