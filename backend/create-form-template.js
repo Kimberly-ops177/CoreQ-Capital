@@ -53,7 +53,7 @@ async function createFormTemplate() {
     loanIdField.addToPage(page1, {
       x: 50,
       y: p1Height - 128,
-      width: 200,
+      width: 120,  // Reduced width for shorter loan IDs
       height: 30,
     });
     loanIdField.setFontSize(28);
