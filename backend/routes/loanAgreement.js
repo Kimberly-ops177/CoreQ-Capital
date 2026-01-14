@@ -1,5 +1,4 @@
 const express = require('express');
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { auth, adminOnly } = require('../middleware/auth');
@@ -10,105 +9,6 @@ const { sendCustomSMS } = require('../services/smsService');
 const { generateLoanAgreementPDF } = require('../services/loanAgreementService');
 
 const router = express.Router();
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../uploads/signed_agreements');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, `signed_agreement_${req.params.loanId}_${uniqueSuffix}${path.extname(file.originalname)}`);
-  }
-});
-
-const fileFilter = (req, file, cb) => {
-  // Accept images and PDFs only
-  const allowedTypes = /jpeg|jpg|png|pdf/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
-
-  if (extname && mimetype) {
-    return cb(null, true);
-  } else {
-    cb(new Error('Only JPEG, PNG, and PDF files are allowed!'));
-  }
-};
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-  fileFilter: fileFilter
-});
-
-/**
- * Upload signed loan agreement
- * POST /api/loan-agreements/:loanId/upload
- */
-router.post('/:loanId/upload', auth, upload.single('signedAgreement'), async (req, res) => {
-  try {
-    const { loanId } = req.params;
-
-    if (!req.file) {
-      return res.status(400).send({ error: 'No file uploaded' });
-    }
-
-    // Find the loan
-    const loan = await Loan.findByPk(loanId, {
-      include: [
-        { model: Borrower, as: 'borrower' },
-        { model: Collateral, as: 'collateral' }
-      ]
-    });
-
-    if (!loan) {
-      // Delete uploaded file if loan not found
-      fs.unlinkSync(req.file.path);
-      return res.status(404).send({ error: 'Loan not found' });
-    }
-
-    // Check if user is authorized (borrower's employee/admin or admin)
-    if (req.user.role !== 'admin' && loan.branchId !== req.user.currentBranchId) {
-      fs.unlinkSync(req.file.path);
-      return res.status(403).send({ error: 'Access denied to this loan' });
-    }
-
-    // Update loan with signed agreement info
-    await loan.update({
-      signedAgreementPath: req.file.path,
-      signedAgreementFilename: req.file.filename,
-      signedAgreementUploadedAt: new Date(),
-      signedAgreementUploadedBy: req.user.id,
-      agreementStatus: 'pending_approval' // Awaiting admin approval
-    });
-
-    // Reload loan with updated data
-    await loan.reload();
-
-    res.send({
-      success: true,
-      message: 'Signed agreement uploaded successfully. Awaiting admin approval.',
-      loan: {
-        id: loan.id,
-        agreementStatus: loan.agreementStatus,
-        uploadedAt: loan.signedAgreementUploadedAt,
-        uploadedBy: req.user.name
-      }
-    });
-
-  } catch (error) {
-    console.error('Error uploading signed agreement:', error);
-    // Clean up uploaded file on error
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
-    res.status(500).send({ error: error.message });
-  }
-});
 
 /**
  * Approve signed loan agreement (Admin only)

@@ -8,35 +8,8 @@ const { generateLoanAgreementPDF, sendLoanAgreementEmail } = require('../service
 const { sendLoanApprovalSMS } = require('../services/smsService');
 const path = require('path');
 const fs = require('fs');
-const multer = require('multer');
 
 const router = express.Router();
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, '../uploads/signed_agreements');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'signed_loan_' + req.params.id + '_' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-  fileFilter: function (req, file, cb) {
-    if (file.mimetype !== 'application/pdf') {
-      return cb(new Error('Only PDF files are allowed'));
-    }
-    cb(null, true);
-  }
-});
 
 /**
  * Create a complete loan application (Borrower + Collateral + Loan)
@@ -392,46 +365,6 @@ router.get('/:id/download-agreement', auth, async (req, res) => {
 });
 
 /**
- * Upload signed loan agreement
- * POST /api/loan-applications/:id/upload-signed
- */
-router.post('/:id/upload-signed', auth, upload.single('signedAgreement'), async (req, res) => {
-  try {
-    const loan = await Loan.findByPk(req.params.id);
-
-    if (!loan) {
-      return res.status(404).send({ error: 'Loan not found' });
-    }
-
-    if (!req.file) {
-      return res.status(400).send({ error: 'No file uploaded' });
-    }
-
-    // Update loan with signed agreement details
-    await loan.update({
-      signedAgreementPath: req.file.path,
-      signedAgreementFilename: req.file.filename,
-      signedAgreementUploadedAt: new Date(),
-      signedAgreementUploadedBy: req.user.id,
-      agreementStatus: 'pending_approval'
-    });
-
-    res.send({
-      success: true,
-      message: 'Signed agreement uploaded successfully. Awaiting admin approval.',
-      loan: {
-        id: loan.id,
-        agreementStatus: loan.agreementStatus,
-        uploadedAt: loan.signedAgreementUploadedAt
-      }
-    });
-  } catch (error) {
-    console.error('Error uploading signed agreement:', error);
-    res.status(500).send({ error: error.message });
-  }
-});
-
-/**
  * Approve signed loan agreement (admin only)
  * POST /api/loan-applications/:id/approve
  */
@@ -525,35 +458,6 @@ router.post('/:id/reject', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Error rejecting agreement:', error);
-    res.status(500).send({ error: error.message });
-  }
-});
-
-/**
- * Download signed loan agreement PDF
- * GET /api/loan-applications/:id/download-signed
- */
-router.get('/:id/download-signed', auth, async (req, res) => {
-  try {
-    const loan = await Loan.findByPk(req.params.id, {
-      include: [{ model: Borrower, as: 'borrower' }]
-    });
-
-    if (!loan) {
-      return res.status(404).send({ error: 'Loan not found' });
-    }
-
-    if (!loan.signedAgreementPath) {
-      return res.status(404).send({ error: 'No signed agreement uploaded yet' });
-    }
-
-    if (!fs.existsSync(loan.signedAgreementPath)) {
-      return res.status(404).send({ error: 'Signed agreement file not found' });
-    }
-
-    res.download(loan.signedAgreementPath, `Signed_Loan_Agreement_${loan.id}_${loan.borrower.fullName.replace(/\s+/g, '_')}.pdf`);
-  } catch (error) {
-    console.error('Error downloading signed agreement:', error);
     res.status(500).send({ error: error.message });
   }
 });
