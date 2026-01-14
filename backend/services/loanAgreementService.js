@@ -123,9 +123,29 @@ const generateLoanAgreementPDF = async (loan, borrower, collateral) => {
     form.getTextField('id_number_p5').setText(borrower.idNumber);
     form.getTextField('date_p5').setText(formatDateShort(issueDate));
 
-    console.log('Flattening PDF to prevent editing...');
+    console.log('Removing field borders and flattening PDF...');
+
+    // Remove borders from ALL form fields before flattening
+    const allFields = form.getFields();
+    allFields.forEach(field => {
+      try {
+        // Get the field's widgets (visual representations)
+        const widgets = field.acroField.getWidgets();
+        widgets.forEach(widget => {
+          const dict = widget.dict;
+          // Remove border completely
+          dict.delete(pdfDoc.context.obj('BS')); // Border Style
+          dict.set(pdfDoc.context.obj('Border'), pdfDoc.context.obj([0, 0, 0])); // Border width to 0
+          // Make background transparent
+          dict.delete(pdfDoc.context.obj('BG')); // Background color
+        });
+      } catch (e) {
+        // Silently skip if can't modify widget
+      }
+    });
+
     // CRITICAL: Flatten the form to make it look like a normal document
-    // This prevents users from editing fields and removes field highlighting
+    // This converts form fields to regular text and removes all interactivity
     form.flatten();
 
     // Save the filled PDF

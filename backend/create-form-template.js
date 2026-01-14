@@ -68,7 +68,7 @@ async function createFormTemplate() {
     borrowerNameP1.addToPage(page1, {
       x: 115,  // Moved slightly right after "NAME:"
       y: 523,  // Raised to avoid blocking line
-      width: 150,  // Shortened to not cover "OF ID:" label
+      width: 100,  // Shortened to not cover "OF ID:" label
       height: 12,
     });
     borrowerNameP1.setFontSize(10);
@@ -96,7 +96,7 @@ async function createFormTemplate() {
     dateP1.addToPage(page1, {
       x: (p1Width - 120) / 2, // Centered
       y: 475,  // Below DATED text
-      width: 120,
+      width: 55,
       height: 14,
     });
     dateP1.setFontSize(10);
@@ -116,7 +116,7 @@ async function createFormTemplate() {
     dateTopP2.addToPage(page2, {
       x: 275,   // Aligned with dots after "made on"
       y: p2Height - 82,  // Raised slightly to show dots
-      width: 70,  // Reduced width to fit in dot space
+      width: 55,  // Reduced width to fit in dot space
       height: 10,
     });
     dateTopP2.setFontSize(8);
@@ -130,7 +130,7 @@ async function createFormTemplate() {
     borrowerNameP2.addToPage(page2, {
       x: 165,  // Moved slightly left
       y: p2Height - 147,  // Lowered more to align with name line
-      width: 200,  // Shortened length
+      width: 100,  // Shortened length
       height: 10,
     });
     borrowerNameP2.setFontSize(9);
@@ -144,7 +144,7 @@ async function createFormTemplate() {
     idNumberP2.addToPage(page2, {
       x: 413,  // Moved slightly right
       y: p2Height - 149,  // Lowered to same line as name
-      width: 125,
+      width: 80,
       height: 10,
     });
     idNumberP2.setFontSize(9);
@@ -158,7 +158,7 @@ async function createFormTemplate() {
     phoneNumber.addToPage(page2, {
       x: 198,  // Moved right to be next to "Phone Number" label
       y: p2Height - 164,  // Lowered more to next line
-      width: 105,
+      width: 80,
       height: 10,
     });
     phoneNumber.setFontSize(9);
@@ -170,8 +170,8 @@ async function createFormTemplate() {
     // Institution (for students) in WHEREAS B
     const institution = form.createTextField('institution');
     institution.addToPage(page2, {
-      x: 246,
-      y: p2Height - 263,
+      x: 229,
+      y: p2Height - 262,
       width: 100,
       height: 10,
     });
@@ -184,8 +184,8 @@ async function createFormTemplate() {
     // Registration number (for students) in WHEREAS B
     const registrationNumber = form.createTextField('registration_number');
     registrationNumber.addToPage(page2, {
-      x: 449,
-      y: p2Height - 263,
+      x: 433,
+      y: p2Height - 262,
       width: 80,
       height: 10,
     });
@@ -198,8 +198,8 @@ async function createFormTemplate() {
     // ID number in WHEREAS clause B
     const idNumberWhereas = form.createTextField('id_number_whereas');
     idNumberWhereas.addToPage(page2, {
-      x: 140,
-      y: p2Height - 276,  // Adjusted to align with WHEREAS B section
+      x: 137,
+      y: p2Height - 280,  // Adjusted to align with WHEREAS B section
       width: 55,
       height: 10,
     });
@@ -212,8 +212,8 @@ async function createFormTemplate() {
     // Phone number in WHEREAS B section
     const phoneNumberWhereas = form.createTextField('phone_number_whereas');
     phoneNumberWhereas.addToPage(page2, {
-      x: 277,
-      y: p2Height - 276,
+      x: 269,
+      y: p2Height - 280,
       width: 80,
       height: 10,
     });
@@ -226,8 +226,8 @@ async function createFormTemplate() {
     // Emergency number in WHEREAS B
     const emergencyNumber = form.createTextField('emergency_number');
     emergencyNumber.addToPage(page2, {
-      x: 439,
-      y: p2Height - 277,
+      x: 424,
+      y: p2Height - 280,
       width: 80,
       height: 10,
     });
@@ -241,7 +241,7 @@ async function createFormTemplate() {
     const location = form.createTextField('location');
     location.addToPage(page2, {
       x: 137,
-      y: p2Height - 292,
+      y: p2Height - 294,
       width: 80,
       height: 10,
     });
@@ -254,9 +254,9 @@ async function createFormTemplate() {
     // Apartment name in WHEREAS B
     const apartment = form.createTextField('apartment');
     apartment.addToPage(page2, {
-      x: 325,
-      y: p2Height - 292,
-      width: 55,
+      x: 320,
+      y: p2Height - 294,
+      width: 80,
       height: 10,
     });
     apartment.setFontSize(8);
@@ -284,7 +284,7 @@ async function createFormTemplate() {
     loanAmount.addToPage(page2, {
       x: 424,    // After "Kshs"
       y: p2Height - 482,  // Adjusted for Credit Advance section
-      width: 80,
+      width: 40,
       height: 10,
     });
     loanAmount.setFontSize(8);
@@ -298,7 +298,7 @@ async function createFormTemplate() {
     dueDate.addToPage(page2, {
       x: 198,    // After "before"
       y: p2Height - 498,  // Same line as loan amount
-      width: 80,
+      width: 70,
       height: 10,
     });
     dueDate.setFontSize(8);
@@ -312,7 +312,7 @@ async function createFormTemplate() {
     totalAmount.addToPage(page2, {
       x: 316,    // After "Amount"
       y: p2Height - 498,  // Next line down
-      width: 80,
+      width: 50,
       height: 10,
     });
     totalAmount.setFontSize(8);
@@ -370,7 +370,7 @@ async function createFormTemplate() {
     modelNumber.addToPage(page3, {
       x: 221,
       y: 670,
-      width: 300,
+      width: 80,
       height: 12,
     });
     modelNumber.setFontSize(9);
@@ -383,7 +383,7 @@ async function createFormTemplate() {
     serialNumber.addToPage(page3, {
       x: 222,
       y: 635,
-      width: 300,
+      width: 80,
       height: 10,
     });
     serialNumber.setFontSize(9);
@@ -395,8 +395,8 @@ async function createFormTemplate() {
     const condition = form.createTextField('condition');
     condition.addToPage(page3, {
       x: 205,
-      y: 618,
-      width: 350,
+      y: 616,
+      width: 80,
       height: 12,
     });
     condition.setFontSize(9);
@@ -413,7 +413,7 @@ async function createFormTemplate() {
     dateP4.addToPage(page4, {
       x: 399,
       y: 511,
-      width: 60,
+      width: 70,
       height: 10,
     });
     dateP4.setFontSize(9);
@@ -426,7 +426,7 @@ async function createFormTemplate() {
     borrowerNameP4.addToPage(page4, {
       x: 184,
       y: 496,
-      width: 80,
+      width: 100,
       height: 10,
     });
     borrowerNameP4.setFontSize(9);
@@ -443,7 +443,7 @@ async function createFormTemplate() {
     borrowerNameP5.addToPage(page5, {
       x: 113,
       y: 608,
-      width: 60,
+      width: 100,
       height: 10,
     });
     borrowerNameP5.setFontSize(8);
@@ -456,7 +456,7 @@ async function createFormTemplate() {
     idNumberP5.addToPage(page5, {
       x: 352,
       y: 608,
-      width: 60,
+      width: 70,
       height: 10,
     });
     idNumberP5.setFontSize(8);
@@ -469,7 +469,7 @@ async function createFormTemplate() {
     dateP5.addToPage(page5, {
       x: 170,
       y: 337,
-      width: 40,
+      width: 70,
       height: 10,
     });
     dateP5.setFontSize(8);
