@@ -114,8 +114,8 @@ async function createFormTemplate() {
     // Date at top - aligned with "THIS AGREEMENT is made on ... between:"
     const dateTopP2 = form.createTextField('date_top_p2');
     dateTopP2.addToPage(page2, {
-      x: 250,   // Moved left to align with dots after "made on"
-      y: p2Height - 85,  // Around where "between:" text is
+      x: 250,   // Aligned with dots after "made on"
+      y: p2Height - 82,  // Raised slightly to show dots
       width: 70,  // Reduced width to fit in dot space
       height: 11,
     });
@@ -128,9 +128,9 @@ async function createFormTemplate() {
     // Borrower name in parties section - after "CORE Q CAPITAL... AND"
     const borrowerNameP2 = form.createTextField('borrower_name_p2');
     borrowerNameP2.addToPage(page2, {
-      x: 70,
-      y: p2Height - 138,  // Lowered to better align with name line
-      width: 240,
+      x: 60,  // Moved slightly left
+      y: p2Height - 145,  // Lowered more to align with name line
+      width: 200,  // Shortened length
       height: 11,
     });
     borrowerNameP2.setFontSize(9);
@@ -142,9 +142,9 @@ async function createFormTemplate() {
     // ID number after "of ID number:"
     const idNumberP2 = form.createTextField('id_number_p2');
     idNumberP2.addToPage(page2, {
-      x: 325,
-      y: p2Height - 138,  // Lowered, same line as name
-      width: 145,
+      x: 340,  // Moved slightly right
+      y: p2Height - 145,  // Lowered to same line as name
+      width: 125,
       height: 11,
     });
     idNumberP2.setFontSize(9);
@@ -156,8 +156,8 @@ async function createFormTemplate() {
     // Phone number
     const phoneNumber = form.createTextField('phone_number');
     phoneNumber.addToPage(page2, {
-      x: 400,  // Moved left
-      y: p2Height - 145,  // Lowered further
+      x: 150,  // Moved right to be next to "Phone Number" label
+      y: p2Height - 160,  // Lowered more to next line
       width: 105,
       height: 11,
     });
