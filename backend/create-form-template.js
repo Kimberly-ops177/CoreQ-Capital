@@ -115,7 +115,7 @@ async function createFormTemplate() {
     const dateTopP2 = form.createTextField('date_top_p2');
     dateTopP2.addToPage(page2, {
       x: 275,   // Aligned with dots after "made on"
-      y: p2Height - 82,  // Raised slightly to show dots
+      y: p2Height - 79,  // Raised slightly to show dots
       width: 55,  // Reduced width to fit in dot space
       height: 10,
     });
@@ -171,7 +171,7 @@ async function createFormTemplate() {
     const institution = form.createTextField('institution');
     institution.addToPage(page2, {
       x: 229,
-      y: p2Height - 262,
+      y: p2Height - 264,
       width: 100,
       height: 10,
     });
@@ -185,7 +185,7 @@ async function createFormTemplate() {
     const registrationNumber = form.createTextField('registration_number');
     registrationNumber.addToPage(page2, {
       x: 433,
-      y: p2Height - 280,
+      y: p2Height - 264,
       width: 80,
       height: 10,
     });
@@ -226,9 +226,9 @@ async function createFormTemplate() {
     // Emergency number in WHEREAS B
     const emergencyNumber = form.createTextField('emergency_number');
     emergencyNumber.addToPage(page2, {
-      x: 424,
+      x: 434,
       y: p2Height - 280,
-      width: 80,
+      width: 60,
       height: 10,
     });
     emergencyNumber.setFontSize(8);
@@ -282,7 +282,7 @@ async function createFormTemplate() {
     // Loan amount issued (in Credit Advance section)
     const loanAmount = form.createTextField('loan_amount');
     loanAmount.addToPage(page2, {
-      x: 424,    // After "Kshs"
+      x: 425,    // After "Kshs"
       y: p2Height - 482,  // Adjusted for Credit Advance section
       width: 40,
       height: 10,
@@ -298,7 +298,7 @@ async function createFormTemplate() {
     dueDate.addToPage(page2, {
       x: 198,    // After "before"
       y: p2Height - 498,  // Same line as loan amount
-      width: 70,
+      width: 60,
       height: 10,
     });
     dueDate.setFontSize(8);
@@ -312,7 +312,7 @@ async function createFormTemplate() {
     totalAmount.addToPage(page2, {
       x: 316,    // After "Amount"
       y: p2Height - 498,  // Next line down
-      width: 50,
+      width: 40,
       height: 10,
     });
     totalAmount.setFontSize(8);
@@ -324,8 +324,8 @@ async function createFormTemplate() {
     // Loan period
     const loanPeriod = form.createTextField('loan_period');
     loanPeriod.addToPage(page2, {
-      x: 366,    // In the loan period blank
-      y: p2Height - 539,  // Further down in section B
+      x: 363,    // In the loan period blank
+      y: p2Height - 541,  // Further down in section B
       width: 70,
       height: 10,
     });
