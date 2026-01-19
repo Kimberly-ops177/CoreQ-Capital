@@ -4,7 +4,7 @@ import {
   TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Grid, IconButton, AppBar, Toolbar, Box, Pagination
 } from '@mui/material';
-import { Add, Edit, Delete } from '@mui/icons-material';
+import { Edit, Delete } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -164,9 +164,7 @@ const BorrowerManagement = () => {
       <Container sx={{ mt: 4, mb: 4 }}>
         <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography variant="h4">Borrowers</Typography>
-          <Button variant="contained" startIcon={<Add />} onClick={() => handleOpen()}>
-            Add Borrower
-          </Button>
+          {/* Note: Borrowers are created through the loan application process, not directly */}
         </Grid>
 
         <TextField

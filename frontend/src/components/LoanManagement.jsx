@@ -25,13 +25,19 @@ const LoanManagement = () => {
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [formData, setFormData] = useState({
     borrowerId: '',
-    collateralId: '',
     amountIssued: '',
     loanPeriod: '',
-    interestRate: '',
-    isNegotiable: false,
     dateIssued: new Date().toISOString().split('T')[0]
   });
+  // New collateral fields for each loan
+  const [newCollateral, setNewCollateral] = useState({
+    category: '',
+    itemName: '',
+    modelNumber: '',
+    serialNumber: '',
+    itemCondition: 'Good'
+  });
+  const [selectedBorrower, setSelectedBorrower] = useState(null);
   const [paymentData, setPaymentData] = useState({
     amount: '',
     paymentDate: new Date().toISOString().split('T')[0],
@@ -94,38 +100,20 @@ const LoanManagement = () => {
   }, []);
 
   // Auto-calculate interest rate and validate based on business rules
+  // Interest rates are FIXED for ALL borrowers - no negotiation
   useEffect(() => {
     if (formData.amountIssued && formData.loanPeriod) {
       const amount = parseFloat(formData.amountIssued);
       const period = parseInt(formData.loanPeriod);
       const errors = [];
 
-      // RULE 1: 4-week loans require minimum 12k
+      // RULE: 4-week loans require minimum 12k
       if (period === 4 && amount < businessRules.minAmountFor4Weeks) {
         errors.push(`4-week (1 month) loans require a minimum of KSH ${businessRules.minAmountFor4Weeks?.toLocaleString()}`);
       }
 
-      // RULE 2: Loans above 50k are negotiable
-      if (amount > businessRules.negotiableThreshold) {
-        // For loans >50k, mark as negotiable and allow admin to set custom rate
-        if (!formData.isNegotiable) {
-          setFormData(prev => ({ ...prev, isNegotiable: true }));
-        }
-      } else {
-        // For loans <=50k, use standard rates and cannot be negotiable
-        if (formData.isNegotiable) {
-          setFormData(prev => ({ ...prev, isNegotiable: false }));
-        }
-        // Auto-set interest rate from standard rates
-        if (interestRates[period]) {
-          setFormData(prev => ({ ...prev, interestRate: interestRates[period] }));
-        }
-      }
-
-      // Calculate loan preview
-      const rate = formData.isNegotiable && formData.interestRate
-        ? parseFloat(formData.interestRate)
-        : interestRates[period];
+      // Calculate loan preview using fixed rates
+      const rate = interestRates[period];
 
       if (rate) {
         const interestAmount = amount * (rate / 100);
@@ -144,7 +132,7 @@ const LoanManagement = () => {
       setLoanCalculation(null);
       setValidationErrors([]);
     }
-  }, [formData.amountIssued, formData.loanPeriod, formData.isNegotiable, formData.interestRate, interestRates, businessRules]);
+  }, [formData.amountIssued, formData.loanPeriod, interestRates, businessRules]);
 
   const filteredLoans = loans.filter((loan) => {
     if (!searchTerm) return true;
@@ -159,9 +147,16 @@ const LoanManagement = () => {
   });
 
   // Filter collaterals by selected borrower
-  const availableCollaterals = formData.borrowerId
-    ? collaterals.filter(c => c.borrowerId === parseInt(formData.borrowerId))
-    : [];
+  // Handle borrower selection and auto-fill their details
+  const handleBorrowerChange = (borrowerId) => {
+    setFormData(prev => ({ ...prev, borrowerId }));
+    if (borrowerId) {
+      const borrower = borrowers.find(b => b.id === parseInt(borrowerId));
+      setSelectedBorrower(borrower || null);
+    } else {
+      setSelectedBorrower(null);
+    }
+  };
 
   const handleOpen = (loan = null) => {
     if (loan) {
@@ -173,24 +168,29 @@ const LoanManagement = () => {
       setEditingLoan(loan);
       setFormData({
         borrowerId: loan.borrowerId,
-        collateralId: loan.collateralId,
         amountIssued: loan.amountIssued,
         loanPeriod: loan.loanPeriod,
-        interestRate: loan.interestRate,
-        isNegotiable: loan.isNegotiable,
         dateIssued: loan.dateIssued ? loan.dateIssued.split('T')[0] : new Date().toISOString().split('T')[0]
       });
+      // For editing, show existing borrower info
+      const borrower = borrowers.find(b => b.id === loan.borrowerId);
+      setSelectedBorrower(borrower || null);
     } else {
       setEditingLoan(null);
       setFormData({
         borrowerId: '',
-        collateralId: '',
         amountIssued: '',
         loanPeriod: '',
-        interestRate: '',
-        isNegotiable: false,
         dateIssued: new Date().toISOString().split('T')[0]
       });
+      setNewCollateral({
+        category: '',
+        itemName: '',
+        modelNumber: '',
+        serialNumber: '',
+        itemCondition: 'Good'
+      });
+      setSelectedBorrower(null);
       setLoanCalculation(null);
       setValidationErrors([]);
     }
@@ -200,6 +200,7 @@ const LoanManagement = () => {
   const handleClose = () => {
     setOpen(false);
     setEditingLoan(null);
+    setSelectedBorrower(null);
     setValidationErrors([]);
     setLoanCalculation(null);
   };
@@ -212,22 +213,22 @@ const LoanManagement = () => {
       return;
     }
 
-    try {
-      const payload = {
-        borrowerId: parseInt(formData.borrowerId),
-        collateralId: parseInt(formData.collateralId),
-        amountIssued: parseFloat(formData.amountIssued),
-        loanPeriod: parseInt(formData.loanPeriod),
-        isNegotiable: formData.isNegotiable,
-        dateIssued: formData.dateIssued
-      };
-
-      // Only include custom interest rate for negotiable loans
-      if (formData.isNegotiable) {
-        payload.interestRate = parseFloat(formData.interestRate);
+    // Validate new collateral fields for new loans
+    if (!editingLoan) {
+      if (!newCollateral.category || !newCollateral.itemName || !newCollateral.itemCondition) {
+        alert('Please fill in all required collateral fields');
+        return;
       }
+    }
 
+    try {
       if (editingLoan) {
+        // For editing, use the existing loan endpoint
+        const payload = {
+          amountIssued: parseFloat(formData.amountIssued),
+          loanPeriod: parseInt(formData.loanPeriod),
+          dateIssued: formData.dateIssued
+        };
         const res = await axios.patch(`/api/loans/${editingLoan.id}`, payload);
         if (res.data.success || res.data.id) {
           alert('Loan updated successfully');
@@ -235,10 +236,34 @@ const LoanManagement = () => {
           handleClose();
         }
       } else {
-        const res = await axios.post('/api/loans', payload);
+        // For new loans, use the loan-applications endpoint which creates collateral
+        const payload = {
+          borrower: {
+            fullName: selectedBorrower.fullName,
+            idNumber: selectedBorrower.idNumber,
+            phoneNumber: selectedBorrower.phoneNumber,
+            email: selectedBorrower.email,
+            location: selectedBorrower.location,
+            apartment: selectedBorrower.apartment,
+            houseNumber: selectedBorrower.houseNumber,
+            isStudent: selectedBorrower.isStudent,
+            institution: selectedBorrower.institution,
+            registrationNumber: selectedBorrower.registrationNumber,
+            emergencyNumber: selectedBorrower.emergencyNumber
+          },
+          collateral: newCollateral,
+          loan: {
+            amountIssued: parseFloat(formData.amountIssued),
+            loanPeriod: parseInt(formData.loanPeriod),
+            dateIssued: formData.dateIssued
+          }
+        };
+
+        const res = await axios.post('/api/loan-applications', payload);
         if (res.data.success || res.data.loan) {
-          alert(`Loan created successfully!\n\nPrincipal: KSH ${res.data.calculationDetails?.principal?.toLocaleString()}\nInterest Rate: ${res.data.calculationDetails?.interestRate}%\nInterest Amount: KSH ${parseFloat(res.data.calculationDetails?.interestAmount).toLocaleString()}\nTotal Amount: KSH ${parseFloat(res.data.calculationDetails?.totalAmount).toLocaleString()}\nDue Date: ${res.data.calculationDetails?.dueDate}`);
+          alert(`Loan created successfully!\n\nLoan ID: ${res.data.loan?.id}\nPrincipal: KSH ${parseFloat(formData.amountIssued).toLocaleString()}\nDue Date: ${new Date(res.data.loan?.dueDate).toLocaleDateString()}`);
           fetchLoans();
+          fetchCollaterals(); // Refresh collaterals list
           handleClose();
         }
       }
@@ -359,7 +384,7 @@ const LoanManagement = () => {
           <Divider sx={{ my: 1 }} />
           <Typography variant="caption" color="textSecondary">
             • 4-week loans require minimum KSH {businessRules.minAmountFor4Weeks?.toLocaleString()}<br />
-            • Loans above KSH {businessRules.negotiableThreshold?.toLocaleString()} have negotiable terms (Admin only)
+            • These rates are <strong>fixed and non-negotiable</strong> for all borrowers
           </Typography>
         </Paper>
 
@@ -452,101 +477,171 @@ const LoanManagement = () => {
               )}
 
               <Grid container spacing={2}>
+                {/* Borrower Selection */}
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>Borrower Information</Typography>
+                </Grid>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth required>
-                    <InputLabel>Borrower</InputLabel>
+                    <InputLabel>Select Borrower</InputLabel>
                     <Select
                       value={formData.borrowerId}
-                      onChange={(e) => setFormData({...formData, borrowerId: e.target.value, collateralId: ''})}
+                      onChange={(e) => handleBorrowerChange(e.target.value)}
                       disabled={editingLoan}
                     >
                       {borrowers.map((borrower) => (
                         <MenuItem key={borrower.id} value={borrower.id}>
-                          {borrower.fullName}
+                          {borrower.fullName} - {borrower.idNumber || 'No ID'}
                         </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth required disabled={!formData.borrowerId}>
-                    <InputLabel>Collateral</InputLabel>
-                    <Select
-                      value={formData.collateralId}
-                      onChange={(e) => setFormData({...formData, collateralId: e.target.value})}
-                      disabled={editingLoan}
-                    >
-                      {availableCollaterals.map((collateral) => (
-                        <MenuItem key={collateral.id} value={collateral.id}>
-                          {collateral.itemName} - {collateral.category}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Amount to Issue (KSH)"
-                    required
-                    type="number"
-                    value={formData.amountIssued}
-                    onChange={(e) => setFormData({...formData, amountIssued: e.target.value})}
-                    helperText="Minimum 12k for 4-week loans"
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Date Issued"
-                    required
-                    type="date"
-                    value={formData.dateIssued}
-                    onChange={(e) => setFormData({...formData, dateIssued: e.target.value})}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth required>
-                    <InputLabel>Loan Period</InputLabel>
-                    <Select
-                      value={formData.loanPeriod}
-                      onChange={(e) => setFormData({...formData, loanPeriod: e.target.value})}
-                    >
-                      <MenuItem value={1}>1 Week ({interestRates[1]}% interest)</MenuItem>
-                      <MenuItem value={2}>2 Weeks ({interestRates[2]}% interest)</MenuItem>
-                      <MenuItem value={3}>3 Weeks ({interestRates[3]}% interest)</MenuItem>
-                      <MenuItem value={4}>4 Weeks - 1 Month ({interestRates[4]}% interest)</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                {/* Show interest rate field only for negotiable loans (>50k) and admin users */}
-                {formData.isNegotiable && user.role === 'admin' && (
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Custom Interest Rate (%)"
-                      required
-                      type="number"
-                      step="0.01"
-                      value={formData.interestRate}
-                      onChange={(e) => setFormData({...formData, interestRate: e.target.value})}
-                      helperText="For negotiable loans above 50k"
-                    />
+                {/* Show selected borrower details */}
+                {selectedBorrower && (
+                  <Grid item xs={12}>
+                    <Paper sx={{ p: 2, backgroundColor: '#e3f2fd' }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>Borrower Details (Auto-filled)</Typography>
+                      <Grid container spacing={1}>
+                        <Grid item xs={6} sm={3}>
+                          <Typography variant="body2"><strong>Name:</strong> {selectedBorrower.fullName}</Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                          <Typography variant="body2"><strong>ID:</strong> {selectedBorrower.idNumber || 'N/A'}</Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                          <Typography variant="body2"><strong>Phone:</strong> {selectedBorrower.phoneNumber}</Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                          <Typography variant="body2"><strong>Email:</strong> {selectedBorrower.email || 'N/A'}</Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                          <Typography variant="body2"><strong>Location:</strong> {selectedBorrower.location}</Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                          <Typography variant="body2"><strong>Apartment:</strong> {selectedBorrower.apartment || 'N/A'}</Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                          <Typography variant="body2"><strong>House No:</strong> {selectedBorrower.houseNumber || 'N/A'}</Typography>
+                        </Grid>
+                      </Grid>
+                    </Paper>
                   </Grid>
                 )}
 
-                {formData.isNegotiable && (
-                  <Grid item xs={12}>
-                    <Alert severity="info">
-                      This loan amount exceeds KSH {businessRules.negotiableThreshold?.toLocaleString()} and has negotiable terms. {user.role === 'admin' ? 'You can set a custom interest rate and period.' : 'An administrator must approve this loan.'}
-                    </Alert>
-                  </Grid>
+                {/* New Collateral Section - Only for new loans */}
+                {!editingLoan && selectedBorrower && (
+                  <>
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 1 }} />
+                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>New Collateral (Required for each loan)</Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth required>
+                        <InputLabel>Collateral Category</InputLabel>
+                        <Select
+                          value={newCollateral.category}
+                          onChange={(e) => setNewCollateral({...newCollateral, category: e.target.value})}
+                        >
+                          <MenuItem value="Electronics">Electronics</MenuItem>
+                          <MenuItem value="Jewelry">Jewelry</MenuItem>
+                          <MenuItem value="Furniture">Furniture</MenuItem>
+                          <MenuItem value="Appliances">Appliances</MenuItem>
+                          <MenuItem value="Vehicles">Vehicles</MenuItem>
+                          <MenuItem value="Other">Other</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        required
+                        label="Item Name"
+                        value={newCollateral.itemName}
+                        onChange={(e) => setNewCollateral({...newCollateral, itemName: e.target.value})}
+                        placeholder="e.g., Samsung TV, Gold Ring"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Model Number"
+                        value={newCollateral.modelNumber}
+                        onChange={(e) => setNewCollateral({...newCollateral, modelNumber: e.target.value})}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Serial Number"
+                        value={newCollateral.serialNumber}
+                        onChange={(e) => setNewCollateral({...newCollateral, serialNumber: e.target.value})}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth required>
+                        <InputLabel>Item Condition</InputLabel>
+                        <Select
+                          value={newCollateral.itemCondition}
+                          onChange={(e) => setNewCollateral({...newCollateral, itemCondition: e.target.value})}
+                        >
+                          <MenuItem value="Excellent">Excellent</MenuItem>
+                          <MenuItem value="Good">Good</MenuItem>
+                          <MenuItem value="Fair">Fair</MenuItem>
+                          <MenuItem value="Poor">Poor</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                  </>
+                )}
+
+                {/* Loan Details Section */}
+                {selectedBorrower && (
+                  <>
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 1 }} />
+                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>Loan Details</Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Amount to Issue (KSH)"
+                        required
+                        type="number"
+                        value={formData.amountIssued}
+                        onChange={(e) => setFormData({...formData, amountIssued: e.target.value})}
+                        helperText="Minimum 12k for 4-week loans"
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Date Issued"
+                        required
+                        type="date"
+                        value={formData.dateIssued}
+                        onChange={(e) => setFormData({...formData, dateIssued: e.target.value})}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth required>
+                        <InputLabel>Loan Period</InputLabel>
+                        <Select
+                          value={formData.loanPeriod}
+                          onChange={(e) => setFormData({...formData, loanPeriod: e.target.value})}
+                        >
+                          <MenuItem value={1}>1 Week ({interestRates[1]}% interest)</MenuItem>
+                          <MenuItem value={2}>2 Weeks ({interestRates[2]}% interest)</MenuItem>
+                          <MenuItem value={3}>3 Weeks ({interestRates[3]}% interest)</MenuItem>
+                          <MenuItem value={4}>4 Weeks - 1 Month ({interestRates[4]}% interest)</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                  </>
                 )}
 
                 {/* Loan Calculation Preview */}
