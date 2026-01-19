@@ -97,35 +97,19 @@ router.post('/', auth, async (req, res) => {
       });
     }
 
-    // 6. Determine interest rate
-    let interestRate;
-    const isNegotiableLoan = amount > businessRules.negotiableThreshold || isSecondTimeLoan;
+    // 6. Determine interest rate - FIXED RATES FOR ALL BORROWERS
+    // Policy: Interest rates are non-negotiable for both first-time and returning borrowers
+    const interestRate = standardRates[period];
 
-    if (isNegotiableLoan) {
-      // Negotiable loan - use custom rate if provided
-      if (!loan.interestRate) {
-        await transaction.rollback();
-        return res.status(400).send({
-          error: isSecondTimeLoan
-            ? 'As a returning customer, please specify your negotiated interest rate'
-            : 'Loans above KSH 50,000 require a custom interest rate'
-        });
-      }
-      interestRate = parseFloat(loan.interestRate);
-    } else {
-      // Standard loan - use fixed rate
-      interestRate = standardRates[period];
-    }
-
-    // 7. Log second-time loan info (rates are negotiated)
+    // Log loan creation info
     if (isSecondTimeLoan) {
       const paidLoansCount = existingBorrower.loans.filter(l => l.status === 'paid').length;
       const tier = paidLoansCount >= 2 ? 'Gold' : 'Silver';
 
-      console.log(`📊 Second-time loan created:`, {
+      console.log(`📊 Returning customer loan created:`, {
         borrowerId: newBorrower.id,
         tier: tier,
-        negotiatedRate: `${interestRate}%`,
+        fixedRate: `${interestRate}%`,
         paidLoansCount: paidLoansCount
       });
     }
@@ -156,13 +140,13 @@ router.post('/', auth, async (req, res) => {
       totalAmount: totalAmount,
       amountRepaid: 0,
       penalties: 0,
-      isNegotiable: isNegotiableLoan,
+      isNegotiable: false, // All loans have fixed, non-negotiable rates
       gracePeriodEnd: gracePeriodEnd,
       branchId: req.user.currentBranchId || null,
       agreementStatus: 'pending_approval', // NEW: Agreement workflow status
-      // Track second-time loan info in notes for reference
+      // Track returning customer info in notes for reference
       notes: isSecondTimeLoan
-        ? `Second-time loan with negotiable terms. Previous paid loans: ${existingBorrower.loans.filter(l => l.status === 'paid').length}`
+        ? `Returning customer (${existingBorrower.loans.filter(l => l.status === 'paid').length} paid loans). Standard fixed rate applied.`
         : null
     }, { transaction });
 
@@ -810,8 +794,9 @@ router.get('/check-borrower/:idNumber', auth, async (req, res) => {
         tier
       },
       benefits: {
-        negotiableRates: isSecondTimeBorrower,
-        negotiablePeriod: isSecondTimeBorrower
+        // Note: All borrowers receive the same fixed, non-negotiable interest rates
+        negotiableRates: false,
+        negotiablePeriod: false
       }
     });
 

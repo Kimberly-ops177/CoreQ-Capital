@@ -189,10 +189,10 @@ const LoanApplicationForm = () => {
           }));
         }
 
-        // Set second-time borrower status and negotiable terms if applicable
+        // Set second-time borrower status (for display purposes only - rates are NOT negotiable)
         if (res.data.isSecondTimeBorrower) {
           setIsSecondTimeBorrower(true);
-          setLoanData(prev => ({ ...prev, isNegotiable: true }));
+          // Note: Rates are fixed for ALL borrowers including second-time borrowers
         } else {
           setIsSecondTimeBorrower(false);
         }
@@ -219,23 +219,18 @@ const LoanApplicationForm = () => {
     }
   }, [borrowerData.idNumber, isEditMode]);
 
-  // Check if loan is negotiable based on amount OR second-time borrower status
+  // Interest rates are FIXED for ALL borrowers - no negotiation allowed
+  // This applies to both first-time and returning borrowers equally
   useEffect(() => {
     if (loanData.amountIssued) {
-      const amount = parseFloat(loanData.amountIssued);
-
-      // Check if negotiable (>50k OR second-time borrower)
-      if (amount > (businessRules.negotiableThreshold || 50000) || isSecondTimeBorrower) {
-        setLoanData(prev => ({ ...prev, isNegotiable: true }));
-      } else {
-        setLoanData(prev => ({
-          ...prev,
-          isNegotiable: false,
-          interestRate: ''
-        }));
-      }
+      // All loans use fixed, non-negotiable rates regardless of amount or borrower status
+      setLoanData(prev => ({
+        ...prev,
+        isNegotiable: false,
+        interestRate: ''
+      }));
     }
-  }, [loanData.amountIssued, businessRules, isSecondTimeBorrower]);
+  }, [loanData.amountIssued]);
 
   // Auto-calculate loan terms
   useEffect(() => {
@@ -314,11 +309,7 @@ const LoanApplicationForm = () => {
         setError(`4-week loans require minimum KSH ${(businessRules.minAmountFor4Weeks || 12000).toLocaleString()}`);
         return false;
       }
-
-      if (loanData.isNegotiable && !loanData.interestRate) {
-        setError('Please set a custom interest rate for this negotiable loan');
-        return false;
-      }
+      // Note: Interest rates are fixed and non-negotiable - no custom rate validation needed
     }
 
     return true;
@@ -346,9 +337,8 @@ const LoanApplicationForm = () => {
         loan: {
           amountIssued: parseFloat(loanData.amountIssued),
           loanPeriod: parseInt(loanData.loanPeriod),
-          dateIssued: loanData.dateIssued,
-          isNegotiable: loanData.isNegotiable,
-          interestRate: loanData.isNegotiable ? parseFloat(loanData.interestRate) : undefined
+          dateIssued: loanData.dateIssued
+          // Note: Interest rates are fixed and determined by the backend based on loan period
         }
       };
 
@@ -430,11 +420,11 @@ const LoanApplicationForm = () => {
                   </Typography>
                   {isSecondTimeBorrower && (
                     <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#1b5e20', mt: 1 }}>
-                      ✓ Special Benefit: Interest rates and repayment period are <strong>negotiable</strong> for all your loans!
+                      ✓ Thank you for being a loyal customer!
                     </Typography>
                   )}
                   <Typography variant="body2" sx={{ fontStyle: 'italic', color: isSecondTimeBorrower ? '#1b5e20' : '#0d47a1', mt: 1 }}>
-                    Note: Collateral details must be provided for each new loan.
+                    Note: Standard interest rates apply to all loans. Collateral details must be provided for each new loan.
                   </Typography>
                 </Alert>
               </Grid>
@@ -639,7 +629,7 @@ const LoanApplicationForm = () => {
                   </Grid>
                   <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 1 }}>
                     • 4-week loans require minimum KSH {(businessRules.minAmountFor4Weeks || 12000).toLocaleString()}<br />
-                    • Loans above KSH {(businessRules.negotiableThreshold || 50000).toLocaleString()} have negotiable terms
+                    • These rates are <strong>fixed and non-negotiable</strong> for all borrowers
                   </Typography>
                 </CardContent>
               </Card>
@@ -661,22 +651,6 @@ const LoanApplicationForm = () => {
               />
             </Grid>
 
-            {loanData.isNegotiable && (
-              <Grid item xs={12}>
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  {isSecondTimeBorrower ? (
-                    <>
-                      🎉 <strong>Negotiable Terms!</strong> As a returning customer, you can negotiate both the interest rate and repayment period for this loan. Set your custom terms below.
-                    </>
-                  ) : (
-                    <>
-                      💡 This loan amount exceeds KSH {(businessRules.negotiableThreshold || 50000).toLocaleString()} and has negotiable terms. You can set a custom interest rate and period below.
-                    </>
-                  )}
-                </Alert>
-              </Grid>
-            )}
-
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -688,52 +662,21 @@ const LoanApplicationForm = () => {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-            {!loanData.isNegotiable && (
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>Loan Period</InputLabel>
-                  <Select
-                    value={loanData.loanPeriod}
-                    label="Loan Period"
-                    onChange={(e) => setLoanData({...loanData, loanPeriod: e.target.value})}
-                  >
-                    <MenuItem value={1}>1 Week ({interestRates[1]}% interest)</MenuItem>
-                    <MenuItem value={2}>2 Weeks ({interestRates[2]}% interest)</MenuItem>
-                    <MenuItem value={3}>3 Weeks ({interestRates[3]}% interest)</MenuItem>
-                    <MenuItem value={4}>4 Weeks ({interestRates[4]}% interest)</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            )}
-
-            {loanData.isNegotiable && (
-              <>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    required
-                    type="number"
-                    label="Custom Loan Period (Weeks)"
-                    value={loanData.customLoanPeriod}
-                    onChange={(e) => setLoanData({...loanData, customLoanPeriod: e.target.value, loanPeriod: e.target.value})}
-                    helperText="Enter custom loan period in weeks"
-                    inputProps={{ min: 1, step: 1 }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    required
-                    type="number"
-                    step="0.01"
-                    label="Custom Interest Rate (%)"
-                    value={loanData.interestRate}
-                    onChange={(e) => setLoanData({...loanData, interestRate: e.target.value})}
-                    helperText="Enter custom interest rate for this negotiable loan"
-                  />
-                </Grid>
-              </>
-            )}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth required>
+                <InputLabel>Loan Period</InputLabel>
+                <Select
+                  value={loanData.loanPeriod}
+                  label="Loan Period"
+                  onChange={(e) => setLoanData({...loanData, loanPeriod: e.target.value})}
+                >
+                  <MenuItem value={1}>1 Week ({interestRates[1]}% interest)</MenuItem>
+                  <MenuItem value={2}>2 Weeks ({interestRates[2]}% interest)</MenuItem>
+                  <MenuItem value={3}>3 Weeks ({interestRates[3]}% interest)</MenuItem>
+                  <MenuItem value={4}>4 Weeks ({interestRates[4]}% interest)</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
 
             {/* Loan Calculation Preview */}
             {loanCalculation && (
