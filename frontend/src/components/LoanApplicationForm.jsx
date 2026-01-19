@@ -169,11 +169,10 @@ const LoanApplicationForm = () => {
       setCheckingBorrower(true);
       const res = await axios.get(`/api/loan-applications/check-borrower/${idNumber}`);
 
-      if (res.data.exists && res.data.isSecondTimeBorrower) {
+      if (res.data.exists) {
         setBorrowerHistory(res.data);
-        setIsSecondTimeBorrower(true);
 
-        // Pre-fill borrower data if exists
+        // Pre-fill borrower data for ANY existing borrower (new or returning)
         if (res.data.borrower) {
           setBorrowerData(prev => ({
             ...prev,
@@ -190,8 +189,13 @@ const LoanApplicationForm = () => {
           }));
         }
 
-        // Make loan negotiable for second-time borrowers
-        setLoanData(prev => ({ ...prev, isNegotiable: true }));
+        // Set second-time borrower status and negotiable terms if applicable
+        if (res.data.isSecondTimeBorrower) {
+          setIsSecondTimeBorrower(true);
+          setLoanData(prev => ({ ...prev, isNegotiable: true }));
+        } else {
+          setIsSecondTimeBorrower(false);
+        }
       } else {
         setBorrowerHistory(null);
         setIsSecondTimeBorrower(false);
@@ -399,32 +403,38 @@ const LoanApplicationForm = () => {
               </Grid>
             )}
 
-            {isSecondTimeBorrower && borrowerHistory && (
+            {borrowerHistory && borrowerHistory.exists && (
               <Grid item xs={12}>
                 <Alert
-                  severity="success"
+                  severity={isSecondTimeBorrower ? "success" : "info"}
                   sx={{
-                    backgroundColor: '#e8f5e9',
-                    border: '2px solid #4caf50',
+                    backgroundColor: isSecondTimeBorrower ? '#e8f5e9' : '#e3f2fd',
+                    border: isSecondTimeBorrower ? '2px solid #4caf50' : '2px solid #2196f3',
                     '& .MuiAlert-message': {
-                      color: '#1b5e20'
+                      color: isSecondTimeBorrower ? '#1b5e20' : '#0d47a1'
                     }
                   }}
                 >
-                  <Typography variant="h6" gutterBottom sx={{ color: '#1b5e20' }}>
-                    Welcome Back! 🎉
+                  <Typography variant="h6" gutterBottom sx={{ color: isSecondTimeBorrower ? '#1b5e20' : '#0d47a1' }}>
+                    {isSecondTimeBorrower ? 'Welcome Back! 🎉' : 'Existing Borrower Found'}
                   </Typography>
-                  <Typography variant="body2" gutterBottom sx={{ color: '#1b5e20' }}>
-                    <strong>{borrowerHistory.borrower.fullName}</strong> - You're a valued customer!
+                  <Typography variant="body2" gutterBottom sx={{ color: isSecondTimeBorrower ? '#1b5e20' : '#0d47a1' }}>
+                    <strong>{borrowerHistory.borrower.fullName}</strong> - {isSecondTimeBorrower ? "You're a valued customer!" : 'Borrower details auto-filled'}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#1b5e20' }}>
-                    • Loan History: {borrowerHistory.loanHistory.loansRepaid} loan(s) successfully repaid
+                  <Typography variant="body2" sx={{ color: isSecondTimeBorrower ? '#1b5e20' : '#0d47a1' }}>
+                    • Total Loans: {borrowerHistory.loanHistory.totalLoans}
+                    {borrowerHistory.loanHistory.loansRepaid > 0 && ` | Repaid: ${borrowerHistory.loanHistory.loansRepaid}`}
                     {borrowerHistory.loanHistory.tier === 'silver' && ' (Returning Customer)'}
                     {borrowerHistory.loanHistory.tier === 'gold' && ' (Valued Customer) ⭐'}
-                    {borrowerHistory.loanHistory.loansDefaulted > 0 && ' (Previous defaults: ' + borrowerHistory.loanHistory.loansDefaulted + ')'}
+                    {borrowerHistory.loanHistory.loansDefaulted > 0 && ` | Defaults: ${borrowerHistory.loanHistory.loansDefaulted}`}
                   </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#1b5e20', mt: 1 }}>
-                    ✓ Special Benefit: Interest rates and repayment period are <strong>negotiable</strong> for all your loans!
+                  {isSecondTimeBorrower && (
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#1b5e20', mt: 1 }}>
+                      ✓ Special Benefit: Interest rates and repayment period are <strong>negotiable</strong> for all your loans!
+                    </Typography>
+                  )}
+                  <Typography variant="body2" sx={{ fontStyle: 'italic', color: isSecondTimeBorrower ? '#1b5e20' : '#0d47a1', mt: 1 }}>
+                    Note: Collateral details must be provided for each new loan.
                   </Typography>
                 </Alert>
               </Grid>
