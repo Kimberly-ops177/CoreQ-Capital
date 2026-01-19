@@ -1,47 +1,44 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const smsService = require('./smsService');
 
-// Email configuration using nodemailer
-const createEmailTransporter = () => {
-  // Use SSL on port 465 for better compatibility with cloud platforms
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Use SSL
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD
-    },
-    connectionTimeout: 30000, // 30 seconds
-    greetingTimeout: 30000,
-    socketTimeout: 30000
-  });
+// Initialize Resend client
+const getResendClient = () => {
+  if (!process.env.RESEND_API_KEY) {
+    return null;
+  }
+  return new Resend(process.env.RESEND_API_KEY);
 };
 
 // SMS sending now handled by smsService (Africa's Talking)
 
 /**
- * Send email notification
+ * Send email notification using Resend
  */
 const sendEmail = async (to, subject, htmlContent) => {
   try {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    const resend = getResendClient();
+
+    if (!resend) {
       console.log(`[EMAIL SIMULATION] To: ${to}, Subject: ${subject}`);
-      console.log(`[EMAIL CONTENT]\n${htmlContent}`);
       return { success: true, simulated: true };
     }
 
-    const transporter = createEmailTransporter();
-    const mailOptions = {
-      from: `"Core Q Capital" <${process.env.EMAIL_USER}>`,
-      to,
+    const fromEmail = process.env.EMAIL_FROM || 'notifications@coreqcapital.com';
+
+    const { data, error } = await resend.emails.send({
+      from: `Core Q Capital <${fromEmail}>`,
+      to: [to],
       subject,
       html: htmlContent
-    };
+    });
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`Email sent successfully to ${to}: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
+    if (error) {
+      console.error(`Error sending email to ${to}:`, error.message);
+      return { success: false, error: error.message };
+    }
+
+    console.log(`Email sent successfully to ${to}: ${data.id}`);
+    return { success: true, messageId: data.id };
   } catch (error) {
     console.error(`Error sending email to ${to}:`, error.message);
     return { success: false, error: error.message };
