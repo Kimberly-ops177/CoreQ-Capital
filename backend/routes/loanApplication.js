@@ -461,8 +461,12 @@ router.post('/:id/approve', auth, async (req, res) => {
           </html>
         `;
 
-        await sendEmail(loan.borrower.email, emailSubject, emailHTML);
-        console.log(`✅ Loan approval email sent to ${loan.borrower.email}`);
+        const emailResult = await sendEmail(loan.borrower.email, emailSubject, emailHTML);
+        if (emailResult.success) {
+          console.log(`✅ Loan approval email sent to ${loan.borrower.email}`);
+        } else {
+          console.error(`⚠️ Failed to send loan approval email: ${emailResult.error}`);
+        }
       } catch (emailError) {
         console.error('⚠️ Failed to send loan approval email:', emailError);
         // Don't fail the approval if email fails
