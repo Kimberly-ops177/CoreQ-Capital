@@ -3,21 +3,18 @@ const smsService = require('./smsService');
 
 // Email configuration using nodemailer
 const createEmailTransporter = () => {
-  // Use explicit SMTP settings for better compatibility with cloud platforms
+  // Use SSL on port 465 for better compatibility with cloud platforms
   return nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // Use TLS
+    port: 465,
+    secure: true, // Use SSL
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD
     },
-    tls: {
-      rejectUnauthorized: false
-    },
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 15000
+    connectionTimeout: 30000, // 30 seconds
+    greetingTimeout: 30000,
+    socketTimeout: 30000
   });
 };
 
