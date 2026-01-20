@@ -540,7 +540,7 @@ const LoanApplicationForm = () => {
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>Collateral Details</Typography>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={4}>
               <FormControl fullWidth required>
                 <InputLabel>Category</InputLabel>
                 <Select
@@ -558,7 +558,7 @@ const LoanApplicationForm = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={4}>
               <TextField
                 fullWidth
                 required
@@ -566,6 +566,21 @@ const LoanApplicationForm = () => {
                 value={collateralData.itemName}
                 onChange={(e) => setCollateralData({...collateralData, itemName: e.target.value})}
               />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth required>
+                <InputLabel>Condition</InputLabel>
+                <Select
+                  value={collateralData.itemCondition}
+                  label="Condition"
+                  onChange={(e) => setCollateralData({...collateralData, itemCondition: e.target.value})}
+                >
+                  <MenuItem value="Excellent">Excellent</MenuItem>
+                  <MenuItem value="Good">Good</MenuItem>
+                  <MenuItem value="Fair">Fair</MenuItem>
+                  <MenuItem value="Poor">Poor</MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
@@ -582,21 +597,6 @@ const LoanApplicationForm = () => {
                 value={collateralData.serialNumber}
                 onChange={(e) => setCollateralData({...collateralData, serialNumber: e.target.value})}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
-                <InputLabel>Item Condition</InputLabel>
-                <Select
-                  value={collateralData.itemCondition}
-                  label="Item Condition"
-                  onChange={(e) => setCollateralData({...collateralData, itemCondition: e.target.value})}
-                >
-                  <MenuItem value="Excellent">Excellent</MenuItem>
-                  <MenuItem value="Good">Good</MenuItem>
-                  <MenuItem value="Fair">Fair</MenuItem>
-                  <MenuItem value="Poor">Poor</MenuItem>
-                </Select>
-              </FormControl>
             </Grid>
           </Grid>
         );
