@@ -781,10 +781,7 @@ const Reporting = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh' }}>
-      <Navigation title="Reports" />
-
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
         <Typography
           variant="h4"
           align="center"
@@ -869,7 +866,6 @@ const Reporting = () => {
         {/* Report Results */}
         {renderReportData()}
       </Container>
-    </Box>
   );
 };
 

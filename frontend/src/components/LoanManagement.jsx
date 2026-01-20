@@ -336,9 +336,7 @@ const LoanManagement = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh' }}>
-      <Navigation title="Loans" />
-      <Container sx={{ mt: 4, mb: 4 }}>
+    <Container sx={{ py: 4 }}>
         <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography variant="h4">Loans</Typography>
           <Button variant="contained" startIcon={<Add />} onClick={() => handleOpen()}>
@@ -740,7 +738,6 @@ const LoanManagement = () => {
           </form>
         </Dialog>
       </Container>
-    </Box>
   );
 };
 

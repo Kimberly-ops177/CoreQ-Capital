@@ -148,9 +148,7 @@ const CollateralManagement = () => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh' }}>
-      <Navigation title="Collaterals" />
-      <Container sx={{ mt: 4, mb: 4 }}>
+    <Container sx={{ py: 4 }}>
         <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography variant="h4">Collaterals</Typography>
           <Button variant="contained" startIcon={<Add />} onClick={() => handleOpen()}>
@@ -304,7 +302,6 @@ const CollateralManagement = () => {
           </form>
         </Dialog>
       </Container>
-    </Box>
   );
 };
 

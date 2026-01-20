@@ -116,9 +116,7 @@ const UserManagement = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh' }}>
-      <Navigation title="Users" />
-      <Container sx={{ mt: 4, mb: 4 }}>
+    <Container sx={{ py: 4 }}>
         <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography variant="h4">Users</Typography>
           <Button variant="contained" startIcon={<Add />} onClick={() => handleOpen()}>
@@ -334,7 +332,6 @@ const UserManagement = () => {
           </form>
         </Dialog>
       </Container>
-    </Box>
   );
 };
 

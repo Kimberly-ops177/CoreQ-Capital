@@ -47,9 +47,7 @@ const Settings = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh' }}>
-      <Navigation title="Settings" />
-      <Container sx={{ mt: 4, mb: 4 }}>
+    <Container sx={{ py: 4 }}>
         <Typography variant="h4" gutterBottom>System Settings</Typography>
 
         <Grid container spacing={3}>
@@ -122,7 +120,6 @@ const Settings = () => {
           </Grid>
         </Grid>
       </Container>
-    </Box>
   );
 };
 
