@@ -652,12 +652,24 @@ const LoanManagement = () => {
                           '&:hover fieldset': { borderColor: '#00FF9D' },
                           '&.Mui-focused fieldset': { borderColor: '#00FF9D' },
                         },
-                        '& .MuiSelect-icon': { color: '#00FF9D' }
+                        '& .MuiSelect-icon': { color: '#00FF9D' },
+                        '& .MuiSelect-select': {
+                          minWidth: '150px',
+                          textOverflow: 'ellipsis',
+                          overflow: 'visible'
+                        }
                       }}>
-                        <InputLabel>Collateral Category</InputLabel>
+                        <InputLabel>Category</InputLabel>
                         <Select
                           value={newCollateral.category}
-                          label="Collateral Category"
+                          label="Category"
+                          displayEmpty
+                          renderValue={(selected) => {
+                            if (!selected) {
+                              return <span style={{ color: 'rgba(255,255,255,0.5)' }}>Select category...</span>;
+                            }
+                            return selected;
+                          }}
                           onChange={(e) => setNewCollateral({...newCollateral, category: e.target.value})}
                           MenuProps={{
                             PaperProps: {
@@ -748,12 +760,13 @@ const LoanManagement = () => {
                           '&:hover fieldset': { borderColor: '#00FF9D' },
                           '&.Mui-focused fieldset': { borderColor: '#00FF9D' },
                         },
-                        '& .MuiSelect-icon': { color: '#00FF9D' }
+                        '& .MuiSelect-icon': { color: '#00FF9D' },
+                        '& .MuiSelect-select': { minWidth: '100px' }
                       }}>
-                        <InputLabel>Item Condition</InputLabel>
+                        <InputLabel>Condition</InputLabel>
                         <Select
                           value={newCollateral.itemCondition}
-                          label="Item Condition"
+                          label="Condition"
                           onChange={(e) => setNewCollateral({...newCollateral, itemCondition: e.target.value})}
                           MenuProps={{
                             PaperProps: {
@@ -842,12 +855,26 @@ const LoanManagement = () => {
                           '&:hover fieldset': { borderColor: '#00FF9D' },
                           '&.Mui-focused fieldset': { borderColor: '#00FF9D' },
                         },
-                        '& .MuiSelect-icon': { color: '#00FF9D' }
+                        '& .MuiSelect-icon': { color: '#00FF9D' },
+                        '& .MuiSelect-select': { minWidth: '150px' }
                       }}>
-                        <InputLabel>Loan Period</InputLabel>
+                        <InputLabel>Period</InputLabel>
                         <Select
                           value={formData.loanPeriod}
-                          label="Loan Period"
+                          label="Period"
+                          displayEmpty
+                          renderValue={(selected) => {
+                            if (!selected) {
+                              return <span style={{ color: 'rgba(255,255,255,0.5)' }}>Select period...</span>;
+                            }
+                            const periodText = {
+                              1: `1 Week (${interestRates[1]}%)`,
+                              2: `2 Weeks (${interestRates[2]}%)`,
+                              3: `3 Weeks (${interestRates[3]}%)`,
+                              4: `4 Weeks (${interestRates[4]}%)`
+                            };
+                            return periodText[selected] || selected;
+                          }}
                           onChange={(e) => setFormData({...formData, loanPeriod: e.target.value})}
                           MenuProps={{
                             PaperProps: {
