@@ -569,10 +569,10 @@ const LoanApplicationForm = () => {
             </Grid>
             <Grid item xs={12} sm={4}>
               <FormControl fullWidth required>
-                <InputLabel>Condition</InputLabel>
+                <InputLabel>Item Condition</InputLabel>
                 <Select
                   value={collateralData.itemCondition}
-                  label="Condition"
+                  label="Item Condition"
                   onChange={(e) => setCollateralData({...collateralData, itemCondition: e.target.value})}
                 >
                   <MenuItem value="Excellent">Excellent</MenuItem>
