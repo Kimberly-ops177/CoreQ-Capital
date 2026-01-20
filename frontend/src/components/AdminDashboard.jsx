@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Typography, Grid, Card, CardContent, Button, AppBar, Toolbar, Box } from '@mui/material';
-import { Add } from '@mui/icons-material';
+import { Container, Typography, Grid, Card, CardContent, Button, Box } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Navigation from './Navigation';
 
 const AdminDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [data, setData] = useState({});
 
@@ -18,29 +18,7 @@ const AdminDashboard = () => {
     <Box sx={{
       minHeight: '100vh'
     }}>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            🏦 Core Q Capital - Admin Dashboard
-          </Typography>
-          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
-            <Button variant="contained" color="success" startIcon={<Add />} onClick={() => navigate('/new-loan')}>
-              New Loan
-            </Button>
-            <Button color="inherit" onClick={() => navigate('/loans')}>Loans</Button>
-            <Button color="inherit" onClick={() => navigate('/loan-agreements')}>Agreements</Button>
-            <Button color="inherit" onClick={() => navigate('/collaterals')}>Collaterals</Button>
-            <Button color="inherit" onClick={() => navigate('/expenses')}>Expenses</Button>
-            <Button color="inherit" onClick={() => navigate('/reports')}>Reports</Button>
-            <Button color="inherit" onClick={() => navigate('/settings')}>Settings</Button>
-            <Button color="inherit" onClick={() => navigate('/users')}>Users</Button>
-            <Button color="inherit" onClick={logout}>Logout</Button>
-          </Box>
-          <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
-            <Button color="inherit" onClick={logout}>Logout</Button>
-          </Box>
-        </Toolbar>
-      </AppBar>
+      <Navigation title="Core Q Capital - Admin Dashboard" isDashboard={true} />
 
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Typography

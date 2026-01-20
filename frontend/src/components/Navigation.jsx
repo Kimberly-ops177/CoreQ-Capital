@@ -1,12 +1,12 @@
 import React from 'react';
 import {
-  AppBar, Toolbar, Typography, Button, Box, IconButton
+  AppBar, Toolbar, Typography, Button, Box
 } from '@mui/material';
-import { ArrowBack } from '@mui/icons-material';
+import { ArrowBack, Add } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const Navigation = ({ title, showBack = true }) => {
+const Navigation = ({ title, showBack = true, isDashboard = false }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -18,19 +18,85 @@ const Navigation = ({ title, showBack = true }) => {
     return user?.role === 'admin' ? '/admin' : '/employee';
   };
 
+  // Dashboard layout - Title on left, navigation spread across
+  if (isDashboard) {
+    return (
+      <AppBar position="static">
+        <Toolbar>
+          {/* Dashboard Title */}
+          <Typography variant="h6" sx={{ fontWeight: 'bold', minWidth: 'fit-content' }}>
+            {title || 'Core Q Capital'}
+          </Typography>
+
+          {/* Spacer */}
+          <Box sx={{ flexGrow: 1 }} />
+
+          {/* Navigation Links */}
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
+            <Button variant="contained" color="success" startIcon={<Add />} onClick={() => navigate('/new-loan')}>
+              New Loan
+            </Button>
+            <Button color="inherit" onClick={() => navigate('/borrowers')}>
+              Borrowers
+            </Button>
+            <Button color="inherit" onClick={() => navigate('/loans')}>
+              Loans
+            </Button>
+            <Button color="inherit" onClick={() => navigate('/agreements')}>
+              Agreements
+            </Button>
+            <Button color="inherit" onClick={() => navigate('/collaterals')}>
+              Collaterals
+            </Button>
+            <Button color="inherit" onClick={() => navigate('/expenses')}>
+              Expenses
+            </Button>
+            <Button color="inherit" onClick={() => navigate('/reports')}>
+              Reports
+            </Button>
+            {user?.role === 'admin' && (
+              <Button color="inherit" onClick={() => navigate('/settings')}>
+                Settings
+              </Button>
+            )}
+            {user?.role === 'admin' && (
+              <Button color="inherit" onClick={() => navigate('/users')}>
+                Users
+              </Button>
+            )}
+            <Button color="inherit" onClick={logout}>
+              Logout
+            </Button>
+          </Box>
+
+          {/* Mobile */}
+          <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 1 }}>
+            <Button variant="contained" color="success" size="small" startIcon={<Add />} onClick={() => navigate('/new-loan')}>
+              New
+            </Button>
+            <Button color="inherit" onClick={logout}>
+              Logout
+            </Button>
+          </Box>
+        </Toolbar>
+      </AppBar>
+    );
+  }
+
+  // Other pages layout - Back button on left, navigation on right
   return (
     <AppBar position="static">
       <Toolbar>
         {/* Back Button */}
         {showBack && (
-          <IconButton
+          <Button
             color="inherit"
             onClick={handleBack}
+            startIcon={<ArrowBack />}
             sx={{ mr: 2 }}
-            aria-label="Go back"
           >
-            <ArrowBack />
-          </IconButton>
+            Back
+          </Button>
         )}
 
         {/* Page Title */}

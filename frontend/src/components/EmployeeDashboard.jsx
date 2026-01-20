@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Typography, Grid, Card, CardContent, Button, AppBar, Toolbar, Box } from '@mui/material';
-import { Add } from '@mui/icons-material';
+import { Container, Typography, Grid, Card, CardContent, Box } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Navigation from './Navigation';
 
 const EmployeeDashboard = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [data, setData] = useState({});
 
   useEffect(() => {
@@ -15,25 +13,8 @@ const EmployeeDashboard = () => {
   }, []);
 
   return (
-    <div>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Employee Dashboard
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="contained" color="success" startIcon={<Add />} onClick={() => navigate('/new-loan')}>
-              New Loan
-            </Button>
-            <Button color="inherit" onClick={() => navigate('/loans')}>Loans</Button>
-            <Button color="inherit" onClick={() => navigate('/loan-agreements')}>Agreements</Button>
-            <Button color="inherit" onClick={() => navigate('/collaterals')}>Collaterals</Button>
-            <Button color="inherit" onClick={() => navigate('/expenses')}>Expenses</Button>
-            <Button color="inherit" onClick={() => navigate('/reports')}>Reports</Button>
-            <Button color="inherit" onClick={logout}>Logout</Button>
-          </Box>
-        </Toolbar>
-      </AppBar>
+    <Box sx={{ minHeight: '100vh' }}>
+      <Navigation title="Core Q Capital - Employee Dashboard" isDashboard={true} />
       <Container sx={{ mt: 4 }}>
         <Typography variant="h4" gutterBottom>
           Welcome, {user.name}
@@ -158,7 +139,7 @@ const EmployeeDashboard = () => {
           </Grid>
         </Grid>
       </Container>
-    </div>
+    </Box>
   );
 };
 
