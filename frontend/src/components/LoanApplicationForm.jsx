@@ -107,9 +107,9 @@ const LoanApplicationForm = () => {
         return;
       }
 
-      // Check if loan can be edited
-      if (loan.agreementStatus !== 'pending_upload') {
-        setError('This loan cannot be edited');
+      // Check if loan can be edited (only pending loans can be edited)
+      if (loan.agreementStatus === 'approved' || loan.agreementStatus === 'rejected') {
+        setError('This loan cannot be edited because the agreement has already been ' + loan.agreementStatus);
         return;
       }
 
@@ -130,12 +130,11 @@ const LoanApplicationForm = () => {
 
       // Populate collateral data
       setCollateralData({
-        itemName: loan.collateral?.itemName || '',
         category: loan.collateral?.category || '',
+        itemName: loan.collateral?.itemName || '',
+        modelNumber: loan.collateral?.modelNumber || '',
         serialNumber: loan.collateral?.serialNumber || '',
-        estimatedValue: loan.collateral?.estimatedValue || '',
-        condition: loan.collateral?.condition || '',
-        description: loan.collateral?.description || ''
+        itemCondition: loan.collateral?.itemCondition || 'Good'
       });
 
       // Populate loan data
