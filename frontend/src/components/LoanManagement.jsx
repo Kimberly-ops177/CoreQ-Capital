@@ -60,6 +60,7 @@ const LoanManagement = () => {
 
   const fetchLoans = async (page = 1) => {
     try {
+      console.log('Fetching loans page', page);
       const res = await axios.get(`/api/loans?page=${page}&limit=10`);
       setLoans(res.data.data || res.data);
       if (res.data.pagination) {
@@ -93,6 +94,7 @@ const LoanManagement = () => {
   };
 
   useEffect(() => {
+    console.log('LoanManagement mounted, starting data fetch');
     fetchInterestRates();
     fetchLoans();
     fetchBorrowers();
