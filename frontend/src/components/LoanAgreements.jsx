@@ -18,12 +18,9 @@ import {
   DialogActions,
   TextField,
   Alert,
-  AppBar,
-  Toolbar,
   CircularProgress,
   IconButton,
-  Tooltip,
-  Badge
+  Tooltip
 } from '@mui/material';
 import {
   Download,
@@ -38,9 +35,10 @@ import {
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import Navigation from './Navigation';
 
 const LoanAgreements = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [agreements, setAgreements] = useState([]);
   const [pendingApprovals, setPendingApprovals] = useState([]);
@@ -230,17 +228,7 @@ const LoanAgreements = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5' }}>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            Core Q Capital - Loan Agreements
-          </Typography>
-          <Button color="inherit" onClick={() => navigate(user.role === 'admin' ? '/admin' : '/employee')}>
-            Dashboard
-          </Button>
-          <Button color="inherit" onClick={logout}>Logout</Button>
-        </Toolbar>
-      </AppBar>
+      <Navigation title="Loan Agreements" />
 
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>

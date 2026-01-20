@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
 import {
   Container, Typography, Button, Grid, Card, CardContent,
-  TextField, Box, AppBar, Toolbar, Alert, Table, TableBody,
+  TextField, Box, Alert, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Paper,
   Chip, Divider
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Navigation from './Navigation';
 
 const Reporting = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [reportData, setReportData] = useState(null);
   const [reportType, setReportType] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -784,21 +783,7 @@ const Reporting = () => {
 
   return (
     <Box sx={{ minHeight: '100vh' }}>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            🏦 Core Q Capital - Reports
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button color="inherit" onClick={() => navigate('/admin')}>Dashboard</Button>
-            <Button color="inherit" onClick={() => navigate('/borrowers')}>Borrowers</Button>
-            <Button color="inherit" onClick={() => navigate('/loans')}>Loans</Button>
-            <Button color="inherit" onClick={() => navigate('/collaterals')}>Collaterals</Button>
-            <Button color="inherit" onClick={() => navigate('/expenses')}>Expenses</Button>
-            <Button color="inherit" onClick={logout}>Logout</Button>
-          </Box>
-        </Toolbar>
-      </AppBar>
+      <Navigation title="Reports" />
 
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Typography

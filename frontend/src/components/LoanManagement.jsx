@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import {
   Container, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Grid, IconButton, AppBar, Toolbar, Select, MenuItem, FormControl,
+  TextField, Grid, IconButton, Select, MenuItem, FormControl,
   InputLabel, Chip, Box, Alert, Divider, Pagination
 } from '@mui/material';
 import { Add, Edit, Delete, Payment, Calculate } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Navigation from './Navigation';
 
 const LoanManagement = () => {
   const { user, logout } = useAuth();
@@ -335,27 +336,7 @@ const LoanManagement = () => {
 
   return (
     <Box sx={{ minHeight: '100vh' }}>
-      <AppBar position="static" sx={{  }}>
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            🏦 Core Q Capital - Loan Management
-          </Typography>
-          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
-            <Button color="inherit" onClick={() => navigate(user.role === 'admin' ? '/admin' : '/employee')}>Dashboard</Button>
-            <Button color="inherit" onClick={() => navigate('/borrowers')}>Borrowers</Button>
-            <Button color="inherit" onClick={() => navigate('/loans')}>Loans</Button>
-            <Button color="inherit" onClick={() => navigate('/collaterals')}>Collaterals</Button>
-            <Button color="inherit" onClick={() => navigate('/expenses')}>Expenses</Button>
-            <Button color="inherit" onClick={() => navigate('/reports')}>Reports</Button>
-            {user.role === 'admin' && <Button color="inherit" onClick={() => navigate('/settings')}>Settings</Button>}
-            {user.role === 'admin' && <Button color="inherit" onClick={() => navigate('/users')}>Users</Button>}
-            <Button color="inherit" onClick={logout}>Logout</Button>
-          </Box>
-          <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
-            <Button color="inherit" onClick={logout}>Logout</Button>
-          </Box>
-        </Toolbar>
-      </AppBar>
+      <Navigation title="Loans" />
       <Container sx={{ mt: 4, mb: 4 }}>
         <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography variant="h4">Loans</Typography>
