@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Typography, Grid, Card, CardContent, Box } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const palette = {
@@ -51,6 +52,7 @@ const StatCard = ({ label, value, color }) => (
 
 const AdminDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [data, setData] = useState({});
 
   useEffect(() => {
@@ -145,13 +147,14 @@ const AdminDashboard = () => {
             }}
           >
             {[
-              { label: 'Manage Borrowers', color: 'linear-gradient(135deg, #00f7b2 0%, #00d7ff 100%)' },
-              { label: 'Process Loans', color: 'linear-gradient(135deg, #00f7b2 0%, #00d7ff 100%)' },
-              { label: 'View Reports', color: 'linear-gradient(135deg, #00f7b2 0%, #00d7ff 100%)' },
+              { label: 'Manage Borrowers', path: '/borrowers', color: 'linear-gradient(135deg, #00f7b2 0%, #00d7ff 100%)' },
+              { label: 'Process Loans', path: '/loans', color: 'linear-gradient(135deg, #00f7b2 0%, #00d7ff 100%)' },
+              { label: 'View Reports', path: '/reports', color: 'linear-gradient(135deg, #00f7b2 0%, #00d7ff 100%)' },
             ].map((action) => (
               <Box
                 key={action.label}
                 component="button"
+                onClick={() => navigate(action.path)}
                 sx={{
                   border: 'none',
                   cursor: 'pointer',

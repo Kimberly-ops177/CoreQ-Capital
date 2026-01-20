@@ -164,7 +164,17 @@ function AppRoutes() {
         backgroundColor: '#0A1628'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <h2 style={{ color: '#00FF9D' }}>Loading...</h2>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            border: '4px solid rgba(0, 255, 157, 0.2)',
+            borderTop: '4px solid #00FF9D',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }} />
+          <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+          <h2 style={{ color: '#00FF9D', margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>Loading Core Q Capital...</h2>
         </div>
       </div>
     );
