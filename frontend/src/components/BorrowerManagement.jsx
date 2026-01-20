@@ -136,9 +136,6 @@ const BorrowerManagement = () => {
 
   return (
     <Container sx={{ py: 4 }}>
-        <Box sx={{ mb: 2, p: 1.5, borderRadius: 1, bgcolor: 'rgba(0,255,157,0.08)', color: '#00FF9D', fontWeight: 700 }}>
-          DEBUG: BorrowerManagement rendered
-        </Box>
         <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography variant="h4">Borrowers</Typography>
           {/* Note: Borrowers are created through the loan application process, not directly */}

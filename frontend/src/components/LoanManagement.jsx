@@ -3,9 +3,10 @@ import {
   Container, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Grid, IconButton, Select, MenuItem, FormControl,
-  InputLabel, Chip, Box, Alert, Divider, Pagination
+  InputLabel, Chip, Box, Alert, Divider, Pagination, List, ListItem, ListItemButton, ListItemText,
+  InputAdornment
 } from '@mui/material';
-import { Add, Edit, Delete, Payment, Calculate } from '@mui/icons-material';
+import { Add, Edit, Delete, Payment, Calculate, Search, Person } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -44,6 +45,7 @@ const LoanManagement = () => {
     paymentMethod: 'cash'
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [borrowerSearchTerm, setBorrowerSearchTerm] = useState('');
   const [validationErrors, setValidationErrors] = useState([]);
   const [loanCalculation, setLoanCalculation] = useState(null);
 
@@ -193,6 +195,7 @@ const LoanManagement = () => {
         itemCondition: 'Good'
       });
       setSelectedBorrower(null);
+      setBorrowerSearchTerm('');
       setLoanCalculation(null);
       setValidationErrors([]);
     }
@@ -444,10 +447,23 @@ const LoanManagement = () => {
         )}
 
         {/* Add/Edit Loan Dialog */}
-        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-          <DialogTitle>{editingLoan ? 'Edit Loan' : 'Issue New Loan'}</DialogTitle>
+        <Dialog
+          open={open}
+          onClose={handleClose}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{
+            sx: {
+              bgcolor: '#ffffff',
+              color: '#212121'
+            }
+          }}
+        >
+          <DialogTitle sx={{ bgcolor: '#1976d2', color: '#ffffff', fontWeight: 'bold' }}>
+            {editingLoan ? 'Edit Loan' : 'Issue New Loan'}
+          </DialogTitle>
           <form onSubmit={handleSubmit}>
-            <DialogContent>
+            <DialogContent sx={{ bgcolor: '#ffffff', pt: 3 }}>
               {validationErrors.length > 0 && (
                 <Alert severity="error" sx={{ mb: 2 }}>
                   {validationErrors.map((error, idx) => (
@@ -459,51 +475,148 @@ const LoanManagement = () => {
               <Grid container spacing={2}>
                 {/* Borrower Selection */}
                 <Grid item xs={12}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>Borrower Information</Typography>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#1976d2' }}>
+                    Select Borrower
+                  </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth required>
-                    <InputLabel>Select Borrower</InputLabel>
-                    <Select
-                      value={formData.borrowerId}
-                      onChange={(e) => handleBorrowerChange(e.target.value)}
-                      disabled={editingLoan}
-                    >
-                      {borrowers.map((borrower) => (
-                        <MenuItem key={borrower.id} value={borrower.id}>
-                          {borrower.fullName} - {borrower.idNumber || 'No ID'}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
+
+                {!editingLoan && !selectedBorrower && (
+                  <>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        placeholder="Search borrowers by name, ID, phone, or location..."
+                        value={borrowerSearchTerm}
+                        onChange={(e) => setBorrowerSearchTerm(e.target.value)}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <Search />
+                            </InputAdornment>
+                          ),
+                        }}
+                        sx={{ mb: 1 }}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Paper
+                        variant="outlined"
+                        sx={{
+                          maxHeight: 250,
+                          overflow: 'auto',
+                          bgcolor: '#fafafa'
+                        }}
+                      >
+                        <List dense>
+                          {borrowers
+                            .filter(b => {
+                              if (!borrowerSearchTerm) return true;
+                              const search = borrowerSearchTerm.toLowerCase();
+                              return (
+                                b.fullName?.toLowerCase().includes(search) ||
+                                b.idNumber?.toLowerCase().includes(search) ||
+                                b.phoneNumber?.includes(search) ||
+                                b.location?.toLowerCase().includes(search)
+                              );
+                            })
+                            .map((borrower) => (
+                              <ListItem key={borrower.id} disablePadding>
+                                <ListItemButton
+                                  onClick={() => handleBorrowerChange(borrower.id)}
+                                  sx={{
+                                    py: 1.5,
+                                    '&:hover': {
+                                      bgcolor: '#e3f2fd',
+                                    }
+                                  }}
+                                >
+                                  <Person sx={{ mr: 2, color: '#1976d2' }} />
+                                  <ListItemText
+                                    primary={
+                                      <Typography variant="body1" sx={{ fontWeight: 600, color: '#212121' }}>
+                                        {borrower.fullName}
+                                      </Typography>
+                                    }
+                                    secondary={
+                                      <Typography variant="body2" sx={{ color: '#666' }}>
+                                        ID: {borrower.idNumber || 'N/A'} | Phone: {borrower.phoneNumber} | {borrower.location}
+                                      </Typography>
+                                    }
+                                  />
+                                </ListItemButton>
+                              </ListItem>
+                            ))}
+                          {borrowers.filter(b => {
+                            if (!borrowerSearchTerm) return true;
+                            const search = borrowerSearchTerm.toLowerCase();
+                            return (
+                              b.fullName?.toLowerCase().includes(search) ||
+                              b.idNumber?.toLowerCase().includes(search) ||
+                              b.phoneNumber?.includes(search) ||
+                              b.location?.toLowerCase().includes(search)
+                            );
+                          }).length === 0 && (
+                            <ListItem>
+                              <ListItemText
+                                primary={
+                                  <Typography variant="body2" sx={{ color: '#999', textAlign: 'center', py: 2 }}>
+                                    No borrowers found matching your search
+                                  </Typography>
+                                }
+                              />
+                            </ListItem>
+                          )}
+                        </List>
+                      </Paper>
+                      <Typography variant="caption" sx={{ color: '#666', mt: 1, display: 'block' }}>
+                        {borrowers.length} borrowers available. Click on a borrower to select.
+                      </Typography>
+                    </Grid>
+                  </>
+                )}
 
                 {/* Show selected borrower details */}
                 {selectedBorrower && (
                   <Grid item xs={12}>
-                    <Paper sx={{ p: 2, backgroundColor: '#e3f2fd' }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>Borrower Details (Auto-filled)</Typography>
+                    <Paper sx={{ p: 2, bgcolor: '#e8f5e9', border: '1px solid #4caf50' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
+                          Selected Borrower
+                        </Typography>
+                        {!editingLoan && (
+                          <Button
+                            size="small"
+                            onClick={() => {
+                              setSelectedBorrower(null);
+                              setFormData(prev => ({ ...prev, borrowerId: '' }));
+                            }}
+                            sx={{ color: '#d32f2f' }}
+                          >
+                            Change
+                          </Button>
+                        )}
+                      </Box>
                       <Grid container spacing={1}>
                         <Grid item xs={6} sm={3}>
-                          <Typography variant="body2"><strong>Name:</strong> {selectedBorrower.fullName}</Typography>
+                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Name:</strong> {selectedBorrower.fullName}</Typography>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                          <Typography variant="body2"><strong>ID:</strong> {selectedBorrower.idNumber || 'N/A'}</Typography>
+                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>ID:</strong> {selectedBorrower.idNumber || 'N/A'}</Typography>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                          <Typography variant="body2"><strong>Phone:</strong> {selectedBorrower.phoneNumber}</Typography>
+                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Phone:</strong> {selectedBorrower.phoneNumber}</Typography>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                          <Typography variant="body2"><strong>Email:</strong> {selectedBorrower.email || 'N/A'}</Typography>
+                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Email:</strong> {selectedBorrower.email || 'N/A'}</Typography>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                          <Typography variant="body2"><strong>Location:</strong> {selectedBorrower.location}</Typography>
+                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Location:</strong> {selectedBorrower.location}</Typography>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                          <Typography variant="body2"><strong>Apartment:</strong> {selectedBorrower.apartment || 'N/A'}</Typography>
+                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Apartment:</strong> {selectedBorrower.apartment || 'N/A'}</Typography>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                          <Typography variant="body2"><strong>House No:</strong> {selectedBorrower.houseNumber || 'N/A'}</Typography>
+                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>House No:</strong> {selectedBorrower.houseNumber || 'N/A'}</Typography>
                         </Grid>
                       </Grid>
                     </Paper>
@@ -515,7 +628,9 @@ const LoanManagement = () => {
                   <>
                     <Grid item xs={12}>
                       <Divider sx={{ my: 1 }} />
-                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>New Collateral (Required for each loan)</Typography>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#1976d2' }}>
+                        New Collateral (Required for each loan)
+                      </Typography>
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <FormControl fullWidth required>
@@ -581,7 +696,9 @@ const LoanManagement = () => {
                   <>
                     <Grid item xs={12}>
                       <Divider sx={{ my: 1 }} />
-                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>Loan Details</Typography>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#1976d2' }}>
+                        Loan Details
+                      </Typography>
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <TextField
@@ -627,26 +744,28 @@ const LoanManagement = () => {
                 {/* Loan Calculation Preview */}
                 {loanCalculation && (
                   <Grid item xs={12}>
-                    <Paper sx={{ p: 2 }}>
-                      <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Paper sx={{ p: 2, bgcolor: '#fff3e0', border: '1px solid #ff9800' }}>
+                      <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#e65100' }}>
                         <Calculate sx={{ mr: 1 }} /> Loan Calculation
                       </Typography>
                       <Grid container spacing={1}>
                         <Grid item xs={6}>
-                          <Typography variant="body2"><strong>Principal:</strong> KSH {parseFloat(loanCalculation.principal).toLocaleString()}</Typography>
+                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Principal:</strong> KSH {parseFloat(loanCalculation.principal).toLocaleString()}</Typography>
                         </Grid>
                         <Grid item xs={6}>
-                          <Typography variant="body2"><strong>Interest Rate:</strong> {loanCalculation.interestRate}%</Typography>
+                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Interest Rate:</strong> {loanCalculation.interestRate}%</Typography>
                         </Grid>
                         <Grid item xs={6}>
-                          <Typography variant="body2"><strong>Interest Amount:</strong> KSH {parseFloat(loanCalculation.interestAmount).toLocaleString()}</Typography>
+                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Interest Amount:</strong> KSH {parseFloat(loanCalculation.interestAmount).toLocaleString()}</Typography>
                         </Grid>
                         <Grid item xs={6}>
-                          <Typography variant="body2"><strong>Period:</strong> {loanCalculation.period}</Typography>
+                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Period:</strong> {loanCalculation.period}</Typography>
                         </Grid>
                         <Grid item xs={12}>
                           <Divider sx={{ my: 1 }} />
-                          <Typography variant="h6" color="primary"><strong>Total Amount Due:</strong> KSH {parseFloat(loanCalculation.totalAmount).toLocaleString()}</Typography>
+                          <Typography variant="h6" sx={{ color: '#2e7d32', fontWeight: 'bold' }}>
+                            Total Amount Due: KSH {parseFloat(loanCalculation.totalAmount).toLocaleString()}
+                          </Typography>
                         </Grid>
                       </Grid>
                     </Paper>
@@ -654,12 +773,13 @@ const LoanManagement = () => {
                 )}
               </Grid>
             </DialogContent>
-            <DialogActions>
-              <Button onClick={handleClose}>Cancel</Button>
+            <DialogActions sx={{ bgcolor: '#f5f5f5', p: 2 }}>
+              <Button onClick={handleClose} sx={{ color: '#666' }}>Cancel</Button>
               <Button
                 type="submit"
                 variant="contained"
                 disabled={validationErrors.length > 0}
+                sx={{ bgcolor: '#1976d2', '&:hover': { bgcolor: '#1565c0' } }}
               >
                 {editingLoan ? 'Update Loan' : 'Issue Loan'}
               </Button>
