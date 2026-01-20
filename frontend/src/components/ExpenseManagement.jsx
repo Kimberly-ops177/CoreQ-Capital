@@ -8,7 +8,6 @@ import {
 import { Add, Edit, Delete } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
-import Navigation from './Navigation';
 
 const ExpenseManagement = () => {
   const { user } = useAuth();
@@ -95,9 +94,7 @@ const ExpenseManagement = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh' }}>
-      <Navigation title="Expenses" />
-      <Container sx={{ mt: 4, mb: 4 }}>
+    <Container sx={{ py: 4 }}>
         <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography variant="h4">Expenses</Typography>
           {canAddExpense && (
@@ -213,7 +210,6 @@ const ExpenseManagement = () => {
           </Dialog>
         )}
       </Container>
-    </Box>
   );
 };
 

@@ -7,7 +7,6 @@ import {
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
-import Navigation from './Navigation';
 
 const Reporting = () => {
   const { user } = useAuth();

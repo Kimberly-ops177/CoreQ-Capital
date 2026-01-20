@@ -6,7 +6,6 @@ import {
 } from '@mui/material';
 import { Edit, Delete } from '@mui/icons-material';
 import axios from 'axios';
-import Navigation from './Navigation';
 
 const BorrowerManagement = () => {
   const [borrowers, setBorrowers] = useState([]);
@@ -136,9 +135,7 @@ const BorrowerManagement = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh' }}>
-      <Navigation title="Borrowers" />
-      <Container sx={{ mt: 4, mb: 4 }}>
+    <Container sx={{ py: 4 }}>
         <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography variant="h4">Borrowers</Typography>
           {/* Note: Borrowers are created through the loan application process, not directly */}
@@ -360,7 +357,6 @@ const BorrowerManagement = () => {
           </form>
         </Dialog>
       </Container>
-    </Box>
   );
 };
 

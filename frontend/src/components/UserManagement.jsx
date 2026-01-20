@@ -7,7 +7,6 @@ import {
 } from '@mui/material';
 import { Add, Edit, Delete } from '@mui/icons-material';
 import axios from 'axios';
-import Navigation from './Navigation';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);

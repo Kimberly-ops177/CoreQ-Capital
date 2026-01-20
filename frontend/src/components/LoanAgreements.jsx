@@ -35,7 +35,6 @@ import {
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import Navigation from './Navigation';
 
 const LoanAgreements = () => {
   const { user } = useAuth();
@@ -227,10 +226,7 @@ const LoanAgreements = () => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5' }}>
-      <Navigation title="Loan Agreements" />
-
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#000000' }}>
             Loan Agreements

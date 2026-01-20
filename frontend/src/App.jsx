@@ -14,6 +14,7 @@ import ExpenseManagement from './components/ExpenseManagement';
 import Reporting from './components/Reporting';
 import Settings from './components/Settings';
 import UserManagement from './components/UserManagement';
+import Sidebar from './components/Sidebar';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const theme = createTheme({
@@ -169,27 +170,38 @@ function AppRoutes() {
     );
   }
 
+  // Routes without sidebar (login)
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Navigate to="/login" />} />
+      </Routes>
+    );
+  }
+
+  // Routes with sidebar (authenticated)
   return (
-    <Routes>
-      <Route path="/" element={user ? (user.role === 'admin' ? <Navigate to="/admin" /> : <Navigate to="/employee" />) : <Login />} />
-      <Route path="/login" element={user ? (user.role === 'admin' ? <Navigate to="/admin" /> : <Navigate to="/employee" />) : <Login />} />
-      {user && (
-        <>
-          <Route path="/admin" element={user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/employee" />} />
-          <Route path="/employee" element={user.role === 'employee' ? <EmployeeDashboard /> : <Navigate to="/admin" />} />
-          <Route path="/new-loan" element={<LoanApplicationForm />} />
-          <Route path="/borrowers" element={<BorrowerManagement />} />
-          <Route path="/loans" element={<LoanManagement />} />
-          <Route path="/loan-agreements" element={<LoanAgreements />} />
-          <Route path="/collaterals" element={<CollateralManagement />} />
-          <Route path="/expenses" element={<ExpenseManagement />} />
-          <Route path="/reports" element={<Reporting />} />
-          <Route path="/settings" element={user.role === 'admin' ? <Settings /> : <Navigate to="/employee" />} />
-          <Route path="/users" element={user.role === 'admin' ? <UserManagement /> : <Navigate to="/employee" />} />
-        </>
-      )}
-      <Route path="*" element={user ? (user.role === 'admin' ? <Navigate to="/admin" /> : <Navigate to="/employee" />) : <Navigate to="/login" />} />
-    </Routes>
+    <Sidebar>
+      <Routes>
+        <Route path="/" element={user.role === 'admin' ? <Navigate to="/admin" /> : <Navigate to="/employee" />} />
+        <Route path="/login" element={user.role === 'admin' ? <Navigate to="/admin" /> : <Navigate to="/employee" />} />
+        <Route path="/admin" element={user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/employee" />} />
+        <Route path="/employee" element={user.role === 'employee' ? <EmployeeDashboard /> : <Navigate to="/admin" />} />
+        <Route path="/new-loan" element={<LoanApplicationForm />} />
+        <Route path="/borrowers" element={<BorrowerManagement />} />
+        <Route path="/loans" element={<LoanManagement />} />
+        <Route path="/agreements" element={<LoanAgreements />} />
+        <Route path="/loan-agreements" element={<LoanAgreements />} />
+        <Route path="/collaterals" element={<CollateralManagement />} />
+        <Route path="/expenses" element={<ExpenseManagement />} />
+        <Route path="/reports" element={<Reporting />} />
+        <Route path="/settings" element={user.role === 'admin' ? <Settings /> : <Navigate to="/employee" />} />
+        <Route path="/users" element={user.role === 'admin' ? <UserManagement /> : <Navigate to="/employee" />} />
+        <Route path="*" element={user.role === 'admin' ? <Navigate to="/admin" /> : <Navigate to="/employee" />} />
+      </Routes>
+    </Sidebar>
   );
 }
 

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Typography, Grid, Card, CardContent, Box } from '@mui/material';
+import { Container, Typography, Grid, Card, CardContent } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
-import Navigation from './Navigation';
 
 const EmployeeDashboard = () => {
   const { user } = useAuth();
@@ -13,9 +12,7 @@ const EmployeeDashboard = () => {
   }, []);
 
   return (
-    <Box sx={{ minHeight: '100vh' }}>
-      <Navigation title="Core Q Capital - Employee Dashboard" isDashboard={true} />
-      <Container sx={{ mt: 4 }}>
+    <Container sx={{ py: 4 }}>
         <Typography variant="h4" gutterBottom>
           Welcome, {user.name}
         </Typography>
@@ -139,7 +136,6 @@ const EmployeeDashboard = () => {
           </Grid>
         </Grid>
       </Container>
-    </Box>
   );
 };
 

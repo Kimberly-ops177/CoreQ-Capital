@@ -3,7 +3,6 @@ import {
   Container, Typography, Button, Grid, Card, CardContent, TextField, Box
 } from '@mui/material';
 import axios from 'axios';
-import Navigation from './Navigation';
 
 const Settings = () => {
   const [settings, setSettings] = useState({

@@ -9,7 +9,6 @@ import { Add, Edit, Delete, Payment, Calculate } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Navigation from './Navigation';
 
 const LoanManagement = () => {
   const { user, logout } = useAuth();
