@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
-  Typography, Drawer, IconButton, useMediaQuery, useTheme
+  Typography, Drawer, IconButton, useMediaQuery, useTheme, Tooltip
 } from '@mui/material';
 import {
   Dashboard, People, AccountBalance, Description, Inventory,
@@ -12,6 +12,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const DRAWER_WIDTH = 260;
+const COLLAPSED_WIDTH = 70;
 
 const Sidebar = ({ children }) => {
   const { user, logout } = useAuth();
@@ -20,9 +21,14 @@ const Sidebar = ({ children }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleCollapseToggle = () => {
+    setCollapsed(!collapsed);
   };
 
   const handleNavigation = (path) => {
@@ -98,167 +104,207 @@ const Sidebar = ({ children }) => {
     },
   ];
 
-  const drawerContent = (
+  const currentDrawerWidth = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
+
+  const drawerContent = (isCollapsed = false) => (
     <Box
       sx={{
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        bgcolor: '#0A1628', // Dark navy matching app theme
+        bgcolor: '#0A1628',
         color: 'white',
+        overflow: 'hidden',
       }}
     >
       {/* Header/Logo */}
       <Box
         sx={{
-          p: 2,
+          p: isCollapsed ? 1.5 : 2,
           background: 'linear-gradient(135deg, #00FF9D 0%, #00D4FF 100%)',
           display: 'flex',
           alignItems: 'center',
-          gap: 1,
+          justifyContent: isCollapsed ? 'center' : 'flex-start',
+          gap: isCollapsed ? 0 : 1,
+          minHeight: 64,
         }}
       >
-        <AccountBalance sx={{ fontSize: 28, color: '#0A1628' }} />
-        <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#0A1628' }}>
-          Core Q Capital
-        </Typography>
-        {isMobile && (
+        {!isMobile && (
+          <IconButton
+            onClick={handleCollapseToggle}
+            sx={{ color: '#0A1628', p: 0.5 }}
+          >
+            <MenuIcon />
+          </IconButton>
+        )}
+        {!isCollapsed && (
+          <>
+            <AccountBalance sx={{ fontSize: 28, color: '#0A1628' }} />
+            <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#0A1628', whiteSpace: 'nowrap' }}>
+              Core Q Capital
+            </Typography>
+          </>
+        )}
+        {isMobile && !isCollapsed && (
           <IconButton
             onClick={handleDrawerToggle}
-             sx={{ ml: 'auto', color: '#0A1628' }}
-           >
-             <Close />
-           </IconButton>
+            sx={{ ml: 'auto', color: '#0A1628' }}
+          >
+            <Close />
+          </IconButton>
         )}
       </Box>
 
       {/* Navigation Menu */}
-      <List sx={{ flexGrow: 1, pt: 1 }}>
+      <List sx={{ flexGrow: 1, pt: 1, overflowY: 'auto', overflowX: 'hidden' }}>
         {menuItems.map((item) => (
           <ListItem key={item.label} disablePadding sx={{ mb: 0.5 }}>
-            <ListItemButton
-              onClick={() => handleNavigation(item.path)}
-              sx={{
-                py: 1.5,
-                px: 2,
-                mx: 1,
-                borderRadius: 2,
-                bgcolor: isActive(item.path)
-                  ? 'rgba(0, 255, 157, 0.15)'
-                  : item.isAction
-                    ? 'rgba(0, 255, 157, 0.1)'
-                    : 'transparent',
-                borderLeft: isActive(item.path)
-                  ? '3px solid #00FF9D'
-                  : '3px solid transparent',
-                '&:hover': {
-                  bgcolor: isActive(item.path)
-                    ? 'rgba(0, 255, 157, 0.2)'
-                    : 'rgba(0, 255, 157, 0.08)',
-                },
-                transition: 'all 0.2s ease',
-                boxShadow: isActive(item.path) ? 'inset 0 0 0 1px rgba(0,0,0,0.08)' : 'none',
-              }}
-            >
-              <ListItemIcon
+            <Tooltip title={isCollapsed ? item.label : ''} placement="right" arrow>
+              <ListItemButton
+                onClick={() => handleNavigation(item.path)}
                 sx={{
-                  color: isActive(item.path) || item.isAction ? '#00FF9D' : '#B0BEC5',
-                  minWidth: 40
+                  py: 1.5,
+                  px: isCollapsed ? 1.5 : 2,
+                  mx: isCollapsed ? 0.5 : 1,
+                  borderRadius: 2,
+                  justifyContent: isCollapsed ? 'center' : 'flex-start',
+                  bgcolor: isActive(item.path)
+                    ? 'rgba(0, 255, 157, 0.15)'
+                    : item.isAction
+                      ? 'rgba(0, 255, 157, 0.1)'
+                      : 'transparent',
+                  borderLeft: isCollapsed ? 'none' : (isActive(item.path)
+                    ? '3px solid #00FF9D'
+                    : '3px solid transparent'),
+                  '&:hover': {
+                    bgcolor: isActive(item.path)
+                      ? 'rgba(0, 255, 157, 0.2)'
+                      : 'rgba(0, 255, 157, 0.08)',
+                  },
+                  transition: 'all 0.2s ease',
+                  boxShadow: isActive(item.path) ? 'inset 0 0 0 1px rgba(0,0,0,0.08)' : 'none',
                 }}
               >
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText
-                primary={item.label}
-                primaryTypographyProps={{
-                  fontWeight: isActive(item.path) ? 600 : 400,
-                  color: isActive(item.path) ? '#00FF9D' : '#FFFFFF',
-                  fontSize: '0.95rem',
-                }}
-              />
-            </ListItemButton>
+                <ListItemIcon
+                  sx={{
+                    color: isActive(item.path) || item.isAction ? '#00FF9D' : '#B0BEC5',
+                    minWidth: isCollapsed ? 0 : 40,
+                    justifyContent: 'center',
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                {!isCollapsed && (
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{
+                      fontWeight: isActive(item.path) ? 600 : 400,
+                      color: isActive(item.path) ? '#00FF9D' : '#FFFFFF',
+                      fontSize: '0.95rem',
+                      whiteSpace: 'nowrap',
+                    }}
+                  />
+                )}
+              </ListItemButton>
+            </Tooltip>
           </ListItem>
         ))}
 
         {/* Admin-only items */}
         {user?.role === 'admin' && (
           <>
-            <Box sx={{ my: 2, mx: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }} />
+            <Box sx={{ my: 2, mx: isCollapsed ? 1 : 2, borderTop: '1px solid rgba(255,255,255,0.1)' }} />
             {adminMenuItems.map((item) => (
               <ListItem key={item.label} disablePadding sx={{ mb: 0.5 }}>
-            <ListItemButton
-               onClick={() => handleNavigation(item.path)}
-               sx={{
-                 py: 1.5,
-                 px: 2,
-                 mx: 1,
-                 borderRadius: 2,
-                 bgcolor: isActive(item.path)
-                   ? 'rgba(0, 255, 157, 0.15)'
-                   : 'transparent',
-                 borderLeft: isActive(item.path)
-                   ? '3px solid #00FF9D'
-                   : '3px solid transparent',
-                 '&:hover': {
-                   bgcolor: isActive(item.path)
-                     ? 'rgba(0, 255, 157, 0.2)'
-                     : 'rgba(0, 255, 157, 0.08)',
-                 },
-                 transition: 'all 0.2s ease',
-                 boxShadow: isActive(item.path) ? 'inset 0 0 0 1px rgba(0,0,0,0.08)' : 'none',
-               }}
-             >
-               <ListItemIcon
-                 sx={{
-                   color: isActive(item.path) ? '#00FF9D' : '#B0BEC5',
-                   minWidth: 40
-                 }}
-               >
-                 {item.icon}
-               </ListItemIcon>
-               <ListItemText
-                 primary={item.label}
-                 primaryTypographyProps={{
-                   fontWeight: isActive(item.path) ? 600 : 400,
-                   color: isActive(item.path) ? '#00FF9D' : '#FFFFFF',
-                   fontSize: '0.95rem',
-                 }}
-               />
-             </ListItemButton>
-          </ListItem>
-        ))}
+                <Tooltip title={isCollapsed ? item.label : ''} placement="right" arrow>
+                  <ListItemButton
+                    onClick={() => handleNavigation(item.path)}
+                    sx={{
+                      py: 1.5,
+                      px: isCollapsed ? 1.5 : 2,
+                      mx: isCollapsed ? 0.5 : 1,
+                      borderRadius: 2,
+                      justifyContent: isCollapsed ? 'center' : 'flex-start',
+                      bgcolor: isActive(item.path)
+                        ? 'rgba(0, 255, 157, 0.15)'
+                        : 'transparent',
+                      borderLeft: isCollapsed ? 'none' : (isActive(item.path)
+                        ? '3px solid #00FF9D'
+                        : '3px solid transparent'),
+                      '&:hover': {
+                        bgcolor: isActive(item.path)
+                          ? 'rgba(0, 255, 157, 0.2)'
+                          : 'rgba(0, 255, 157, 0.08)',
+                      },
+                      transition: 'all 0.2s ease',
+                      boxShadow: isActive(item.path) ? 'inset 0 0 0 1px rgba(0,0,0,0.08)' : 'none',
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        color: isActive(item.path) ? '#00FF9D' : '#B0BEC5',
+                        minWidth: isCollapsed ? 0 : 40,
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {item.icon}
+                    </ListItemIcon>
+                    {!isCollapsed && (
+                      <ListItemText
+                        primary={item.label}
+                        primaryTypographyProps={{
+                          fontWeight: isActive(item.path) ? 600 : 400,
+                          color: isActive(item.path) ? '#00FF9D' : '#FFFFFF',
+                          fontSize: '0.95rem',
+                          whiteSpace: 'nowrap',
+                        }}
+                      />
+                    )}
+                  </ListItemButton>
+                </Tooltip>
+              </ListItem>
+            ))}
           </>
         )}
       </List>
 
       {/* User info and Logout at bottom */}
-      <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.1)', p: 2 }}>
-        <Typography variant="body2" sx={{ color: '#B0BEC5', mb: 1 }}>
-          Logged in as
-        </Typography>
-        <Typography variant="body1" sx={{ color: '#FFFFFF', fontWeight: 600, mb: 2 }}>
-          {user?.name || 'User'}
-        </Typography>
-        <ListItemButton
-          onClick={logout}
-          sx={{
-            py: 1.5,
-            px: 2,
-            borderRadius: 2,
-            bgcolor: 'rgba(255, 77, 106, 0.1)',
-            '&:hover': {
-              bgcolor: 'rgba(255, 77, 106, 0.2)',
-            },
-          }}
-        >
-          <ListItemIcon sx={{ color: '#FF4D6A', minWidth: 40 }}>
-            <Logout />
-          </ListItemIcon>
-          <ListItemText
-            primary="Logout"
-            primaryTypographyProps={{ color: '#FF4D6A', fontWeight: 500 }}
-          />
-        </ListItemButton>
+      <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.1)', p: isCollapsed ? 1 : 2 }}>
+        {!isCollapsed && (
+          <>
+            <Typography variant="body2" sx={{ color: '#B0BEC5', mb: 1 }}>
+              Logged in as
+            </Typography>
+            <Typography variant="body1" sx={{ color: '#FFFFFF', fontWeight: 600, mb: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {user?.name || 'User'}
+            </Typography>
+          </>
+        )}
+        <Tooltip title={isCollapsed ? 'Logout' : ''} placement="right" arrow>
+          <ListItemButton
+            onClick={logout}
+            sx={{
+              py: 1.5,
+              px: isCollapsed ? 1.5 : 2,
+              borderRadius: 2,
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              bgcolor: 'rgba(255, 77, 106, 0.1)',
+              '&:hover': {
+                bgcolor: 'rgba(255, 77, 106, 0.2)',
+              },
+            }}
+          >
+            <ListItemIcon sx={{ color: '#FF4D6A', minWidth: isCollapsed ? 0 : 40, justifyContent: 'center' }}>
+              <Logout />
+            </ListItemIcon>
+            {!isCollapsed && (
+              <ListItemText
+                primary="Logout"
+                primaryTypographyProps={{ color: '#FF4D6A', fontWeight: 500, whiteSpace: 'nowrap' }}
+              />
+            )}
+          </ListItemButton>
+        </Tooltip>
       </Box>
     </Box>
   );
@@ -295,7 +341,11 @@ const Sidebar = ({ children }) => {
       {/* Sidebar Drawer */}
       <Box
         component="nav"
-        sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}
+        sx={{
+          width: { md: currentDrawerWidth },
+          flexShrink: { md: 0 },
+          transition: 'width 0.3s ease',
+        }}
       >
         {/* Mobile Drawer */}
         <Drawer
@@ -312,7 +362,7 @@ const Sidebar = ({ children }) => {
             },
           }}
         >
-          {drawerContent}
+          {drawerContent(false)}
         </Drawer>
 
         {/* Desktop Drawer */}
@@ -322,14 +372,16 @@ const Sidebar = ({ children }) => {
             display: { xs: 'none', md: 'block' },
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
-              width: DRAWER_WIDTH,
+              width: currentDrawerWidth,
               borderRight: '1px solid rgba(0, 255, 157, 0.1)',
               bgcolor: '#0A1628',
+              transition: 'width 0.3s ease',
+              overflowX: 'hidden',
             },
           }}
           open
         >
-          {drawerContent}
+          {drawerContent(collapsed)}
         </Drawer>
       </Box>
 
@@ -338,10 +390,11 @@ const Sidebar = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
+          width: { md: `calc(100% - ${currentDrawerWidth}px)` },
           mt: { xs: 8, md: 0 },
           bgcolor: '#0A1628',
           minHeight: '100vh',
+          transition: 'width 0.3s ease, margin-left 0.3s ease',
         }}
       >
         {children}
