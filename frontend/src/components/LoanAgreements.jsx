@@ -40,7 +40,6 @@ const LoanAgreements = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [agreements, setAgreements] = useState([]);
-  const [pendingApprovals, setPendingApprovals] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -51,9 +50,6 @@ const LoanAgreements = () => {
 
   useEffect(() => {
     fetchAgreements();
-    if (user?.role === 'admin') {
-      fetchPendingApprovals();
-    }
   }, [user]);
 
   const fetchAgreements = async () => {
@@ -66,15 +62,6 @@ const LoanAgreements = () => {
       setError(err.response?.data?.error || 'Failed to fetch agreements');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchPendingApprovals = async () => {
-    try {
-      const res = await axios.get('/api/loan-applications/pending-approvals');
-      setPendingApprovals(res.data);
-    } catch (err) {
-      console.error('Error fetching pending approvals:', err);
     }
   };
 
@@ -145,7 +132,6 @@ const LoanAgreements = () => {
       setSuccess(`Loan agreement #${selectedLoan.id} approved successfully!`);
       setApprovalDialog(false);
       fetchAgreements();
-      fetchPendingApprovals();
     } catch (err) {
       console.error('Error approving agreement:', err);
       setError(err.response?.data?.error || 'Failed to approve agreement');
@@ -164,7 +150,6 @@ const LoanAgreements = () => {
       setSuccess(`Loan agreement #${selectedLoan.id} rejected.`);
       setApprovalDialog(false);
       fetchAgreements();
-      fetchPendingApprovals();
     } catch (err) {
       console.error('Error rejecting agreement:', err);
       setError(err.response?.data?.error || 'Failed to reject agreement');
@@ -226,7 +211,8 @@ const LoanAgreements = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Box>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#000000' }}>
             Loan Agreements
@@ -343,7 +329,6 @@ const LoanAgreements = () => {
                                           await axios.post(`/api/loan-applications/${loan.id}/approve`, { notes: null });
                                           setSuccess(`Loan agreement #${loan.id} approved!`);
                                           fetchAgreements();
-                                          fetchPendingApprovals();
                                         } catch (err) {
                                           setError(err.response?.data?.error || 'Failed to approve');
                                         }
