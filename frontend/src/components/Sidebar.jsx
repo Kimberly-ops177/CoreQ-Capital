@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
   Typography, Drawer, IconButton, useMediaQuery, useTheme
@@ -11,7 +11,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const DRAWER_WIDTH = 270;
+const DRAWER_WIDTH = 260;
 
 const Sidebar = ({ children }) => {
   const { user, logout } = useAuth();
@@ -20,7 +20,6 @@ const Sidebar = ({ children }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
-  const animateKey = useMemo(() => location.pathname, [location.pathname]);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -99,55 +98,34 @@ const Sidebar = ({ children }) => {
     },
   ];
 
-  // palette tuned to provided screenshot (green/teal gradient with red active)
-  const colors = useMemo(() => ({
-    gradient: 'linear-gradient(180deg, #10e9a8 0%, #0db6ff 100%)',
-    gradientHover: 'linear-gradient(180deg, #1af4b5 0%, #2dc6ff 100%)',
-    base: '#0db6ff',
-    baseDark: '#0a97d4',
-    highlight: '#ff3b5f', // active red accent
-    icon: '#0b1a2b',
-    text: '#0b1a2b',
-    textOnActive: '#ffffff',
-    divider: 'rgba(11, 26, 43, 0.18)',
-  }), []);
-
   const drawerContent = (
     <Box
-      key={animateKey}
       sx={{
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        bgcolor: colors.base,
-        color: colors.text,
-        position: 'relative',
-        overflow: 'hidden',
-        animation: 'slide-in-left 320ms ease',
-        '@keyframes slide-in-left': {
-          from: { transform: 'translateX(-22px)', opacity: 0.4 },
-          to: { transform: 'translateX(0)', opacity: 1 },
-        },
+        bgcolor: '#0A1628', // Dark navy matching app theme
+        color: 'white',
       }}
     >
       {/* Header/Logo */}
       <Box
         sx={{
           p: 2,
-          background: colors.gradient,
+          background: 'linear-gradient(135deg, #00FF9D 0%, #00D4FF 100%)',
           display: 'flex',
           alignItems: 'center',
           gap: 1,
         }}
       >
-        <AccountBalance sx={{ fontSize: 28, color: colors.text }} />
-        <Typography variant="h6" sx={{ fontWeight: 'bold', color: colors.text }}>
+        <AccountBalance sx={{ fontSize: 28, color: '#0A1628' }} />
+        <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#0A1628' }}>
           Core Q Capital
         </Typography>
         {isMobile && (
           <IconButton
             onClick={handleDrawerToggle}
-             sx={{ ml: 'auto', color: colors.text }}
+             sx={{ ml: 'auto', color: '#0A1628' }}
            >
              <Close />
            </IconButton>
@@ -166,25 +144,25 @@ const Sidebar = ({ children }) => {
                 mx: 1,
                 borderRadius: 2,
                 bgcolor: isActive(item.path)
-                  ? colors.highlight
-                  : 'transparent',
+                  ? 'rgba(0, 255, 157, 0.15)'
+                  : item.isAction
+                    ? 'rgba(0, 255, 157, 0.1)'
+                    : 'transparent',
                 borderLeft: isActive(item.path)
-                  ? `6px solid ${colors.textOnActive}`
-                  : `6px solid transparent`,
+                  ? '3px solid #00FF9D'
+                  : '3px solid transparent',
                 '&:hover': {
                   bgcolor: isActive(item.path)
-                    ? colors.highlight
-                    : colors.gradientHover,
+                    ? 'rgba(0, 255, 157, 0.2)'
+                    : 'rgba(0, 255, 157, 0.08)',
                 },
-                transition: 'all 0.18s ease',
-                boxShadow: isActive(item.path)
-                  ? 'inset 0 0 0 1px rgba(0,0,0,0.18)'
-                  : 'none',
+                transition: 'all 0.2s ease',
+                boxShadow: isActive(item.path) ? 'inset 0 0 0 1px rgba(0,0,0,0.08)' : 'none',
               }}
             >
               <ListItemIcon
                 sx={{
-                  color: isActive(item.path) ? colors.textOnActive : colors.icon,
+                  color: isActive(item.path) || item.isAction ? '#00FF9D' : '#B0BEC5',
                   minWidth: 40
                 }}
               >
@@ -193,9 +171,9 @@ const Sidebar = ({ children }) => {
               <ListItemText
                 primary={item.label}
                 primaryTypographyProps={{
-                  fontWeight: isActive(item.path) ? 800 : 600,
-                  color: isActive(item.path) ? colors.textOnActive : colors.text,
-                  fontSize: '0.98rem',
+                  fontWeight: isActive(item.path) ? 600 : 400,
+                  color: isActive(item.path) ? '#00FF9D' : '#FFFFFF',
+                  fontSize: '0.95rem',
                 }}
               />
             </ListItemButton>
@@ -209,46 +187,44 @@ const Sidebar = ({ children }) => {
             {adminMenuItems.map((item) => (
               <ListItem key={item.label} disablePadding sx={{ mb: 0.5 }}>
             <ListItemButton
-              onClick={() => handleNavigation(item.path)}
-              sx={{
-                py: 1.5,
-                px: 2,
-                mx: 1,
-                borderRadius: 2,
-                bgcolor: isActive(item.path)
-                  ? colors.highlight
-                  : 'transparent',
-                borderLeft: isActive(item.path)
-                  ? `6px solid ${colors.textOnActive}`
-                  : `6px solid transparent`,
-                '&:hover': {
-                  bgcolor: isActive(item.path)
-                    ? colors.highlight
-                    : colors.gradientHover,
-                },
-                transition: 'all 0.18s ease',
-                boxShadow: isActive(item.path)
-                  ? 'inset 0 0 0 1px rgba(0,0,0,0.18)'
-                  : 'none',
-              }}
-            >
-              <ListItemIcon
-                sx={{
-                  color: isActive(item.path) ? colors.textOnActive : colors.icon,
-                  minWidth: 40
-                }}
-              >
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText
-                primary={item.label}
-                primaryTypographyProps={{
-                  fontWeight: isActive(item.path) ? 800 : 600,
-                  color: isActive(item.path) ? colors.textOnActive : colors.text,
-                  fontSize: '0.98rem',
-                }}
-              />
-            </ListItemButton>
+               onClick={() => handleNavigation(item.path)}
+               sx={{
+                 py: 1.5,
+                 px: 2,
+                 mx: 1,
+                 borderRadius: 2,
+                 bgcolor: isActive(item.path)
+                   ? 'rgba(0, 255, 157, 0.15)'
+                   : 'transparent',
+                 borderLeft: isActive(item.path)
+                   ? '3px solid #00FF9D'
+                   : '3px solid transparent',
+                 '&:hover': {
+                   bgcolor: isActive(item.path)
+                     ? 'rgba(0, 255, 157, 0.2)'
+                     : 'rgba(0, 255, 157, 0.08)',
+                 },
+                 transition: 'all 0.2s ease',
+                 boxShadow: isActive(item.path) ? 'inset 0 0 0 1px rgba(0,0,0,0.08)' : 'none',
+               }}
+             >
+               <ListItemIcon
+                 sx={{
+                   color: isActive(item.path) ? '#00FF9D' : '#B0BEC5',
+                   minWidth: 40
+                 }}
+               >
+                 {item.icon}
+               </ListItemIcon>
+               <ListItemText
+                 primary={item.label}
+                 primaryTypographyProps={{
+                   fontWeight: isActive(item.path) ? 600 : 400,
+                   color: isActive(item.path) ? '#00FF9D' : '#FFFFFF',
+                   fontSize: '0.95rem',
+                 }}
+               />
+             </ListItemButton>
           </ListItem>
         ))}
           </>
@@ -256,11 +232,11 @@ const Sidebar = ({ children }) => {
       </List>
 
       {/* User info and Logout at bottom */}
-      <Box sx={{ borderTop: `1px solid ${colors.divider}`, p: 2 }}>
-        <Typography variant="body2" sx={{ color: colors.text, mb: 1, opacity: 0.9 }}>
+      <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.1)', p: 2 }}>
+        <Typography variant="body2" sx={{ color: '#B0BEC5', mb: 1 }}>
           Logged in as
         </Typography>
-        <Typography variant="body1" sx={{ color: colors.text, fontWeight: 700, mb: 2 }}>
+        <Typography variant="body1" sx={{ color: '#FFFFFF', fontWeight: 600, mb: 2 }}>
           {user?.name || 'User'}
         </Typography>
         <ListItemButton
@@ -269,7 +245,7 @@ const Sidebar = ({ children }) => {
             py: 1.5,
             px: 2,
             borderRadius: 2,
-            bgcolor: 'rgba(255, 77, 106, 0.12)',
+            bgcolor: 'rgba(255, 77, 106, 0.1)',
             '&:hover': {
               bgcolor: 'rgba(255, 77, 106, 0.2)',
             },
@@ -364,7 +340,7 @@ const Sidebar = ({ children }) => {
           flexGrow: 1,
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           mt: { xs: 8, md: 0 },
-          bgcolor: '#F4F6FB',
+          bgcolor: '#0A1628',
           minHeight: '100vh',
         }}
       >
