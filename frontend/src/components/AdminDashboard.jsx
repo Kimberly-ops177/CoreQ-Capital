@@ -3,6 +3,52 @@ import { Container, Typography, Grid, Card, CardContent, Box } from '@mui/materi
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 
+const palette = {
+  pageBg: '#0b1a2b',
+  cardBg: '#1f2f48',
+  textPrimary: '#d8e4ff',
+  green: '#16f2a3',
+  cyan: '#16e7d2',
+  red: '#ff4d6a',
+  amber: '#f6b041'
+};
+
+const formatMoney = (value) =>
+  Number(value || 0).toLocaleString('en-KE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+const StatCard = ({ label, value, color }) => (
+  <Card
+    sx={{
+      background: palette.cardBg,
+      borderRadius: 3,
+      boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+      height: '100%',
+    }}
+  >
+    <CardContent sx={{ textAlign: 'center', py: 3 }}>
+      <Typography
+        variant="h6"
+        sx={{ color: palette.textPrimary, fontWeight: 600, mb: 1, letterSpacing: 0.2 }}
+      >
+        {label}
+      </Typography>
+      <Typography
+        variant="h4"
+        sx={{
+          color,
+          fontWeight: 800,
+          fontSize: { xs: '1.9rem', md: '2.2rem' },
+        }}
+      >
+        {value}
+      </Typography>
+    </CardContent>
+  </Card>
+);
+
 const AdminDashboard = () => {
   const { user } = useAuth();
   const [data, setData] = useState({});
@@ -12,140 +58,129 @@ const AdminDashboard = () => {
   }, []);
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography
-        variant="h4"
-        align="center"
-        sx={{
-          mb: 4,
-          fontWeight: 'bold'
-        }}
-      >
-        Welcome, {user.name}
-      </Typography>
+    <Box sx={{ bgcolor: palette.pageBg, minHeight: '100vh', py: { xs: 4, md: 6 } }}>
+      <Container maxWidth="lg">
+        <Typography
+          variant="h4"
+          align="center"
+          sx={{
+            mb: { xs: 3, md: 5 },
+            fontWeight: 800,
+            color: '#ffffff',
+            fontSize: { xs: '2rem', md: '2.6rem' },
+          }}
+        >
+          Welcome, {user.name}
+        </Typography>
 
-      <Grid container spacing={3} justifyContent="center">
-        <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{
-            transition: 'all 0.3s',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: 3
-            }
-          }}>
-            <CardContent sx={{ textAlign: 'center', py: 3 }}>
-              <Typography variant="h6" sx={{ color: 'text.secondary', mb: 1 }}>
-                Total Loaned Principal
-              </Typography>
-              <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
-                Ksh {Number(data.totalLoanedPrincipal || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </Typography>
-            </CardContent>
-          </Card>
+        <Grid container spacing={3} justifyContent="center">
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              label="💰 Total Loaned Principal"
+              value={`Ksh ${formatMoney(data.totalLoanedPrincipal)}`}
+              color={palette.green}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              label="📊 Outstanding Receivables"
+              value={`Ksh ${formatMoney(data.totalOutstandingReceivables)}`}
+              color={palette.cyan}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              label="✅ Active Loans"
+              value={data.totalActiveLoans || 0}
+              color={palette.green}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              label="⚠️ Defaulted Loans"
+              value={data.totalDefaultedLoans || 0}
+              color={palette.red}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={5}>
+            <StatCard
+              label="📈 Month-to-Date P/L"
+              value={`Ksh ${formatMoney(data.monthToDateProfitLoss)}`}
+              color={(data.monthToDateProfitLoss || 0) >= 0 ? palette.green : palette.red}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={5}>
+            <StatCard
+              label="💸 Month-to-Date Expenses"
+              value={`Ksh ${formatMoney(data.monthToDateExpenses)}`}
+              color={palette.amber}
+            />
+          </Grid>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{
-            transition: 'all 0.3s',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: 3
-            }
-          }}>
-            <CardContent sx={{ textAlign: 'center', py: 3 }}>
-              <Typography variant="h6" sx={{ color: 'text.secondary', mb: 1 }}>
-                Outstanding Receivables
-              </Typography>
-              <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
-                Ksh {Number(data.totalOutstandingReceivables || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+        <Box sx={{ mt: { xs: 4, md: 6 }, textAlign: 'center' }}>
+          <Typography
+            variant="h5"
+            sx={{
+              color: palette.green,
+              fontWeight: 800,
+              mb: 2.5,
+              letterSpacing: 0.4,
+            }}
+          >
+            Quick Actions
+          </Typography>
 
-        <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{
-            transition: 'all 0.3s',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: 3
-            }
-          }}>
-            <CardContent sx={{ textAlign: 'center', py: 3 }}>
-              <Typography variant="h6" sx={{ color: 'text.secondary', mb: 1 }}>
-                Active Loans
-              </Typography>
-              <Typography variant="h4" sx={{ color: 'success.main', fontWeight: 'bold' }}>
-                {data.totalActiveLoans || 0}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{
-            transition: 'all 0.3s',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: 3
-            }
-          }}>
-            <CardContent sx={{ textAlign: 'center', py: 3 }}>
-              <Typography variant="h6" sx={{ color: 'text.secondary', mb: 1 }}>
-                Defaulted Loans
-              </Typography>
-              <Typography variant="h4" sx={{ color: 'error.main', fontWeight: 'bold' }}>
-                {data.totalDefaultedLoans || 0}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{
-            transition: 'all 0.3s',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: 3
-            }
-          }}>
-            <CardContent sx={{ textAlign: 'center', py: 3 }}>
-              <Typography variant="h6" sx={{ color: 'text.secondary', mb: 1 }}>
-                Month-to-Date P/L
-              </Typography>
-              <Typography
-                variant="h4"
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+            }}
+          >
+            {[
+              { label: 'Manage Borrowers', color: 'linear-gradient(135deg, #00f7b2 0%, #00d7ff 100%)' },
+              { label: 'Process Loans', color: 'linear-gradient(135deg, #00f7b2 0%, #00d7ff 100%)' },
+              { label: 'View Reports', color: 'linear-gradient(135deg, #00f7b2 0%, #00d7ff 100%)' },
+            ].map((action) => (
+              <Box
+                key={action.label}
+                component="button"
                 sx={{
-                  color: (data.monthToDateProfitLoss || 0) >= 0 ? 'success.main' : 'error.main',
-                  fontWeight: 'bold'
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: action.color,
+                  color: '#0b1a2b',
+                  fontWeight: 800,
+                  fontSize: '1rem',
+                  px: 4,
+                  py: 1.3,
+                  borderRadius: 2,
+                  minWidth: { xs: '220px', md: '240px' },
+                  boxShadow: '0 8px 18px rgba(0,0,0,0.25)',
+                  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 12px 22px rgba(0,0,0,0.32)',
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)',
+                  },
                 }}
               >
-                Ksh {Number(data.monthToDateProfitLoss || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{
-            transition: 'all 0.3s',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: 3
-            }
-          }}>
-            <CardContent sx={{ textAlign: 'center', py: 3 }}>
-              <Typography variant="h6" sx={{ color: 'text.secondary', mb: 1 }}>
-                Month-to-Date Expenses
-              </Typography>
-              <Typography variant="h4" sx={{ color: 'warning.main', fontWeight: 'bold' }}>
-                Ksh {Number(data.monthToDateExpenses || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Container>
+                {action.label}
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      </Container>
+    </Box>
   );
 };
 
