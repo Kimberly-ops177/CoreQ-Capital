@@ -548,12 +548,13 @@ const LoanApplicationForm = () => {
                   label="Category"
                   onChange={(e) => setCollateralData({...collateralData, category: e.target.value})}
                 >
-                  <MenuItem value="Electronics">Electronics</MenuItem>
-                  <MenuItem value="Jewelry">Jewelry</MenuItem>
-                  <MenuItem value="Furniture">Furniture</MenuItem>
-                  <MenuItem value="Appliances">Appliances</MenuItem>
-                  <MenuItem value="Vehicles">Vehicles</MenuItem>
-                  <MenuItem value="Other">Other</MenuItem>
+                  <MenuItem value="Smartphone">Smartphone</MenuItem>
+                  <MenuItem value="Laptop">Laptop</MenuItem>
+                  <MenuItem value="Tablet">Tablet</MenuItem>
+                  <MenuItem value="TV">TV</MenuItem>
+                  <MenuItem value="Gaming Console">Gaming Console</MenuItem>
+                  <MenuItem value="Speaker/Audio">Speaker/Audio</MenuItem>
+                  <MenuItem value="Other Electronics">Other Electronics</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
