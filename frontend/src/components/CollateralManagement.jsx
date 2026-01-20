@@ -56,6 +56,7 @@ const CollateralManagement = () => {
   };
 
   useEffect(() => {
+    console.log('CollateralManagement mounted');
     fetchCollaterals(1);
     fetchBorrowers();
   }, []);
