@@ -646,6 +646,7 @@ const LoanManagement = () => {
                       <FormControl fullWidth required sx={{
                         '& .MuiInputLabel-root': { color: '#B0BEC5' },
                         '& .MuiInputLabel-root.Mui-focused': { color: '#00FF9D' },
+                        '& .MuiInputLabel-root.MuiInputLabel-shrink': { color: '#00FF9D' },
                         '& .MuiOutlinedInput-root': {
                           color: '#ffffff',
                           '& fieldset': { borderColor: 'rgba(0,255,157,0.3)' },
@@ -654,23 +655,15 @@ const LoanManagement = () => {
                         },
                         '& .MuiSelect-icon': { color: '#00FF9D' },
                         '& .MuiSelect-select': {
-                          minWidth: '150px',
-                          textOverflow: 'ellipsis',
-                          overflow: 'visible'
+                          minWidth: '150px'
                         }
                       }}>
-                        <InputLabel>Category</InputLabel>
+                        <InputLabel shrink>Category *</InputLabel>
                         <Select
                           value={newCollateral.category}
-                          label="Category"
                           displayEmpty
-                          renderValue={(selected) => {
-                            if (!selected) {
-                              return <span style={{ color: 'rgba(255,255,255,0.5)' }}>Select category...</span>;
-                            }
-                            return selected;
-                          }}
                           onChange={(e) => setNewCollateral({...newCollateral, category: e.target.value})}
+                          notched
                           MenuProps={{
                             PaperProps: {
                               sx: {
@@ -684,6 +677,9 @@ const LoanManagement = () => {
                             }
                           }}
                         >
+                          <MenuItem value="" disabled>
+                            <span style={{ color: 'rgba(255,255,255,0.5)' }}>Select category...</span>
+                          </MenuItem>
                           <MenuItem value="Electronics">Electronics</MenuItem>
                           <MenuItem value="Jewelry">Jewelry</MenuItem>
                           <MenuItem value="Furniture">Furniture</MenuItem>
@@ -754,6 +750,7 @@ const LoanManagement = () => {
                       <FormControl fullWidth required sx={{
                         '& .MuiInputLabel-root': { color: '#B0BEC5' },
                         '& .MuiInputLabel-root.Mui-focused': { color: '#00FF9D' },
+                        '& .MuiInputLabel-root.MuiInputLabel-shrink': { color: '#00FF9D' },
                         '& .MuiOutlinedInput-root': {
                           color: '#ffffff',
                           '& fieldset': { borderColor: 'rgba(0,255,157,0.3)' },
@@ -763,10 +760,10 @@ const LoanManagement = () => {
                         '& .MuiSelect-icon': { color: '#00FF9D' },
                         '& .MuiSelect-select': { minWidth: '100px' }
                       }}>
-                        <InputLabel>Condition</InputLabel>
+                        <InputLabel shrink>Condition *</InputLabel>
                         <Select
                           value={newCollateral.itemCondition}
-                          label="Condition"
+                          notched
                           onChange={(e) => setNewCollateral({...newCollateral, itemCondition: e.target.value})}
                           MenuProps={{
                             PaperProps: {
@@ -849,6 +846,7 @@ const LoanManagement = () => {
                       <FormControl fullWidth required sx={{
                         '& .MuiInputLabel-root': { color: '#B0BEC5' },
                         '& .MuiInputLabel-root.Mui-focused': { color: '#00FF9D' },
+                        '& .MuiInputLabel-root.MuiInputLabel-shrink': { color: '#00FF9D' },
                         '& .MuiOutlinedInput-root': {
                           color: '#ffffff',
                           '& fieldset': { borderColor: 'rgba(0,255,157,0.3)' },
@@ -858,11 +856,11 @@ const LoanManagement = () => {
                         '& .MuiSelect-icon': { color: '#00FF9D' },
                         '& .MuiSelect-select': { minWidth: '150px' }
                       }}>
-                        <InputLabel>Period</InputLabel>
+                        <InputLabel shrink>Period *</InputLabel>
                         <Select
                           value={formData.loanPeriod}
-                          label="Period"
                           displayEmpty
+                          notched
                           renderValue={(selected) => {
                             if (!selected) {
                               return <span style={{ color: 'rgba(255,255,255,0.5)' }}>Select period...</span>;
