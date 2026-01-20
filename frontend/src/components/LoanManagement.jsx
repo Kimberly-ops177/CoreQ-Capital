@@ -454,16 +454,16 @@ const LoanManagement = () => {
           fullWidth
           PaperProps={{
             sx: {
-              bgcolor: '#ffffff',
-              color: '#212121'
+              bgcolor: '#0A1628',
+              color: '#ffffff'
             }
           }}
         >
-          <DialogTitle sx={{ bgcolor: '#1976d2', color: '#ffffff', fontWeight: 'bold' }}>
+          <DialogTitle sx={{ bgcolor: '#1A2B45', color: '#00FF9D', fontWeight: 'bold', borderBottom: '1px solid rgba(0,255,157,0.2)' }}>
             {editingLoan ? 'Edit Loan' : 'Issue New Loan'}
           </DialogTitle>
           <form onSubmit={handleSubmit}>
-            <DialogContent sx={{ bgcolor: '#ffffff', pt: 3 }}>
+            <DialogContent sx={{ bgcolor: '#0A1628', pt: 3 }}>
               {validationErrors.length > 0 && (
                 <Alert severity="error" sx={{ mb: 2 }}>
                   {validationErrors.map((error, idx) => (
@@ -475,7 +475,7 @@ const LoanManagement = () => {
               <Grid container spacing={2}>
                 {/* Borrower Selection */}
                 <Grid item xs={12}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#1976d2' }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#00FF9D' }}>
                     Select Borrower
                   </Typography>
                 </Grid>
@@ -491,11 +491,20 @@ const LoanManagement = () => {
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
-                              <Search />
+                              <Search sx={{ color: '#00FF9D' }} />
                             </InputAdornment>
                           ),
                         }}
-                        sx={{ mb: 1 }}
+                        sx={{
+                          mb: 1,
+                          '& .MuiOutlinedInput-root': {
+                            color: '#ffffff',
+                            '& fieldset': { borderColor: 'rgba(0,255,157,0.3)' },
+                            '&:hover fieldset': { borderColor: '#00FF9D' },
+                            '&.Mui-focused fieldset': { borderColor: '#00FF9D' },
+                          },
+                          '& .MuiInputBase-input::placeholder': { color: 'rgba(255,255,255,0.5)' }
+                        }}
                       />
                     </Grid>
                     <Grid item xs={12}>
@@ -504,7 +513,8 @@ const LoanManagement = () => {
                         sx={{
                           maxHeight: 250,
                           overflow: 'auto',
-                          bgcolor: '#fafafa'
+                          bgcolor: '#1A2B45',
+                          borderColor: 'rgba(0,255,157,0.3)'
                         }}
                       >
                         <List dense>
@@ -526,19 +536,19 @@ const LoanManagement = () => {
                                   sx={{
                                     py: 1.5,
                                     '&:hover': {
-                                      bgcolor: '#e3f2fd',
+                                      bgcolor: 'rgba(0,255,157,0.1)',
                                     }
                                   }}
                                 >
-                                  <Person sx={{ mr: 2, color: '#1976d2' }} />
+                                  <Person sx={{ mr: 2, color: '#00FF9D' }} />
                                   <ListItemText
                                     primary={
-                                      <Typography variant="body1" sx={{ fontWeight: 600, color: '#212121' }}>
+                                      <Typography variant="body1" sx={{ fontWeight: 600, color: '#ffffff' }}>
                                         {borrower.fullName}
                                       </Typography>
                                     }
                                     secondary={
-                                      <Typography variant="body2" sx={{ color: '#666' }}>
+                                      <Typography variant="body2" sx={{ color: '#B0BEC5' }}>
                                         ID: {borrower.idNumber || 'N/A'} | Phone: {borrower.phoneNumber} | {borrower.location}
                                       </Typography>
                                     }
@@ -559,7 +569,7 @@ const LoanManagement = () => {
                             <ListItem>
                               <ListItemText
                                 primary={
-                                  <Typography variant="body2" sx={{ color: '#999', textAlign: 'center', py: 2 }}>
+                                  <Typography variant="body2" sx={{ color: '#B0BEC5', textAlign: 'center', py: 2 }}>
                                     No borrowers found matching your search
                                   </Typography>
                                 }
@@ -568,7 +578,7 @@ const LoanManagement = () => {
                           )}
                         </List>
                       </Paper>
-                      <Typography variant="caption" sx={{ color: '#666', mt: 1, display: 'block' }}>
+                      <Typography variant="caption" sx={{ color: '#B0BEC5', mt: 1, display: 'block' }}>
                         {borrowers.length} borrowers available. Click on a borrower to select.
                       </Typography>
                     </Grid>
@@ -578,9 +588,9 @@ const LoanManagement = () => {
                 {/* Show selected borrower details */}
                 {selectedBorrower && (
                   <Grid item xs={12}>
-                    <Paper sx={{ p: 2, bgcolor: '#e8f5e9', border: '1px solid #4caf50' }}>
+                    <Paper sx={{ p: 2, bgcolor: 'rgba(0,255,157,0.1)', border: '1px solid #00FF9D' }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#00FF9D' }}>
                           Selected Borrower
                         </Typography>
                         {!editingLoan && (
@@ -590,7 +600,7 @@ const LoanManagement = () => {
                               setSelectedBorrower(null);
                               setFormData(prev => ({ ...prev, borrowerId: '' }));
                             }}
-                            sx={{ color: '#d32f2f' }}
+                            sx={{ color: '#FF4D6A' }}
                           >
                             Change
                           </Button>
@@ -598,25 +608,25 @@ const LoanManagement = () => {
                       </Box>
                       <Grid container spacing={1}>
                         <Grid item xs={6} sm={3}>
-                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Name:</strong> {selectedBorrower.fullName}</Typography>
+                          <Typography variant="body2" sx={{ color: '#ffffff' }}><strong>Name:</strong> {selectedBorrower.fullName}</Typography>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>ID:</strong> {selectedBorrower.idNumber || 'N/A'}</Typography>
+                          <Typography variant="body2" sx={{ color: '#ffffff' }}><strong>ID:</strong> {selectedBorrower.idNumber || 'N/A'}</Typography>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Phone:</strong> {selectedBorrower.phoneNumber}</Typography>
+                          <Typography variant="body2" sx={{ color: '#ffffff' }}><strong>Phone:</strong> {selectedBorrower.phoneNumber}</Typography>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Email:</strong> {selectedBorrower.email || 'N/A'}</Typography>
+                          <Typography variant="body2" sx={{ color: '#ffffff' }}><strong>Email:</strong> {selectedBorrower.email || 'N/A'}</Typography>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Location:</strong> {selectedBorrower.location}</Typography>
+                          <Typography variant="body2" sx={{ color: '#ffffff' }}><strong>Location:</strong> {selectedBorrower.location}</Typography>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Apartment:</strong> {selectedBorrower.apartment || 'N/A'}</Typography>
+                          <Typography variant="body2" sx={{ color: '#ffffff' }}><strong>Apartment:</strong> {selectedBorrower.apartment || 'N/A'}</Typography>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>House No:</strong> {selectedBorrower.houseNumber || 'N/A'}</Typography>
+                          <Typography variant="body2" sx={{ color: '#ffffff' }}><strong>House No:</strong> {selectedBorrower.houseNumber || 'N/A'}</Typography>
                         </Grid>
                       </Grid>
                     </Paper>
@@ -627,17 +637,40 @@ const LoanManagement = () => {
                 {!editingLoan && selectedBorrower && (
                   <>
                     <Grid item xs={12}>
-                      <Divider sx={{ my: 1 }} />
-                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#1976d2' }}>
+                      <Divider sx={{ my: 1, borderColor: 'rgba(0,255,157,0.2)' }} />
+                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#00FF9D' }}>
                         New Collateral (Required for each loan)
                       </Typography>
                     </Grid>
                     <Grid item xs={12} sm={6}>
-                      <FormControl fullWidth required>
+                      <FormControl fullWidth required sx={{
+                        '& .MuiInputLabel-root': { color: '#B0BEC5' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#00FF9D' },
+                        '& .MuiOutlinedInput-root': {
+                          color: '#ffffff',
+                          '& fieldset': { borderColor: 'rgba(0,255,157,0.3)' },
+                          '&:hover fieldset': { borderColor: '#00FF9D' },
+                          '&.Mui-focused fieldset': { borderColor: '#00FF9D' },
+                        },
+                        '& .MuiSelect-icon': { color: '#00FF9D' }
+                      }}>
                         <InputLabel>Collateral Category</InputLabel>
                         <Select
                           value={newCollateral.category}
+                          label="Collateral Category"
                           onChange={(e) => setNewCollateral({...newCollateral, category: e.target.value})}
+                          MenuProps={{
+                            PaperProps: {
+                              sx: {
+                                bgcolor: '#1A2B45',
+                                '& .MuiMenuItem-root': {
+                                  color: '#ffffff',
+                                  '&:hover': { bgcolor: 'rgba(0,255,157,0.1)' },
+                                  '&.Mui-selected': { bgcolor: 'rgba(0,255,157,0.2)' }
+                                }
+                              }
+                            }
+                          }}
                         >
                           <MenuItem value="Electronics">Electronics</MenuItem>
                           <MenuItem value="Jewelry">Jewelry</MenuItem>
@@ -656,6 +689,17 @@ const LoanManagement = () => {
                         value={newCollateral.itemName}
                         onChange={(e) => setNewCollateral({...newCollateral, itemName: e.target.value})}
                         placeholder="e.g., Samsung TV, Gold Ring"
+                        sx={{
+                          '& .MuiInputLabel-root': { color: '#B0BEC5' },
+                          '& .MuiInputLabel-root.Mui-focused': { color: '#00FF9D' },
+                          '& .MuiOutlinedInput-root': {
+                            color: '#ffffff',
+                            '& fieldset': { borderColor: 'rgba(0,255,157,0.3)' },
+                            '&:hover fieldset': { borderColor: '#00FF9D' },
+                            '&.Mui-focused fieldset': { borderColor: '#00FF9D' },
+                          },
+                          '& .MuiInputBase-input::placeholder': { color: 'rgba(255,255,255,0.5)' }
+                        }}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -664,6 +708,16 @@ const LoanManagement = () => {
                         label="Model Number"
                         value={newCollateral.modelNumber}
                         onChange={(e) => setNewCollateral({...newCollateral, modelNumber: e.target.value})}
+                        sx={{
+                          '& .MuiInputLabel-root': { color: '#B0BEC5' },
+                          '& .MuiInputLabel-root.Mui-focused': { color: '#00FF9D' },
+                          '& .MuiOutlinedInput-root': {
+                            color: '#ffffff',
+                            '& fieldset': { borderColor: 'rgba(0,255,157,0.3)' },
+                            '&:hover fieldset': { borderColor: '#00FF9D' },
+                            '&.Mui-focused fieldset': { borderColor: '#00FF9D' },
+                          }
+                        }}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -672,14 +726,47 @@ const LoanManagement = () => {
                         label="Serial Number"
                         value={newCollateral.serialNumber}
                         onChange={(e) => setNewCollateral({...newCollateral, serialNumber: e.target.value})}
+                        sx={{
+                          '& .MuiInputLabel-root': { color: '#B0BEC5' },
+                          '& .MuiInputLabel-root.Mui-focused': { color: '#00FF9D' },
+                          '& .MuiOutlinedInput-root': {
+                            color: '#ffffff',
+                            '& fieldset': { borderColor: 'rgba(0,255,157,0.3)' },
+                            '&:hover fieldset': { borderColor: '#00FF9D' },
+                            '&.Mui-focused fieldset': { borderColor: '#00FF9D' },
+                          }
+                        }}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
-                      <FormControl fullWidth required>
+                      <FormControl fullWidth required sx={{
+                        '& .MuiInputLabel-root': { color: '#B0BEC5' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#00FF9D' },
+                        '& .MuiOutlinedInput-root': {
+                          color: '#ffffff',
+                          '& fieldset': { borderColor: 'rgba(0,255,157,0.3)' },
+                          '&:hover fieldset': { borderColor: '#00FF9D' },
+                          '&.Mui-focused fieldset': { borderColor: '#00FF9D' },
+                        },
+                        '& .MuiSelect-icon': { color: '#00FF9D' }
+                      }}>
                         <InputLabel>Item Condition</InputLabel>
                         <Select
                           value={newCollateral.itemCondition}
+                          label="Item Condition"
                           onChange={(e) => setNewCollateral({...newCollateral, itemCondition: e.target.value})}
+                          MenuProps={{
+                            PaperProps: {
+                              sx: {
+                                bgcolor: '#1A2B45',
+                                '& .MuiMenuItem-root': {
+                                  color: '#ffffff',
+                                  '&:hover': { bgcolor: 'rgba(0,255,157,0.1)' },
+                                  '&.Mui-selected': { bgcolor: 'rgba(0,255,157,0.2)' }
+                                }
+                              }
+                            }
+                          }}
                         >
                           <MenuItem value="Excellent">Excellent</MenuItem>
                           <MenuItem value="Good">Good</MenuItem>
@@ -695,8 +782,8 @@ const LoanManagement = () => {
                 {selectedBorrower && (
                   <>
                     <Grid item xs={12}>
-                      <Divider sx={{ my: 1 }} />
-                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#1976d2' }}>
+                      <Divider sx={{ my: 1, borderColor: 'rgba(0,255,157,0.2)' }} />
+                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#00FF9D' }}>
                         Loan Details
                       </Typography>
                     </Grid>
@@ -709,6 +796,17 @@ const LoanManagement = () => {
                         value={formData.amountIssued}
                         onChange={(e) => setFormData({...formData, amountIssued: e.target.value})}
                         helperText="Minimum 12k for 4-week loans"
+                        sx={{
+                          '& .MuiInputLabel-root': { color: '#B0BEC5' },
+                          '& .MuiInputLabel-root.Mui-focused': { color: '#00FF9D' },
+                          '& .MuiOutlinedInput-root': {
+                            color: '#ffffff',
+                            '& fieldset': { borderColor: 'rgba(0,255,157,0.3)' },
+                            '&:hover fieldset': { borderColor: '#00FF9D' },
+                            '&.Mui-focused fieldset': { borderColor: '#00FF9D' },
+                          },
+                          '& .MuiFormHelperText-root': { color: '#B0BEC5' }
+                        }}
                       />
                     </Grid>
 
@@ -721,15 +819,48 @@ const LoanManagement = () => {
                         value={formData.dateIssued}
                         onChange={(e) => setFormData({...formData, dateIssued: e.target.value})}
                         InputLabelProps={{ shrink: true }}
+                        sx={{
+                          '& .MuiInputLabel-root': { color: '#B0BEC5' },
+                          '& .MuiInputLabel-root.Mui-focused': { color: '#00FF9D' },
+                          '& .MuiOutlinedInput-root': {
+                            color: '#ffffff',
+                            '& fieldset': { borderColor: 'rgba(0,255,157,0.3)' },
+                            '&:hover fieldset': { borderColor: '#00FF9D' },
+                            '&.Mui-focused fieldset': { borderColor: '#00FF9D' },
+                          }
+                        }}
                       />
                     </Grid>
 
                     <Grid item xs={12} sm={6}>
-                      <FormControl fullWidth required>
+                      <FormControl fullWidth required sx={{
+                        '& .MuiInputLabel-root': { color: '#B0BEC5' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#00FF9D' },
+                        '& .MuiOutlinedInput-root': {
+                          color: '#ffffff',
+                          '& fieldset': { borderColor: 'rgba(0,255,157,0.3)' },
+                          '&:hover fieldset': { borderColor: '#00FF9D' },
+                          '&.Mui-focused fieldset': { borderColor: '#00FF9D' },
+                        },
+                        '& .MuiSelect-icon': { color: '#00FF9D' }
+                      }}>
                         <InputLabel>Loan Period</InputLabel>
                         <Select
                           value={formData.loanPeriod}
+                          label="Loan Period"
                           onChange={(e) => setFormData({...formData, loanPeriod: e.target.value})}
+                          MenuProps={{
+                            PaperProps: {
+                              sx: {
+                                bgcolor: '#1A2B45',
+                                '& .MuiMenuItem-root': {
+                                  color: '#ffffff',
+                                  '&:hover': { bgcolor: 'rgba(0,255,157,0.1)' },
+                                  '&.Mui-selected': { bgcolor: 'rgba(0,255,157,0.2)' }
+                                }
+                              }
+                            }
+                          }}
                         >
                           <MenuItem value={1}>1 Week ({interestRates[1]}% interest)</MenuItem>
                           <MenuItem value={2}>2 Weeks ({interestRates[2]}% interest)</MenuItem>
@@ -744,26 +875,26 @@ const LoanManagement = () => {
                 {/* Loan Calculation Preview */}
                 {loanCalculation && (
                   <Grid item xs={12}>
-                    <Paper sx={{ p: 2, bgcolor: '#fff3e0', border: '1px solid #ff9800' }}>
-                      <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#e65100' }}>
+                    <Paper sx={{ p: 2, bgcolor: 'rgba(246,176,65,0.1)', border: '1px solid #f6b041' }}>
+                      <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: '#f6b041' }}>
                         <Calculate sx={{ mr: 1 }} /> Loan Calculation
                       </Typography>
                       <Grid container spacing={1}>
                         <Grid item xs={6}>
-                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Principal:</strong> KSH {parseFloat(loanCalculation.principal).toLocaleString()}</Typography>
+                          <Typography variant="body2" sx={{ color: '#ffffff' }}><strong>Principal:</strong> KSH {parseFloat(loanCalculation.principal).toLocaleString()}</Typography>
                         </Grid>
                         <Grid item xs={6}>
-                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Interest Rate:</strong> {loanCalculation.interestRate}%</Typography>
+                          <Typography variant="body2" sx={{ color: '#ffffff' }}><strong>Interest Rate:</strong> {loanCalculation.interestRate}%</Typography>
                         </Grid>
                         <Grid item xs={6}>
-                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Interest Amount:</strong> KSH {parseFloat(loanCalculation.interestAmount).toLocaleString()}</Typography>
+                          <Typography variant="body2" sx={{ color: '#ffffff' }}><strong>Interest Amount:</strong> KSH {parseFloat(loanCalculation.interestAmount).toLocaleString()}</Typography>
                         </Grid>
                         <Grid item xs={6}>
-                          <Typography variant="body2" sx={{ color: '#212121' }}><strong>Period:</strong> {loanCalculation.period}</Typography>
+                          <Typography variant="body2" sx={{ color: '#ffffff' }}><strong>Period:</strong> {loanCalculation.period}</Typography>
                         </Grid>
                         <Grid item xs={12}>
-                          <Divider sx={{ my: 1 }} />
-                          <Typography variant="h6" sx={{ color: '#2e7d32', fontWeight: 'bold' }}>
+                          <Divider sx={{ my: 1, borderColor: 'rgba(246,176,65,0.3)' }} />
+                          <Typography variant="h6" sx={{ color: '#00FF9D', fontWeight: 'bold' }}>
                             Total Amount Due: KSH {parseFloat(loanCalculation.totalAmount).toLocaleString()}
                           </Typography>
                         </Grid>
@@ -773,13 +904,13 @@ const LoanManagement = () => {
                 )}
               </Grid>
             </DialogContent>
-            <DialogActions sx={{ bgcolor: '#f5f5f5', p: 2 }}>
-              <Button onClick={handleClose} sx={{ color: '#666' }}>Cancel</Button>
+            <DialogActions sx={{ bgcolor: '#1A2B45', p: 2, borderTop: '1px solid rgba(0,255,157,0.2)' }}>
+              <Button onClick={handleClose} sx={{ color: '#B0BEC5' }}>Cancel</Button>
               <Button
                 type="submit"
                 variant="contained"
                 disabled={validationErrors.length > 0}
-                sx={{ bgcolor: '#1976d2', '&:hover': { bgcolor: '#1565c0' } }}
+                sx={{ bgcolor: '#00FF9D', color: '#0A1628', fontWeight: 'bold', '&:hover': { bgcolor: '#00D4FF' } }}
               >
                 {editingLoan ? 'Update Loan' : 'Issue Loan'}
               </Button>
