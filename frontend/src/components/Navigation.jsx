@@ -2,7 +2,7 @@ import React from 'react';
 import {
   AppBar, Toolbar, Typography, Button, Box
 } from '@mui/material';
-import { ArrowBack, Add } from '@mui/icons-material';
+import { ArrowBack, Add, AccountBalance } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -18,22 +18,22 @@ const Navigation = ({ title, showBack = true, isDashboard = false }) => {
     return user?.role === 'admin' ? '/admin' : '/employee';
   };
 
-  // Dashboard layout - Clean title on left, New Loan button, then navigation
+  // Dashboard layout - Icon + title on left, navigation on right
   if (isDashboard) {
     return (
       <AppBar position="static">
         <Toolbar>
-          {/* Dashboard Title */}
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
+          {/* Dashboard Title with Icon */}
+          <AccountBalance sx={{ mr: 1 }} />
+          <Typography variant="h6" sx={{ fontWeight: 'bold', mr: 4 }}>
             {title || 'Core Q Capital'}
           </Typography>
 
           {/* Desktop Navigation */}
-          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, flexGrow: 1, justifyContent: 'flex-start' }}>
             <Button variant="contained" color="success" startIcon={<Add />} onClick={() => navigate('/new-loan')}>
               New Loan
             </Button>
-            <Button color="inherit" onClick={() => navigate('/borrowers')}>Borrowers</Button>
             <Button color="inherit" onClick={() => navigate('/loans')}>Loans</Button>
             <Button color="inherit" onClick={() => navigate('/agreements')}>Agreements</Button>
             <Button color="inherit" onClick={() => navigate('/collaterals')}>Collaterals</Button>
@@ -49,7 +49,7 @@ const Navigation = ({ title, showBack = true, isDashboard = false }) => {
           </Box>
 
           {/* Mobile */}
-          <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 1 }}>
+          <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 1, flexGrow: 1, justifyContent: 'flex-end' }}>
             <Button variant="contained" color="success" size="small" startIcon={<Add />} onClick={() => navigate('/new-loan')}>
               New
             </Button>
@@ -60,7 +60,7 @@ const Navigation = ({ title, showBack = true, isDashboard = false }) => {
     );
   }
 
-  // Other pages layout - Back button on left, title, navigation on right
+  // Other pages layout - Back button on left, then same nav as dashboard
   return (
     <AppBar position="static">
       <Toolbar>
@@ -76,15 +76,17 @@ const Navigation = ({ title, showBack = true, isDashboard = false }) => {
           </Button>
         )}
 
-        {/* Page Title */}
-        <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
+        {/* Page Title with Icon */}
+        <AccountBalance sx={{ mr: 1 }} />
+        <Typography variant="h6" sx={{ fontWeight: 'bold', mr: 4 }}>
           {title || 'Core Q Capital'}
         </Typography>
 
-        {/* Desktop Navigation - Right aligned */}
-        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
-          <Button color="inherit" onClick={() => navigate(getDashboardPath())}>Dashboard</Button>
-          <Button color="inherit" onClick={() => navigate('/borrowers')}>Borrowers</Button>
+        {/* Desktop Navigation */}
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, flexGrow: 1, justifyContent: 'flex-start' }}>
+          <Button variant="contained" color="success" startIcon={<Add />} onClick={() => navigate('/new-loan')}>
+            New Loan
+          </Button>
           <Button color="inherit" onClick={() => navigate('/loans')}>Loans</Button>
           <Button color="inherit" onClick={() => navigate('/agreements')}>Agreements</Button>
           <Button color="inherit" onClick={() => navigate('/collaterals')}>Collaterals</Button>
@@ -100,7 +102,7 @@ const Navigation = ({ title, showBack = true, isDashboard = false }) => {
         </Box>
 
         {/* Mobile */}
-        <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 1 }}>
+        <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 1, flexGrow: 1, justifyContent: 'flex-end' }}>
           <Button color="inherit" size="small" onClick={() => navigate(getDashboardPath())}>Home</Button>
           <Button color="inherit" size="small" onClick={logout}>Logout</Button>
         </Box>
