@@ -18,7 +18,7 @@ const Navigation = ({ title, showBack = true, isDashboard = false }) => {
     return user?.role === 'admin' ? '/admin' : '/employee';
   };
 
-  // Dashboard layout - Icon + title on left, navigation on right
+  // Dashboard layout - Icon + title on left, navigation on right (original design)
   if (isDashboard) {
     return (
       <AppBar position="static">
@@ -34,6 +34,7 @@ const Navigation = ({ title, showBack = true, isDashboard = false }) => {
             <Button variant="contained" color="success" startIcon={<Add />} onClick={() => navigate('/new-loan')}>
               New Loan
             </Button>
+            <Button color="inherit" onClick={() => navigate('/borrowers')}>Borrowers</Button>
             <Button color="inherit" onClick={() => navigate('/loans')}>Loans</Button>
             <Button color="inherit" onClick={() => navigate('/agreements')}>Agreements</Button>
             <Button color="inherit" onClick={() => navigate('/collaterals')}>Collaterals</Button>
@@ -60,7 +61,7 @@ const Navigation = ({ title, showBack = true, isDashboard = false }) => {
     );
   }
 
-  // Other pages layout - Back button on left, then same nav as dashboard
+  // Other pages layout - Clean: Back on left, title center, Dashboard + Logout on right
   return (
     <AppBar position="static">
       <Toolbar>
@@ -70,41 +71,20 @@ const Navigation = ({ title, showBack = true, isDashboard = false }) => {
             color="inherit"
             onClick={handleBack}
             startIcon={<ArrowBack />}
-            sx={{ mr: 2 }}
           >
             Back
           </Button>
         )}
 
-        {/* Page Title with Icon */}
-        <AccountBalance sx={{ mr: 1 }} />
-        <Typography variant="h6" sx={{ fontWeight: 'bold', mr: 4 }}>
+        {/* Page Title - centered */}
+        <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold', textAlign: 'center' }}>
           {title || 'Core Q Capital'}
         </Typography>
 
-        {/* Desktop Navigation */}
-        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, flexGrow: 1, justifyContent: 'flex-start' }}>
-          <Button variant="contained" color="success" startIcon={<Add />} onClick={() => navigate('/new-loan')}>
-            New Loan
-          </Button>
-          <Button color="inherit" onClick={() => navigate('/loans')}>Loans</Button>
-          <Button color="inherit" onClick={() => navigate('/agreements')}>Agreements</Button>
-          <Button color="inherit" onClick={() => navigate('/collaterals')}>Collaterals</Button>
-          <Button color="inherit" onClick={() => navigate('/expenses')}>Expenses</Button>
-          <Button color="inherit" onClick={() => navigate('/reports')}>Reports</Button>
-          {user?.role === 'admin' && (
-            <Button color="inherit" onClick={() => navigate('/settings')}>Settings</Button>
-          )}
-          {user?.role === 'admin' && (
-            <Button color="inherit" onClick={() => navigate('/users')}>Users</Button>
-          )}
+        {/* Right side - Dashboard link and Logout */}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button color="inherit" onClick={() => navigate(getDashboardPath())}>Dashboard</Button>
           <Button color="inherit" onClick={logout}>Logout</Button>
-        </Box>
-
-        {/* Mobile */}
-        <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 1, flexGrow: 1, justifyContent: 'flex-end' }}>
-          <Button color="inherit" size="small" onClick={() => navigate(getDashboardPath())}>Home</Button>
-          <Button color="inherit" size="small" onClick={logout}>Logout</Button>
         </Box>
       </Toolbar>
     </AppBar>
