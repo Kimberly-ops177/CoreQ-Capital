@@ -45,48 +45,56 @@ const Sidebar = ({ children }) => {
     return location.pathname === path;
   };
 
-  // Menu items configuration - matching app's dark theme
+  // Menu items configuration - matching app's dark theme with unique icon colors
   const menuItems = [
     {
       label: 'Dashboard',
       icon: <Dashboard />,
       path: user?.role === 'admin' ? '/admin' : '/employee',
+      iconColor: '#00D4FF', // Cyan
     },
     {
       label: 'New Loan',
       icon: <Add />,
       path: '/new-loan',
       isAction: true,
+      iconColor: '#00FF9D', // Green (action)
     },
     {
       label: 'Borrowers',
       icon: <People />,
       path: '/borrowers',
+      iconColor: '#FFB547', // Amber/Orange
     },
     {
       label: 'Loans',
       icon: <AccountBalance />,
       path: '/loans',
+      iconColor: '#00FF9D', // Green
     },
     {
       label: 'Agreements',
       icon: <Description />,
       path: '/agreements',
+      iconColor: '#A78BFA', // Purple
     },
     {
       label: 'Collaterals',
       icon: <Inventory />,
       path: '/collaterals',
+      iconColor: '#34D399', // Emerald
     },
     {
       label: 'Expenses',
       icon: <Receipt />,
       path: '/expenses',
+      iconColor: '#F87171', // Red/Coral
     },
     {
       label: 'Reports',
       icon: <Assessment />,
       path: '/reports',
+      iconColor: '#60A5FA', // Blue
     },
   ];
 
@@ -96,11 +104,13 @@ const Sidebar = ({ children }) => {
       label: 'Settings',
       icon: <Settings />,
       path: '/settings',
+      iconColor: '#9CA3AF', // Gray
     },
     {
       label: 'Users',
       icon: <Group />,
       path: '/users',
+      iconColor: '#FBBF24', // Yellow
     },
   ];
 
@@ -187,7 +197,7 @@ const Sidebar = ({ children }) => {
               >
                 <ListItemIcon
                   sx={{
-                    color: isActive(item.path) || item.isAction ? '#00FF9D' : '#B0BEC5',
+                    color: isActive(item.path) ? '#00FF9D' : item.iconColor || '#B0BEC5',
                     minWidth: isCollapsed ? 0 : 40,
                     justifyContent: 'center',
                   }}
@@ -242,7 +252,7 @@ const Sidebar = ({ children }) => {
                   >
                     <ListItemIcon
                       sx={{
-                        color: isActive(item.path) ? '#00FF9D' : '#B0BEC5',
+                        color: isActive(item.path) ? '#00FF9D' : item.iconColor || '#B0BEC5',
                         minWidth: isCollapsed ? 0 : 40,
                         justifyContent: 'center',
                       }}
