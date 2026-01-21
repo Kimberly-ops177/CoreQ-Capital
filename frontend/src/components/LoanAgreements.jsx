@@ -88,7 +88,33 @@ const LoanAgreements = () => {
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Error downloading agreement:', err);
-      setError(err.response?.data?.error || 'Failed to download agreement');
+      // If PDF not found, try to regenerate it first
+      if (err.response?.status === 404) {
+        try {
+          setSuccess('Regenerating agreement PDF...');
+          await axios.post(`/api/loan-agreements/${loanId}/regenerate`);
+          // Retry download after regeneration
+          const retryResponse = await axios.get(`/api/loan-applications/${loanId}/download-agreement`, {
+            responseType: 'blob'
+          });
+          const blob = new Blob([retryResponse.data], { type: 'application/pdf' });
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', `Loan_Agreement_${loanId}.docx`);
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(url);
+          setSuccess('Agreement regenerated and downloaded successfully!');
+          setTimeout(() => setSuccess(null), 3000);
+        } catch (regenErr) {
+          console.error('Error regenerating agreement:', regenErr);
+          setError(regenErr.response?.data?.error || 'Failed to regenerate agreement');
+        }
+      } else {
+        setError(err.response?.data?.error || 'Failed to download agreement');
+      }
     }
   };
 
@@ -111,7 +137,28 @@ const LoanAgreements = () => {
       setTimeout(() => window.URL.revokeObjectURL(url), 1000);
     } catch (err) {
       console.error('Error printing agreement:', err);
-      setError(err.response?.data?.error || 'Failed to print agreement');
+      // If PDF not found, try to regenerate it first
+      if (err.response?.status === 404) {
+        try {
+          setSuccess('Regenerating agreement PDF...');
+          await axios.post(`/api/loan-agreements/${loanId}/regenerate`);
+          // Retry print after regeneration
+          const retryResponse = await axios.get(`/api/loan-applications/${loanId}/download-agreement`, {
+            responseType: 'blob'
+          });
+          const blob = new Blob([retryResponse.data], { type: 'application/pdf' });
+          const url = window.URL.createObjectURL(blob);
+          window.open(url, '_blank');
+          setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+          setSuccess('Agreement regenerated successfully!');
+          setTimeout(() => setSuccess(null), 3000);
+        } catch (regenErr) {
+          console.error('Error regenerating agreement:', regenErr);
+          setError(regenErr.response?.data?.error || 'Failed to regenerate agreement');
+        }
+      } else {
+        setError(err.response?.data?.error || 'Failed to print agreement');
+      }
     }
   };
 
