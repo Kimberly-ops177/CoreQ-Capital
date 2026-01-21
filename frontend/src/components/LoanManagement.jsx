@@ -8,12 +8,13 @@ import {
 } from '@mui/material';
 import { Add, Edit, Delete, Payment, Calculate, Search, Person } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 const LoanManagement = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalItems: 0 });
@@ -23,6 +24,7 @@ const LoanManagement = () => {
   const [businessRules, setBusinessRules] = useState({});
   const [open, setOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [loanSelectorOpen, setLoanSelectorOpen] = useState(false);
   const [editingLoan, setEditingLoan] = useState(null);
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [formData, setFormData] = useState({
@@ -107,6 +109,16 @@ const LoanManagement = () => {
     fetchCollaterals();
   }, []);
 
+  // Check for ?action=payment query parameter to open loan selector
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('action') === 'payment') {
+      setLoanSelectorOpen(true);
+      // Clear the query parameter
+      navigate('/loans', { replace: true });
+    }
+  }, [location.search, navigate]);
+
   // Auto-calculate interest rate and validate based on business rules
   // Interest rates are FIXED for ALL borrowers - no negotiation
   useEffect(() => {
@@ -142,17 +154,28 @@ const LoanManagement = () => {
     }
   }, [formData.amountIssued, formData.loanPeriod, interestRates, businessRules]);
 
-  const filteredLoans = loans.filter((loan) => {
+  // Filter out defaulted loans - they should only appear in reports
+  const activeLoans = loans.filter(loan => loan.status !== 'defaulted');
+
+  const filteredLoans = activeLoans.filter((loan) => {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
     return (
       loan.borrower?.fullName?.toLowerCase().includes(search) ||
+      loan.borrower?.idNumber?.toLowerCase().includes(search) ||
       loan.collateral?.itemName?.toLowerCase().includes(search) ||
       loan.status?.toLowerCase().includes(search) ||
       loan.id?.toString().includes(search) ||
       loan.amountIssued?.toString().includes(search)
     );
   });
+
+  // Calculate remaining balance for a loan (total + penalties - repaid)
+  const calculateRemainingBalance = (loan) => {
+    const total = parseFloat(loan.totalAmount) + parseFloat(loan.penalties || 0);
+    const repaid = parseFloat(loan.amountRepaid || 0);
+    return Math.max(0, total - repaid);
+  };
 
   // Filter collaterals by selected borrower
   // Handle borrower selection and auto-fill their details
@@ -381,7 +404,7 @@ const LoanManagement = () => {
           variant="outlined"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search by borrower name, collateral item, status, loan ID, or amount..."
+          placeholder="Search by borrower name, ID number, collateral item, status, loan ID, or amount..."
           sx={{ mb: 2 }}
         />
 
@@ -391,11 +414,11 @@ const LoanManagement = () => {
               <TableRow>
                 <TableCell sx={{ fontWeight: 'bold' }}>Loan ID</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Borrower</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>ID Number</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Amount Issued</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Interest Rate</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Period</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Total Amount</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Amount Repaid</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Total + Penalties</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Repaid</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Balance</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Due Date</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
@@ -429,11 +452,13 @@ const LoanManagement = () => {
                   <TableRow key={loan.id}>
                     <TableCell>#{loan.id}</TableCell>
                     <TableCell>{loan.borrower?.fullName || 'N/A'}</TableCell>
+                    <TableCell>{loan.borrower?.idNumber || 'N/A'}</TableCell>
                     <TableCell>KSH {parseFloat(loan.amountIssued).toLocaleString()}</TableCell>
-                    <TableCell>{loan.interestRate}% {loan.isNegotiable && <Chip label="Negotiable" size="small" color="secondary" sx={{ ml: 1 }} />}</TableCell>
-                    <TableCell>{loan.loanPeriod} week(s)</TableCell>
-                    <TableCell>KSH {parseFloat(loan.totalAmount).toLocaleString()}</TableCell>
+                    <TableCell>KSH {(parseFloat(loan.totalAmount) + parseFloat(loan.penalties || 0)).toLocaleString()}</TableCell>
                     <TableCell>KSH {parseFloat(loan.amountRepaid || 0).toLocaleString()}</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: calculateRemainingBalance(loan) > 0 ? '#ff4d6a' : '#16f2a3' }}>
+                      KSH {calculateRemainingBalance(loan).toLocaleString()}
+                    </TableCell>
                     <TableCell>{new Date(loan.dueDate).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <Chip label={loan.status} color={getStatusColor(loan.status)} />
@@ -1041,6 +1066,53 @@ const LoanManagement = () => {
               </Button>
             </DialogActions>
           </form>
+        </Dialog>
+
+        {/* Loan Selector Dialog for Quick Repayment */}
+        <Dialog open={loanSelectorOpen} onClose={() => setLoanSelectorOpen(false)} maxWidth="md" fullWidth>
+          <DialogTitle>Select Loan for Repayment</DialogTitle>
+          <DialogContent>
+            <TextField
+              fullWidth
+              label="Search by borrower name or ID number"
+              variant="outlined"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Type to search..."
+              sx={{ my: 2 }}
+            />
+            <List sx={{ maxHeight: 400, overflow: 'auto' }}>
+              {filteredLoans.filter(loan => loan.status !== 'paid').length === 0 ? (
+                <ListItem>
+                  <ListItemText primary="No outstanding loans found" secondary="All loans have been paid" />
+                </ListItem>
+              ) : (
+                filteredLoans.filter(loan => loan.status !== 'paid').map((loan) => (
+                  <ListItemButton
+                    key={loan.id}
+                    onClick={() => {
+                      setLoanSelectorOpen(false);
+                      handlePaymentOpen(loan);
+                    }}
+                    sx={{
+                      border: '1px solid #e0e0e0',
+                      borderRadius: 1,
+                      mb: 1,
+                      '&:hover': { bgcolor: 'rgba(0,255,157,0.1)' }
+                    }}
+                  >
+                    <ListItemText
+                      primary={`#${loan.id} - ${loan.borrower?.fullName || 'N/A'} (${loan.borrower?.idNumber || 'N/A'})`}
+                      secondary={`Balance: KSH ${calculateRemainingBalance(loan).toLocaleString()} | Due: ${new Date(loan.dueDate).toLocaleDateString()} | Status: ${loan.status}`}
+                    />
+                  </ListItemButton>
+                ))
+              )}
+            </List>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setLoanSelectorOpen(false)}>Cancel</Button>
+          </DialogActions>
         </Dialog>
       </Container>
   );

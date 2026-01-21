@@ -151,9 +151,7 @@ const CollateralManagement = () => {
     <Container sx={{ py: 4 }}>
         <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography variant="h4">Collaterals</Typography>
-          <Button variant="contained" startIcon={<Add />} onClick={() => handleOpen()}>
-            Add Collateral
-          </Button>
+          {/* Note: Collaterals are added through the loan application process */}
         </Grid>
 
         <TextField

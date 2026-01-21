@@ -168,6 +168,7 @@ const AdminDashboard = () => {
             {[
               { label: 'Manage Borrowers', path: '/borrowers', color: 'linear-gradient(135deg, #00f7b2 0%, #00d7ff 100%)' },
               { label: 'Process Loans', path: '/loans', color: 'linear-gradient(135deg, #00f7b2 0%, #00d7ff 100%)' },
+              { label: 'Record Repayment', path: '/loans?action=payment', color: 'linear-gradient(135deg, #f6b041 0%, #ff8c00 100%)' },
               { label: 'View Reports', path: '/reports', color: 'linear-gradient(135deg, #00f7b2 0%, #00d7ff 100%)' },
             ].map((action) => (
               <Box
