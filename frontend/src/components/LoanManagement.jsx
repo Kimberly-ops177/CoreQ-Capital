@@ -4,7 +4,7 @@ import {
   TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Grid, IconButton, Select, MenuItem, FormControl,
   InputLabel, Chip, Box, Alert, Divider, Pagination, List, ListItem, ListItemButton, ListItemText,
-  InputAdornment
+  InputAdornment, Skeleton
 } from '@mui/material';
 import { Add, Edit, Delete, Payment, Calculate, Search, Person } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,6 +15,7 @@ const LoanManagement = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [loans, setLoans] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalItems: 0 });
   const [borrowers, setBorrowers] = useState([]);
   const [collaterals, setCollaterals] = useState([]);
@@ -62,6 +63,7 @@ const LoanManagement = () => {
 
   const fetchLoans = async (page = 1) => {
     try {
+      setLoading(true);
       console.log('Fetching loans page', page);
       const res = await axios.get(`/api/loans?page=${page}&limit=10`);
       setLoans(res.data.data || res.data);
@@ -70,6 +72,8 @@ const LoanManagement = () => {
       }
     } catch (err) {
       console.error('Error fetching loans:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -398,36 +402,60 @@ const LoanManagement = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredLoans.map((loan) => (
-                <TableRow key={loan.id}>
-                  <TableCell>#{loan.id}</TableCell>
-                  <TableCell>{loan.borrower?.fullName || 'N/A'}</TableCell>
-                  <TableCell>KSH {parseFloat(loan.amountIssued).toLocaleString()}</TableCell>
-                  <TableCell>{loan.interestRate}% {loan.isNegotiable && <Chip label="Negotiable" size="small" color="secondary" sx={{ ml: 1 }} />}</TableCell>
-                  <TableCell>{loan.loanPeriod} week(s)</TableCell>
-                  <TableCell>KSH {parseFloat(loan.totalAmount).toLocaleString()}</TableCell>
-                  <TableCell>KSH {parseFloat(loan.amountRepaid || 0).toLocaleString()}</TableCell>
-                  <TableCell>{new Date(loan.dueDate).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Chip label={loan.status} color={getStatusColor(loan.status)} />
-                  </TableCell>
-                  <TableCell>
-                    {user.role === 'admin' && (
-                      <IconButton onClick={() => handleOpen(loan)} size="small" title="Edit Loan">
-                        <Edit />
-                      </IconButton>
-                    )}
-                    <IconButton onClick={() => handlePaymentOpen(loan)} size="small" title="Make Payment">
-                      <Payment />
-                    </IconButton>
-                    {user.role === 'admin' && (
-                      <IconButton onClick={() => handleDelete(loan.id)} size="small" title="Delete Loan">
-                        <Delete />
-                      </IconButton>
-                    )}
+              {loading ? (
+                // Skeleton loading rows
+                [...Array(5)].map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" width={60} /></TableCell>
+                    <TableCell><Skeleton animation="wave" width={100} /></TableCell>
+                  </TableRow>
+                ))
+              ) : filteredLoans.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
+                    <Typography color="textSecondary">No loans found</Typography>
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredLoans.map((loan) => (
+                  <TableRow key={loan.id}>
+                    <TableCell>#{loan.id}</TableCell>
+                    <TableCell>{loan.borrower?.fullName || 'N/A'}</TableCell>
+                    <TableCell>KSH {parseFloat(loan.amountIssued).toLocaleString()}</TableCell>
+                    <TableCell>{loan.interestRate}% {loan.isNegotiable && <Chip label="Negotiable" size="small" color="secondary" sx={{ ml: 1 }} />}</TableCell>
+                    <TableCell>{loan.loanPeriod} week(s)</TableCell>
+                    <TableCell>KSH {parseFloat(loan.totalAmount).toLocaleString()}</TableCell>
+                    <TableCell>KSH {parseFloat(loan.amountRepaid || 0).toLocaleString()}</TableCell>
+                    <TableCell>{new Date(loan.dueDate).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Chip label={loan.status} color={getStatusColor(loan.status)} />
+                    </TableCell>
+                    <TableCell>
+                      {user.role === 'admin' && (
+                        <IconButton onClick={() => handleOpen(loan)} size="small" title="Edit Loan">
+                          <Edit />
+                        </IconButton>
+                      )}
+                      <IconButton onClick={() => handlePaymentOpen(loan)} size="small" title="Make Payment">
+                        <Payment />
+                      </IconButton>
+                      {user.role === 'admin' && (
+                        <IconButton onClick={() => handleDelete(loan.id)} size="small" title="Delete Loan">
+                          <Delete />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </TableContainer>

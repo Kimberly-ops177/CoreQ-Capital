@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Container, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Grid, IconButton, Box, Pagination
+  TextField, Grid, IconButton, Box, Pagination, Skeleton
 } from '@mui/material';
 import { Edit, Delete } from '@mui/icons-material';
 import axios from 'axios';
@@ -10,6 +10,7 @@ import axios from 'axios';
 const BorrowerManagement = () => {
   const [borrowers, setBorrowers] = useState([]);
   const [collaterals, setCollaterals] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalItems: 0 });
   const [collateralPagination, setCollateralPagination] = useState({ currentPage: 1, totalPages: 1, totalItems: 0 });
   const [open, setOpen] = useState(false);
@@ -25,6 +26,7 @@ const BorrowerManagement = () => {
 
   const fetchBorrowers = async (page = 1) => {
     try {
+      setLoading(true);
       const res = await axios.get(`/api/borrowers?page=${page}&limit=10`);
       setBorrowers(res.data.data || res.data);
       if (res.data.pagination) {
@@ -32,6 +34,8 @@ const BorrowerManagement = () => {
       }
     } catch (err) {
       console.error('Error fetching borrowers:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -168,44 +172,68 @@ const BorrowerManagement = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredBorrowers.map((borrower) => {
-                const borrowerCollaterals = getBorrowerCollaterals(borrower.id);
-                return (
-                  <TableRow key={borrower.id}>
-                    <TableCell>{borrower.fullName}</TableCell>
-                    <TableCell>{borrower.idNumber}</TableCell>
-                    <TableCell>{borrower.phoneNumber}</TableCell>
-                    <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {borrower.email}
-                    </TableCell>
-                    <TableCell>{borrower.location}</TableCell>
-                    <TableCell>{borrower.apartment || '-'}</TableCell>
-                    <TableCell>{borrower.houseNumber || '-'}</TableCell>
-                    <TableCell>
-                      {borrower.isStudent ? (
-                        <span>✓ {borrower.institution}</span>
-                      ) : (
-                        <span>-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {borrowerCollaterals.length > 0 ? (
-                        <div>{borrowerCollaterals.map(c => c.itemName).join(', ')}</div>
-                      ) : (
-                        <span style={{ color: '#999' }}>No collaterals</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleOpen(borrower)} size="small">
-                        <Edit />
-                      </IconButton>
-                      <IconButton onClick={() => handleDelete(borrower.id)} size="small">
-                        <Delete />
-                      </IconButton>
-                    </TableCell>
+              {loading ? (
+                // Skeleton loading rows
+                [...Array(5)].map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" width={80} /></TableCell>
                   </TableRow>
-                );
-              })}
+                ))
+              ) : filteredBorrowers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
+                    <Typography color="textSecondary">No borrowers found</Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredBorrowers.map((borrower) => {
+                  const borrowerCollaterals = getBorrowerCollaterals(borrower.id);
+                  return (
+                    <TableRow key={borrower.id}>
+                      <TableCell>{borrower.fullName}</TableCell>
+                      <TableCell>{borrower.idNumber}</TableCell>
+                      <TableCell>{borrower.phoneNumber}</TableCell>
+                      <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {borrower.email}
+                      </TableCell>
+                      <TableCell>{borrower.location}</TableCell>
+                      <TableCell>{borrower.apartment || '-'}</TableCell>
+                      <TableCell>{borrower.houseNumber || '-'}</TableCell>
+                      <TableCell>
+                        {borrower.isStudent ? (
+                          <span>✓ {borrower.institution}</span>
+                        ) : (
+                          <span>-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {borrowerCollaterals.length > 0 ? (
+                          <div>{borrowerCollaterals.map(c => c.itemName).join(', ')}</div>
+                        ) : (
+                          <span style={{ color: '#999' }}>No collaterals</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <IconButton onClick={() => handleOpen(borrower)} size="small">
+                          <Edit />
+                        </IconButton>
+                        <IconButton onClick={() => handleDelete(borrower.id)} size="small">
+                          <Delete />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
         </TableContainer>
