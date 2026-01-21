@@ -258,7 +258,10 @@ const getLoans = async (req, res) => {
     const { borrowerId, status, branchId } = req.query;
     const { page, limit, offset } = getPaginationParams(req.query);
 
-    const whereClause = {};
+    const whereClause = {
+      // Only show loans that have been approved
+      agreementStatus: 'approved'
+    };
 
     if (borrowerId) {
       whereClause.borrowerId = borrowerId;

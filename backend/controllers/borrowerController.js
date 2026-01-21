@@ -35,16 +35,16 @@ const getBorrowers = async (req, res) => {
       whereClause.location = { [Op.in]: locations };
     }
 
-    // Only show borrowers with at least one loan (any status)
+    // Only show borrowers with at least one approved loan
     const includeLoans = {
       model: Loan,
       as: 'loans',
-      // No where clause - show borrowers with any loan status
-      required: true, // Inner join - only borrowers with at least one loan
+      where: { agreementStatus: 'approved' }, // Only include borrowers with approved loans
+      required: true, // Inner join - only borrowers with at least one approved loan
       attributes: [] // Don't return loan data, just filter
     };
 
-    // Get total count for pagination (with the approved loan filter)
+    // Get total count for pagination (only borrowers with approved loans)
     const total = await Borrower.count({
       where: whereClause,
       include: [includeLoans],
