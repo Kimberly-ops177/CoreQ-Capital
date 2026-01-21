@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Typography, Grid, Card, CardContent, Box } from '@mui/material';
+import { Container, Typography, Grid, Card, CardContent, Box, Skeleton } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -20,7 +20,7 @@ const formatMoney = (value) =>
     maximumFractionDigits: 2,
   });
 
-const StatCard = ({ label, value, color }) => (
+const StatCard = ({ label, value, color, loading }) => (
   <Card
     sx={{
       background: palette.cardBg,
@@ -36,16 +36,26 @@ const StatCard = ({ label, value, color }) => (
       >
         {label}
       </Typography>
-      <Typography
-        variant="h4"
-        sx={{
-          color,
-          fontWeight: 800,
-          fontSize: { xs: '1.9rem', md: '2.2rem' },
-        }}
-      >
-        {value}
-      </Typography>
+      {loading ? (
+        <Skeleton
+          animation="wave"
+          variant="text"
+          width="60%"
+          height={50}
+          sx={{ mx: 'auto', bgcolor: 'rgba(255,255,255,0.1)' }}
+        />
+      ) : (
+        <Typography
+          variant="h4"
+          sx={{
+            color,
+            fontWeight: 800,
+            fontSize: { xs: '1.9rem', md: '2.2rem' },
+          }}
+        >
+          {value}
+        </Typography>
+      )}
     </CardContent>
   </Card>
 );
@@ -54,9 +64,12 @@ const AdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [data, setData] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('/api/financial/dashboard/admin').then(res => setData(res.data));
+    axios.get('/api/financial/dashboard/admin')
+      .then(res => setData(res.data))
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -81,6 +94,7 @@ const AdminDashboard = () => {
               label="💰 Total Loaned Principal"
               value={`Ksh ${formatMoney(data.totalLoanedPrincipal)}`}
               color={palette.green}
+              loading={loading}
             />
           </Grid>
 
@@ -89,6 +103,7 @@ const AdminDashboard = () => {
               label="📊 Outstanding Receivables"
               value={`Ksh ${formatMoney(data.totalOutstandingReceivables)}`}
               color={palette.cyan}
+              loading={loading}
             />
           </Grid>
 
@@ -97,6 +112,7 @@ const AdminDashboard = () => {
               label="✅ Active Loans"
               value={data.totalActiveLoans || 0}
               color={palette.green}
+              loading={loading}
             />
           </Grid>
 
@@ -105,6 +121,7 @@ const AdminDashboard = () => {
               label="⚠️ Defaulted Loans"
               value={data.totalDefaultedLoans || 0}
               color={palette.red}
+              loading={loading}
             />
           </Grid>
 
@@ -113,6 +130,7 @@ const AdminDashboard = () => {
               label="📈 Month-to-Date P/L"
               value={`Ksh ${formatMoney(data.monthToDateProfitLoss)}`}
               color={(data.monthToDateProfitLoss || 0) >= 0 ? palette.green : palette.red}
+              loading={loading}
             />
           </Grid>
 
@@ -121,6 +139,7 @@ const AdminDashboard = () => {
               label="💸 Month-to-Date Expenses"
               value={`Ksh ${formatMoney(data.monthToDateExpenses)}`}
               color={palette.amber}
+              loading={loading}
             />
           </Grid>
         </Grid>
