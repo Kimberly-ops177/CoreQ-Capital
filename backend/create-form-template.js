@@ -478,7 +478,7 @@ async function createFormTemplate() {
     dateP5.updateAppearances(font);
     removeBorders(dateP5);
 
-    // Save the new form-fillable template
+    // Save the PDF with form fields
     const outputPath = path.join(__dirname, 'templates/loan_agreement_form_template.pdf');
     const pdfBytes = await pdfDoc.save();
     fs.writeFileSync(outputPath, pdfBytes);
