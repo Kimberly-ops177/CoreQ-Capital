@@ -283,7 +283,7 @@ const getLoans = async (req, res) => {
       includeArray.unshift({
         model: Borrower,
         as: 'borrower',
-        attributes: ['id', 'fullName', 'phoneNumber', 'email', 'location'],
+        attributes: ['id', 'fullName', 'idNumber', 'phoneNumber', 'email', 'location'],
         where: { location: { [Op.in]: locations } },
         required: true
       });
@@ -291,7 +291,7 @@ const getLoans = async (req, res) => {
       includeArray.unshift({
         model: Borrower,
         as: 'borrower',
-        attributes: ['id', 'fullName', 'phoneNumber', 'email', 'location']
+        attributes: ['id', 'fullName', 'idNumber', 'phoneNumber', 'email', 'location']
       });
     }
 

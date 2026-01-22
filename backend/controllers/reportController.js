@@ -218,11 +218,11 @@ const getDefaultersReport = async (req, res) => {
         loanId: loan.id,
         borrower: {
           id: loan.borrower.id,
-          name: loan.borrower.name,
+          name: loan.borrower.fullName,
           idNumber: loan.borrower.idNumber,
           phoneNumber: loan.borrower.phoneNumber,
           email: loan.borrower.email,
-          address: loan.borrower.address
+          location: loan.borrower.location
         },
         loanDetails: {
           amountIssued: parseFloat(loan.amountIssued),
