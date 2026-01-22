@@ -341,7 +341,7 @@ const CollateralManagement = () => {
                     <IconButton onClick={() => handleOpen(collateral)} title="Edit">
                       <Edit />
                     </IconButton>
-                    {collateral.status === 'seized' && user?.role === 'admin' && (
+                    {!collateral.isSold && user?.role === 'admin' && (
                       <IconButton onClick={() => handleOpenSoldDialog(collateral)} title="Mark as Sold" color="success">
                         <Sell />
                       </IconButton>
@@ -425,18 +425,6 @@ const CollateralManagement = () => {
                       <MenuItem value="Good">Good</MenuItem>
                       <MenuItem value="Fair">Fair</MenuItem>
                       <MenuItem value="Poor">Poor</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth required>
-                    <InputLabel>Status</InputLabel>
-                    <Select
-                      value={formData.isSold}
-                      onChange={(e) => setFormData({...formData, isSold: e.target.value})}
-                    >
-                      <MenuItem value={false}>Not Sold</MenuItem>
-                      <MenuItem value={true}>Sold</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
