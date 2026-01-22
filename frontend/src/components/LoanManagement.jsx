@@ -6,7 +6,7 @@ import {
   InputLabel, Chip, Box, Alert, Divider, Pagination, List, ListItem, ListItemButton, ListItemText,
   InputAdornment, Skeleton
 } from '@mui/material';
-import { Add, Edit, Delete, Payment, Calculate, Search, Person } from '@mui/icons-material';
+import { Add, Edit, Delete, Payment, Calculate, Search, Person, ViewList } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -51,6 +51,12 @@ const LoanManagement = () => {
   const [borrowerSearchTerm, setBorrowerSearchTerm] = useState('');
   const [validationErrors, setValidationErrors] = useState([]);
   const [loanCalculation, setLoanCalculation] = useState(null);
+
+  // Borrower loans dialog state
+  const [borrowerLoansDialogOpen, setBorrowerLoansDialogOpen] = useState(false);
+  const [selectedBorrowerLoans, setSelectedBorrowerLoans] = useState([]);
+  const [selectedBorrowerName, setSelectedBorrowerName] = useState('');
+  const [deleteError, setDeleteError] = useState('');
 
   // Fetch interest rates and business rules
   const fetchInterestRates = async () => {
@@ -366,6 +372,45 @@ const LoanManagement = () => {
     }
   };
 
+  // View all loans for a borrower
+  const handleViewBorrowerLoans = async (loan) => {
+    try {
+      setDeleteError('');
+      setSelectedBorrowerName(loan.borrower?.fullName || 'Unknown');
+      // Fetch all loans for this borrower
+      const res = await axios.get(`/api/loans?borrowerId=${loan.borrowerId}&limit=100`);
+      const allLoans = res.data.data || res.data;
+      setSelectedBorrowerLoans(allLoans);
+      setBorrowerLoansDialogOpen(true);
+    } catch (err) {
+      console.error('Error fetching borrower loans:', err);
+      alert('Error fetching loans for this borrower');
+    }
+  };
+
+  // Delete a specific loan from the borrower loans dialog
+  const handleDeleteLoanFromDialog = async (loanId) => {
+    if (user.role !== 'admin') {
+      alert('Only administrators can delete loans');
+      return;
+    }
+    if (window.confirm(`Are you sure you want to delete Loan #${loanId}? This action cannot be undone.`)) {
+      try {
+        setDeleteError('');
+        await axios.delete(`/api/loans/${loanId}`);
+        // Refresh the loans list in dialog
+        const updatedLoans = selectedBorrowerLoans.filter(loan => loan.id !== loanId);
+        setSelectedBorrowerLoans(updatedLoans);
+        // Refresh main loans list
+        fetchLoans();
+        alert('Loan deleted successfully');
+      } catch (err) {
+        console.error('Error deleting loan:', err);
+        setDeleteError(err.response?.data?.error || 'Error deleting loan');
+      }
+    }
+  };
+
   return (
     <Container sx={{ py: 4 }}>
         <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
@@ -472,6 +517,9 @@ const LoanManagement = () => {
                       )}
                       <IconButton onClick={() => handlePaymentOpen(loan)} size="small" title="Make Payment">
                         <Payment />
+                      </IconButton>
+                      <IconButton onClick={() => handleViewBorrowerLoans(loan)} size="small" title="View All Loans for this Borrower">
+                        <ViewList />
                       </IconButton>
                       {user.role === 'admin' && (
                         <IconButton onClick={() => handleDelete(loan.id)} size="small" title="Delete Loan">
@@ -1113,6 +1161,116 @@ const LoanManagement = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setLoanSelectorOpen(false)}>Cancel</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Borrower Loans Dialog - View all loans for a borrower */}
+        <Dialog open={borrowerLoansDialogOpen} onClose={() => setBorrowerLoansDialogOpen(false)} maxWidth="md" fullWidth>
+          <DialogTitle sx={{ bgcolor: '#1A2B45', color: '#00FF9D' }}>
+            All Loans for {selectedBorrowerName}
+          </DialogTitle>
+          <DialogContent sx={{ bgcolor: '#0A1628' }}>
+            {deleteError && (
+              <Alert severity="error" sx={{ mb: 2, mt: 2 }}>{deleteError}</Alert>
+            )}
+            {selectedBorrowerLoans.length === 0 ? (
+              <Typography color="textSecondary" sx={{ py: 4, textAlign: 'center', color: '#B0BEC5' }}>
+                No loans found for this borrower.
+              </Typography>
+            ) : (
+              <>
+                <Typography variant="body2" sx={{ mb: 2, mt: 2, color: '#B0BEC5' }}>
+                  This borrower has {selectedBorrowerLoans.length} loan(s). Click on a loan to make a payment, or use the delete button to remove a specific loan.
+                </Typography>
+                <TableContainer component={Paper} sx={{ bgcolor: '#1A2B45' }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ color: '#00FF9D', fontWeight: 'bold' }}>Loan ID</TableCell>
+                        <TableCell sx={{ color: '#00FF9D', fontWeight: 'bold' }}>Amount Issued</TableCell>
+                        <TableCell sx={{ color: '#00FF9D', fontWeight: 'bold' }}>Total Due</TableCell>
+                        <TableCell sx={{ color: '#00FF9D', fontWeight: 'bold' }}>Balance</TableCell>
+                        <TableCell sx={{ color: '#00FF9D', fontWeight: 'bold' }}>Due Date</TableCell>
+                        <TableCell sx={{ color: '#00FF9D', fontWeight: 'bold' }}>Status</TableCell>
+                        <TableCell sx={{ color: '#00FF9D', fontWeight: 'bold' }}>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {selectedBorrowerLoans.map((loan) => {
+                        const totalDue = parseFloat(loan.totalAmount) + parseFloat(loan.penalties || 0);
+                        const balance = totalDue - parseFloat(loan.amountRepaid || 0);
+                        return (
+                          <TableRow key={loan.id} sx={{ '&:hover': { bgcolor: 'rgba(0,255,157,0.05)' } }}>
+                            <TableCell sx={{ color: '#ffffff' }}>#{loan.id}</TableCell>
+                            <TableCell sx={{ color: '#ffffff' }}>KSH {parseFloat(loan.amountIssued).toLocaleString()}</TableCell>
+                            <TableCell sx={{ color: '#ffffff' }}>KSH {totalDue.toLocaleString()}</TableCell>
+                            <TableCell sx={{ color: balance > 0 ? '#ff4d6a' : '#16f2a3', fontWeight: 'bold' }}>
+                              KSH {balance.toLocaleString()}
+                            </TableCell>
+                            <TableCell sx={{ color: '#ffffff' }}>{new Date(loan.dueDate).toLocaleDateString()}</TableCell>
+                            <TableCell>
+                              <Chip label={loan.status} color={getStatusColor(loan.status)} size="small" />
+                            </TableCell>
+                            <TableCell>
+                              <IconButton
+                                size="small"
+                                onClick={() => {
+                                  setBorrowerLoansDialogOpen(false);
+                                  handlePaymentOpen(loan);
+                                }}
+                                title="Make Payment"
+                                sx={{ color: '#00FF9D' }}
+                              >
+                                <Payment />
+                              </IconButton>
+                              {user.role === 'admin' && (
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleDeleteLoanFromDialog(loan.id)}
+                                  title="Delete Loan"
+                                  sx={{ color: '#ff4d6a' }}
+                                >
+                                  <Delete />
+                                </IconButton>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                {/* Summary row */}
+                <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(0,255,157,0.1)', borderRadius: 1 }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={4}>
+                      <Typography variant="body2" sx={{ color: '#B0BEC5' }}>Total Issued:</Typography>
+                      <Typography variant="h6" sx={{ color: '#ffffff' }}>
+                        KSH {selectedBorrowerLoans.reduce((sum, l) => sum + parseFloat(l.amountIssued), 0).toLocaleString()}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Typography variant="body2" sx={{ color: '#B0BEC5' }}>Total Repaid:</Typography>
+                      <Typography variant="h6" sx={{ color: '#16f2a3' }}>
+                        KSH {selectedBorrowerLoans.reduce((sum, l) => sum + parseFloat(l.amountRepaid || 0), 0).toLocaleString()}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Typography variant="body2" sx={{ color: '#B0BEC5' }}>Total Outstanding:</Typography>
+                      <Typography variant="h6" sx={{ color: '#ff4d6a' }}>
+                        KSH {selectedBorrowerLoans.reduce((sum, l) => {
+                          const due = parseFloat(l.totalAmount) + parseFloat(l.penalties || 0);
+                          return sum + Math.max(0, due - parseFloat(l.amountRepaid || 0));
+                        }, 0).toLocaleString()}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ bgcolor: '#1A2B45' }}>
+            <Button onClick={() => setBorrowerLoansDialogOpen(false)} sx={{ color: '#B0BEC5' }}>Close</Button>
           </DialogActions>
         </Dialog>
       </Container>
