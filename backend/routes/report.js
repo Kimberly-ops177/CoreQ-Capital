@@ -7,7 +7,8 @@ const {
   getBalancesReport,
   getNotYetPaidReport,
   getExpensesReport,
-  getProfitLossReport
+  getProfitLossReport,
+  getPaidLoansReport
 } = require('../controllers/reportController');
 const { auth, employeeOrAdmin, adminOnly } = require('../middleware/auth');
 
@@ -18,6 +19,7 @@ router.get('/loans-issued', auth, employeeOrAdmin, getLoansIssuedReport);
 router.get('/loan-status', auth, employeeOrAdmin, getLoanStatusReport);
 router.get('/defaulters', auth, employeeOrAdmin, getDefaultersReport);
 router.get('/not-yet-paid', auth, employeeOrAdmin, getNotYetPaidReport);
+router.get('/paid-loans', auth, employeeOrAdmin, getPaidLoansReport);
 
 // Admin only reports
 router.get('/defaulted-items', auth, adminOnly, getDefaultedItemsReport);

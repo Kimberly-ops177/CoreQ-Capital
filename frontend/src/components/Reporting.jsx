@@ -17,12 +17,13 @@ const Reporting = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // All 8 reports from Section 3.2
+  // All 9 reports from Section 3.2
   const reports = [
     { key: 'loans-issued', title: 'Loans Issued Report', requiresDate: false, adminOnly: false },
     { key: 'loan-status', title: 'Loan Status Report', requiresDate: false, adminOnly: false },
     { key: 'defaulters', title: 'Defaulters Report', requiresDate: false, adminOnly: false },
     { key: 'not-yet-paid', title: 'Not Yet Paid Report', requiresDate: false, adminOnly: false },
+    { key: 'paid-loans', title: 'Paid Loans Report', requiresDate: false, adminOnly: false },
     { key: 'defaulted-items', title: 'Defaulted Items Report', requiresDate: false, adminOnly: true },
     { key: 'balances', title: 'Balances Report', requiresDate: false, adminOnly: true },
     { key: 'expenses', title: 'Expenses Report', requiresDate: false, adminOnly: true },
@@ -109,7 +110,7 @@ const Reporting = () => {
         csvContent += `Total Amount Issued,${reportData.totalAmountIssued}\n\n`;
         csvContent += 'Loan ID,Borrower,Amount,Date Issued,Due Date,Status\n';
         reportData.loans?.forEach(loan => {
-          csvContent += `${loan.id},"${loan.borrower?.name || 'N/A'}",${loan.amountIssued},${formatDate(loan.dateIssued)},${formatDate(loan.dueDate)},${loan.status}\n`;
+          csvContent += `${loan.id},"${loan.borrower?.fullName || loan.borrower?.name || 'N/A'}",${loan.amountIssued},${formatDate(loan.dateIssued)},${formatDate(loan.dueDate)},${loan.status}\n`;
         });
         break;
 
@@ -129,7 +130,20 @@ const Reporting = () => {
         csvContent += `Total Outstanding Balance,${reportData.totalOutstandingBalance}\n\n`;
         csvContent += 'Loan ID,Borrower,Total Due,Balance,Due Date,Status\n';
         reportData.loans?.forEach(loan => {
-          csvContent += `${loan.id},"${loan.borrower?.name || 'N/A'}",${loan.totalDue},${loan.balance},${formatDate(loan.dueDate)},${loan.status}\n`;
+          csvContent += `${loan.id},"${loan.borrower?.fullName || loan.borrower?.name || 'N/A'}",${loan.totalDue},${loan.balance},${formatDate(loan.dueDate)},${loan.status}\n`;
+        });
+        break;
+
+      case 'paid-loans':
+        csvContent = 'Paid Loans Report\n\n';
+        csvContent += `Total Paid Loans,${reportData.summary.totalPaidLoans}\n`;
+        csvContent += `Total Principal Paid,${reportData.summary.totalPrincipalPaid}\n`;
+        csvContent += `Total Interest Paid,${reportData.summary.totalInterestPaid}\n`;
+        csvContent += `Total Penalties Paid,${reportData.summary.totalPenaltiesPaid}\n`;
+        csvContent += `Total Amount Collected,${reportData.summary.totalAmountCollected}\n\n`;
+        csvContent += 'Loan ID,Borrower,ID Number,Phone,Amount Issued,Total Amount,Penalties,Amount Repaid,Date Issued,Due Date,Payment Date\n';
+        reportData.paidLoans?.forEach(loan => {
+          csvContent += `${loan.loanId},"${loan.borrower?.name || 'N/A'}",${loan.borrower?.idNumber || 'N/A'},${loan.borrower?.phoneNumber || 'N/A'},${loan.loanDetails.amountIssued},${loan.loanDetails.totalAmount},${loan.loanDetails.penalties},${loan.loanDetails.amountRepaid},${formatDate(loan.dates.dateIssued)},${formatDate(loan.dates.dueDate)},${formatDate(loan.dates.lastPaymentDate)}\n`;
         });
         break;
 
@@ -243,6 +257,7 @@ const Reporting = () => {
           {reportType === 'loans-issued' && renderLoansIssuedReport()}
           {reportType === 'defaulters' && renderDefaultersReport()}
           {reportType === 'not-yet-paid' && renderNotYetPaidReport()}
+          {reportType === 'paid-loans' && renderPaidLoansReport()}
           {reportType === 'defaulted-items' && renderDefaultedItemsReport()}
           {reportType === 'balances' && renderBalancesReport()}
           {reportType === 'expenses' && renderExpensesReport()}
@@ -288,7 +303,7 @@ const Reporting = () => {
             {reportData.loans?.map((loan) => (
               <TableRow key={loan.id} hover>
                 <TableCell>{loan.id}</TableCell>
-                <TableCell>{loan.borrower?.name || 'N/A'}</TableCell>
+                <TableCell>{loan.borrower?.fullName || loan.borrower?.name || 'N/A'}</TableCell>
                 <TableCell>{formatCurrency(loan.amountIssued)}</TableCell>
                 <TableCell>{formatDate(loan.dateIssued)}</TableCell>
                 <TableCell>{formatDate(loan.dueDate)}</TableCell>
@@ -454,7 +469,7 @@ const Reporting = () => {
             {reportData.loans?.map((loan) => (
               <TableRow key={loan.id} hover>
                 <TableCell>{loan.id}</TableCell>
-                <TableCell>{loan.borrower?.name || 'N/A'}</TableCell>
+                <TableCell>{loan.borrower?.fullName || loan.borrower?.name || 'N/A'}</TableCell>
                 <TableCell>{formatCurrency(loan.totalDue)}</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', color: '#F57F17' }}>
                   {formatCurrency(loan.balance)}
@@ -475,7 +490,78 @@ const Reporting = () => {
     </Box>
   );
 
-  // Report 5: Defaulted Items Report
+  // Report 5: Paid Loans Report
+  const renderPaidLoansReport = () => (
+    <Box>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={3}>
+          <Card sx={{ p: 2 }}>
+            <Typography variant="subtitle2" color="textSecondary">Total Paid Loans</Typography>
+            <Typography variant="h4" sx={{ color: '#2E7D32' }}>
+              {reportData.summary.totalPaidLoans}
+            </Typography>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Card sx={{ p: 2 }}>
+            <Typography variant="subtitle2" color="textSecondary">Principal Collected</Typography>
+            <Typography variant="h5" sx={{ color: '#1976D2' }}>
+              {formatCurrency(reportData.summary.totalPrincipalPaid)}
+            </Typography>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Card sx={{ p: 2 }}>
+            <Typography variant="subtitle2" color="textSecondary">Interest Collected</Typography>
+            <Typography variant="h5" sx={{ color: '#6A1B9A' }}>
+              {formatCurrency(reportData.summary.totalInterestPaid)}
+            </Typography>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Card sx={{ p: 2 }}>
+            <Typography variant="subtitle2" color="textSecondary">Total Collected</Typography>
+            <Typography variant="h5" sx={{ color: '#2E7D32', fontWeight: 'bold' }}>
+              {formatCurrency(reportData.summary.totalAmountCollected)}
+            </Typography>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <TableContainer component={Paper} sx={{ maxHeight: 500 }}>
+        <Table stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell><strong>Loan ID</strong></TableCell>
+              <TableCell><strong>Borrower</strong></TableCell>
+              <TableCell><strong>ID Number</strong></TableCell>
+              <TableCell><strong>Phone</strong></TableCell>
+              <TableCell><strong>Amount Issued</strong></TableCell>
+              <TableCell><strong>Total Paid</strong></TableCell>
+              <TableCell><strong>Payment Date</strong></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {reportData.paidLoans?.map((loan) => (
+              <TableRow key={loan.loanId} hover>
+                <TableCell>{loan.loanId}</TableCell>
+                <TableCell>{loan.borrower?.name || 'N/A'}</TableCell>
+                <TableCell>{loan.borrower?.idNumber || 'N/A'}</TableCell>
+                <TableCell>{loan.borrower?.phoneNumber || 'N/A'}</TableCell>
+                <TableCell>{formatCurrency(loan.loanDetails.amountIssued)}</TableCell>
+                <TableCell sx={{ color: '#2E7D32', fontWeight: 'bold' }}>
+                  {formatCurrency(loan.loanDetails.amountRepaid)}
+                </TableCell>
+                <TableCell>{formatDate(loan.dates.lastPaymentDate)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+
+  // Report 6: Defaulted Items Report
   const renderDefaultedItemsReport = () => (
     <Box>
       <Typography variant="h6" sx={{ mb: 2, color: '#4A5FE8' }}>

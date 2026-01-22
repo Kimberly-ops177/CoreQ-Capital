@@ -154,8 +154,9 @@ const LoanManagement = () => {
     }
   }, [formData.amountIssued, formData.loanPeriod, interestRates, businessRules]);
 
-  // Filter out defaulted loans - they should only appear in reports
-  const activeLoans = loans.filter(loan => loan.status !== 'defaulted');
+  // Filter to show only active and pastDue loans
+  // Paid loans go to Paid Loans report, defaulted loans go to Defaulters report
+  const activeLoans = loans.filter(loan => loan.status === 'active' || loan.status === 'pastDue');
 
   const filteredLoans = activeLoans.filter((loan) => {
     if (!searchTerm) return true;

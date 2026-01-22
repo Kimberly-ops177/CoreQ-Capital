@@ -768,6 +768,110 @@ const getProfitLossReport = async (req, res) => {
   }
 };
 
+/**
+ * 9. Paid Loans Report
+ * List of all loans that have been fully paid
+ */
+const getPaidLoansReport = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const whereClause = {
+      status: 'paid'
+    };
+
+    // Filter by payment date range if provided
+    if (startDate && endDate) {
+      whereClause.lastPaymentDate = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    } else if (startDate) {
+      whereClause.lastPaymentDate = {
+        [Op.gte]: new Date(startDate)
+      };
+    } else if (endDate) {
+      whereClause.lastPaymentDate = {
+        [Op.lte]: new Date(endDate)
+      };
+    }
+
+    // Build include with location filter for employees
+    const includeOptions = [
+      { model: Collateral, as: 'collateral' }
+    ];
+
+    // Filter by assigned location for employees
+    if (req.user.role === 'employee' && req.user.assignedLocation) {
+      const locations = req.user.assignedLocation.split(',').map(loc => loc.trim());
+      includeOptions.unshift({
+        model: Borrower,
+        as: 'borrower',
+        where: { location: { [Op.in]: locations } },
+        required: true
+      });
+    } else {
+      includeOptions.unshift({
+        model: Borrower,
+        as: 'borrower'
+      });
+    }
+
+    const loans = await Loan.findAll({
+      where: whereClause,
+      include: includeOptions,
+      order: [['lastPaymentDate', 'DESC']]
+    });
+
+    // Calculate totals
+    const totalPrincipalPaid = loans.reduce((sum, loan) => sum + parseFloat(loan.amountIssued), 0);
+    const totalInterestPaid = loans.reduce((sum, loan) => sum + (parseFloat(loan.totalAmount) - parseFloat(loan.amountIssued)), 0);
+    const totalPenaltiesPaid = loans.reduce((sum, loan) => sum + parseFloat(loan.penalties || 0), 0);
+    const totalAmountCollected = loans.reduce((sum, loan) => sum + parseFloat(loan.amountRepaid || 0), 0);
+
+    const paidLoans = loans.map(loan => ({
+      loanId: loan.id,
+      borrower: {
+        id: loan.borrower?.id,
+        name: loan.borrower?.fullName,
+        idNumber: loan.borrower?.idNumber,
+        phoneNumber: loan.borrower?.phoneNumber,
+        location: loan.borrower?.location
+      },
+      collateral: loan.collateral ? {
+        itemName: loan.collateral.itemName,
+        category: loan.collateral.category
+      } : null,
+      loanDetails: {
+        amountIssued: parseFloat(loan.amountIssued),
+        interestRate: parseFloat(loan.interestRate),
+        totalAmount: parseFloat(loan.totalAmount),
+        penalties: parseFloat(loan.penalties || 0),
+        amountRepaid: parseFloat(loan.amountRepaid || 0)
+      },
+      dates: {
+        dateIssued: loan.dateIssued,
+        dueDate: loan.dueDate,
+        lastPaymentDate: loan.lastPaymentDate
+      }
+    }));
+
+    res.send({
+      report: 'Paid Loans Report',
+      period: startDate && endDate ? `${startDate} to ${endDate}` : 'All time',
+      summary: {
+        totalPaidLoans: loans.length,
+        totalPrincipalPaid: parseFloat(totalPrincipalPaid.toFixed(2)),
+        totalInterestPaid: parseFloat(totalInterestPaid.toFixed(2)),
+        totalPenaltiesPaid: parseFloat(totalPenaltiesPaid.toFixed(2)),
+        totalAmountCollected: parseFloat(totalAmountCollected.toFixed(2))
+      },
+      paidLoans
+    });
+  } catch (e) {
+    console.error('Error generating Paid Loans Report:', e);
+    res.status(500).send({ error: e.message });
+  }
+};
+
 module.exports = {
   getLoansIssuedReport,
   getLoanStatusReport,
@@ -776,5 +880,6 @@ module.exports = {
   getBalancesReport,
   getNotYetPaidReport,
   getExpensesReport,
-  getProfitLossReport
+  getProfitLossReport,
+  getPaidLoansReport
 };

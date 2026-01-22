@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import {
   Container, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Grid, IconButton, Box, Pagination, Skeleton
+  TextField, Grid, IconButton, Box, Pagination, Skeleton, List, ListItem, ListItemText,
+  ListItemSecondaryAction, Chip, Alert
 } from '@mui/material';
 import { Edit, Delete } from '@mui/icons-material';
 import axios from 'axios';
@@ -15,6 +16,10 @@ const BorrowerManagement = () => {
   const [collateralPagination, setCollateralPagination] = useState({ currentPage: 1, totalPages: 1, totalItems: 0 });
   const [open, setOpen] = useState(false);
   const [editingBorrower, setEditingBorrower] = useState(null);
+  const [loanDeleteDialogOpen, setLoanDeleteDialogOpen] = useState(false);
+  const [selectedBorrowerLoans, setSelectedBorrowerLoans] = useState([]);
+  const [selectedBorrowerName, setSelectedBorrowerName] = useState('');
+  const [deleteError, setDeleteError] = useState('');
   const [formData, setFormData] = useState({
     fullName: '', idNumber: '', phoneNumber: '', email: '', location: '',
     apartment: '', houseNumber: '', isStudent: false, institution: '', registrationNumber: ''
@@ -126,15 +131,62 @@ const BorrowerManagement = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this borrower?')) {
+  // Open dialog to show borrower's loans for deletion
+  const handleDeleteClick = async (borrower) => {
+    try {
+      setDeleteError('');
+      setSelectedBorrowerName(borrower.fullName);
+      // Fetch all loans for this borrower (including all statuses)
+      const res = await axios.get(`/api/loans?borrowerId=${borrower.id}&limit=100`);
+      const loans = res.data.data || res.data;
+      setSelectedBorrowerLoans(loans);
+      setLoanDeleteDialogOpen(true);
+    } catch (err) {
+      console.error('Error fetching borrower loans:', err);
+      alert('Error fetching loans for this borrower');
+    }
+  };
+
+  // Delete a specific loan
+  const handleDeleteLoan = async (loanId) => {
+    if (window.confirm(`Are you sure you want to delete Loan #${loanId}? This action cannot be undone.`)) {
+      try {
+        setDeleteError('');
+        await axios.delete(`/api/loans/${loanId}`);
+        // Refresh the loans list
+        const updatedLoans = selectedBorrowerLoans.filter(loan => loan.id !== loanId);
+        setSelectedBorrowerLoans(updatedLoans);
+        // Refresh borrowers list in case loan count changed
+        fetchBorrowers(pagination.currentPage);
+        fetchCollaterals(collateralPagination.currentPage);
+      } catch (err) {
+        console.error('Error deleting loan:', err);
+        setDeleteError(err.response?.data?.error || 'Error deleting loan');
+      }
+    }
+  };
+
+  // Delete the entire borrower (only if no loans)
+  const handleDeleteBorrower = async (id) => {
+    if (window.confirm('Are you sure you want to delete this borrower? This will only work if they have no loans.')) {
       try {
         await axios.delete(`/api/borrowers/${id}`);
+        setLoanDeleteDialogOpen(false);
         fetchBorrowers(pagination.currentPage);
       } catch (err) {
         console.error('Error deleting borrower:', err);
-        alert('Error deleting borrower');
+        setDeleteError(err.response?.data?.error || 'Error deleting borrower. Delete all loans first.');
       }
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active': return 'success';
+      case 'paid': return 'info';
+      case 'pastDue': return 'warning';
+      case 'defaulted': return 'error';
+      default: return 'default';
     }
   };
 
@@ -226,7 +278,7 @@ const BorrowerManagement = () => {
                         <IconButton onClick={() => handleOpen(borrower)} size="small">
                           <Edit />
                         </IconButton>
-                        <IconButton onClick={() => handleDelete(borrower.id)} size="small">
+                        <IconButton onClick={() => handleDeleteClick(borrower)} size="small" title="Manage Loans">
                           <Delete />
                         </IconButton>
                       </TableCell>
@@ -383,6 +435,82 @@ const BorrowerManagement = () => {
               </Button>
             </DialogActions>
           </form>
+        </Dialog>
+
+        {/* Loan Deletion Dialog */}
+        <Dialog open={loanDeleteDialogOpen} onClose={() => setLoanDeleteDialogOpen(false)} maxWidth="md" fullWidth>
+          <DialogTitle>Manage Loans for {selectedBorrowerName}</DialogTitle>
+          <DialogContent>
+            {deleteError && (
+              <Alert severity="error" sx={{ mb: 2 }}>{deleteError}</Alert>
+            )}
+            {selectedBorrowerLoans.length === 0 ? (
+              <Typography color="textSecondary" sx={{ py: 2 }}>
+                No loans found for this borrower.
+              </Typography>
+            ) : (
+              <>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                  Click the delete button next to a specific loan to remove it. The borrower and other loans will remain.
+                </Typography>
+                <List>
+                  {selectedBorrowerLoans.map((loan) => (
+                    <ListItem
+                      key={loan.id}
+                      sx={{
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 1,
+                        mb: 1,
+                        bgcolor: loan.status === 'defaulted' ? 'rgba(255,77,106,0.1)' : 'inherit'
+                      }}
+                    >
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography fontWeight="bold">Loan #{loan.id}</Typography>
+                            <Chip label={loan.status} color={getStatusColor(loan.status)} size="small" />
+                          </Box>
+                        }
+                        secondary={
+                          <>
+                            Amount: KSH {parseFloat(loan.amountIssued).toLocaleString()} |
+                            Total: KSH {parseFloat(loan.totalAmount).toLocaleString()} |
+                            Due: {new Date(loan.dueDate).toLocaleDateString()} |
+                            Issued: {new Date(loan.dateIssued).toLocaleDateString()}
+                          </>
+                        }
+                      />
+                      <ListItemSecondaryAction>
+                        <IconButton
+                          edge="end"
+                          onClick={() => handleDeleteLoan(loan.id)}
+                          color="error"
+                          title="Delete this loan"
+                        >
+                          <Delete />
+                        </IconButton>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  ))}
+                </List>
+              </>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setLoanDeleteDialogOpen(false)}>Close</Button>
+            {selectedBorrowerLoans.length === 0 && (
+              <Button
+                color="error"
+                variant="contained"
+                onClick={() => {
+                  const borrower = borrowers.find(b => b.fullName === selectedBorrowerName);
+                  if (borrower) handleDeleteBorrower(borrower.id);
+                }}
+              >
+                Delete Borrower
+              </Button>
+            )}
+          </DialogActions>
         </Dialog>
       </Container>
   );
