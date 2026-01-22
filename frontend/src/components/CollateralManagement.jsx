@@ -5,7 +5,7 @@ import {
   TextField, Grid, IconButton, Select, MenuItem, FormControl,
   InputLabel, Chip, Box, Pagination
 } from '@mui/material';
-import { Add, Edit, Delete } from '@mui/icons-material';
+import { Edit, Delete, Sell } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -22,6 +22,18 @@ const CollateralManagement = () => {
     borrowerId: '', category: '', itemName: '', modelNumber: '', serialNumber: '', itemCondition: '', isSold: false
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [borrowerIdFilter, setBorrowerIdFilter] = useState('');
+
+  // Mark as Sold dialog state
+  const [soldDialogOpen, setSoldDialogOpen] = useState(false);
+  const [selectedCollateral, setSelectedCollateral] = useState(null);
+  const [loanDetails, setLoanDetails] = useState(null);
+  const [soldFormData, setSoldFormData] = useState({
+    soldPrice: '',
+    soldDate: new Date().toISOString().split('T')[0],
+    amountIssued: '',
+    amountPayable: ''
+  });
 
   // Redirect to login if no user
   useEffect(() => {
@@ -30,9 +42,13 @@ const CollateralManagement = () => {
     }
   }, [user, navigate]);
 
-  const fetchCollaterals = async (page = 1) => {
+  const fetchCollaterals = async (page = 1, idFilter = '') => {
     try {
-      const res = await axios.get(`/api/collaterals?page=${page}&limit=10`);
+      let url = `/api/collaterals?page=${page}&limit=10`;
+      if (idFilter) {
+        url += `&borrowerIdNumber=${encodeURIComponent(idFilter)}`;
+      }
+      const res = await axios.get(url);
       setCollaterals(res.data.data || res.data);
       if (res.data.pagination) {
         setPagination(res.data.pagination);
@@ -52,7 +68,20 @@ const CollateralManagement = () => {
   };
 
   const handlePageChange = (_event, value) => {
-    fetchCollaterals(value);
+    fetchCollaterals(value, borrowerIdFilter);
+  };
+
+  const handleBorrowerIdFilterChange = (e) => {
+    setBorrowerIdFilter(e.target.value);
+  };
+
+  const handleFilterByBorrowerId = () => {
+    fetchCollaterals(1, borrowerIdFilter);
+  };
+
+  const handleClearFilter = () => {
+    setBorrowerIdFilter('');
+    fetchCollaterals(1, '');
   };
 
   useEffect(() => {
@@ -128,6 +157,71 @@ const CollateralManagement = () => {
     }
   };
 
+  // Mark as Sold handlers
+  const handleOpenSoldDialog = async (collateral) => {
+    setSelectedCollateral(collateral);
+    setLoanDetails(null);
+
+    // Fetch the loan details for this collateral to get amount issued and amount payable
+    try {
+      const res = await axios.get(`/api/loans?collateralId=${collateral.id}&limit=1`);
+      const loans = res.data.data || res.data;
+      if (loans && loans.length > 0) {
+        const loan = loans[0];
+        setLoanDetails(loan);
+        setSoldFormData({
+          soldPrice: '',
+          soldDate: new Date().toISOString().split('T')[0],
+          amountIssued: loan.amountIssued || '',
+          amountPayable: loan.totalAmount || ''
+        });
+      } else {
+        setSoldFormData({
+          soldPrice: '',
+          soldDate: new Date().toISOString().split('T')[0],
+          amountIssued: '',
+          amountPayable: ''
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching loan details:', err);
+      setSoldFormData({
+        soldPrice: '',
+        soldDate: new Date().toISOString().split('T')[0],
+        amountIssued: '',
+        amountPayable: ''
+      });
+    }
+
+    setSoldDialogOpen(true);
+  };
+
+  const handleCloseSoldDialog = () => {
+    setSoldDialogOpen(false);
+    setSelectedCollateral(null);
+    setLoanDetails(null);
+  };
+
+  const handleMarkAsSold = async (e) => {
+    e.preventDefault();
+    if (!selectedCollateral) return;
+
+    try {
+      await axios.post(`/api/collaterals/${selectedCollateral.id}/mark-sold`, {
+        soldPrice: parseFloat(soldFormData.soldPrice),
+        soldDate: soldFormData.soldDate,
+        amountIssued: parseFloat(soldFormData.amountIssued),
+        amountPayable: parseFloat(soldFormData.amountPayable)
+      });
+      fetchCollaterals(pagination.currentPage);
+      handleCloseSoldDialog();
+      alert('Collateral marked as sold successfully');
+    } catch (err) {
+      console.error('Error marking collateral as sold:', err);
+      alert(err.response?.data?.message || err.response?.data?.error || 'Error marking collateral as sold');
+    }
+  };
+
   const getConditionColor = (condition) => {
     switch (condition?.toLowerCase()) {
       case 'excellent': return 'success';
@@ -136,6 +230,22 @@ const CollateralManagement = () => {
       case 'poor': return 'error';
       default: return 'default';
     }
+  };
+
+  const getStatusColor = (isSold) => {
+    return isSold ? 'error' : 'primary';
+  };
+
+  const getStatusLabel = (isSold) => {
+    return isSold ? 'Sold' : 'Not Sold';
+  };
+
+  // Get the first loan ID for a collateral
+  const getLoanId = (collateral) => {
+    if (collateral.loans && collateral.loans.length > 0) {
+      return collateral.loans[0].id;
+    }
+    return 'N/A';
   };
 
   // Show loading while user data is being fetched
@@ -154,21 +264,55 @@ const CollateralManagement = () => {
           {/* Note: Collaterals are added through the loan application process */}
         </Grid>
 
-        <TextField
-          fullWidth
-          label="Search Collaterals"
-          variant="outlined"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search by item name, category, borrower, model, serial number, or condition..."
-          sx={{ mb: 2 }}
-        />
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Search Collaterals"
+              variant="outlined"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by item name, category, borrower..."
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              fullWidth
+              label="Filter by Borrower ID Number"
+              variant="outlined"
+              value={borrowerIdFilter}
+              onChange={handleBorrowerIdFilterChange}
+              placeholder="Enter Borrower ID Number..."
+              onKeyPress={(e) => e.key === 'Enter' && handleFilterByBorrowerId()}
+            />
+          </Grid>
+          <Grid item xs={12} sm={2}>
+            <Box sx={{ display: 'flex', gap: 1, height: '100%' }}>
+              <Button
+                variant="contained"
+                onClick={handleFilterByBorrowerId}
+                sx={{ flex: 1 }}
+              >
+                Filter
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={handleClearFilter}
+                sx={{ flex: 1 }}
+              >
+                Clear
+              </Button>
+            </Box>
+          </Grid>
+        </Grid>
 
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell>Loan ID</TableCell>
                 <TableCell>Borrower</TableCell>
+                <TableCell>Borrower ID No.</TableCell>
                 <TableCell>Item Name</TableCell>
                 <TableCell>Category</TableCell>
                 <TableCell>Condition</TableCell>
@@ -179,7 +323,9 @@ const CollateralManagement = () => {
             <TableBody>
               {filteredCollaterals.map((collateral) => (
                 <TableRow key={collateral.id}>
+                  <TableCell>{getLoanId(collateral)}</TableCell>
                   <TableCell>{collateral.borrower?.fullName || 'N/A'}</TableCell>
+                  <TableCell>{collateral.borrower?.idNumber || 'N/A'}</TableCell>
                   <TableCell>{collateral.itemName}</TableCell>
                   <TableCell>{collateral.category || 'N/A'}</TableCell>
                   <TableCell>
@@ -187,15 +333,20 @@ const CollateralManagement = () => {
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={collateral.isSold ? 'Sold' : 'Not Sold'}
-                      color={collateral.isSold ? 'error' : 'success'}
+                      label={getStatusLabel(collateral.isSold)}
+                      color={getStatusColor(collateral.isSold)}
                     />
                   </TableCell>
                   <TableCell>
-                    <IconButton onClick={() => handleOpen(collateral)}>
+                    <IconButton onClick={() => handleOpen(collateral)} title="Edit">
                       <Edit />
                     </IconButton>
-                    <IconButton onClick={() => handleDelete(collateral.id)}>
+                    {collateral.status === 'seized' && user?.role === 'admin' && (
+                      <IconButton onClick={() => handleOpenSoldDialog(collateral)} title="Mark as Sold" color="success">
+                        <Sell />
+                      </IconButton>
+                    )}
+                    <IconButton onClick={() => handleDelete(collateral.id)} title="Delete">
                       <Delete />
                     </IconButton>
                   </TableCell>
@@ -295,6 +446,149 @@ const CollateralManagement = () => {
               <Button onClick={handleClose}>Cancel</Button>
               <Button type="submit" variant="contained">
                 {editingCollateral ? 'Update' : 'Add'}
+              </Button>
+            </DialogActions>
+          </form>
+        </Dialog>
+
+        {/* Mark as Sold Dialog */}
+        <Dialog open={soldDialogOpen} onClose={handleCloseSoldDialog} maxWidth="md" fullWidth>
+          <DialogTitle sx={{ bgcolor: 'success.main', color: 'white' }}>
+            Mark Collateral as Sold
+          </DialogTitle>
+          <form onSubmit={handleMarkAsSold}>
+            <DialogContent>
+              {selectedCollateral && (
+                <>
+                  {/* Prefilled Borrower & Item Details (Read-only) */}
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 1, mb: 1, color: 'primary.main' }}>
+                    Borrower Details (Prefilled)
+                  </Typography>
+                  <Grid container spacing={2} sx={{ mb: 3 }}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Borrower Name"
+                        value={selectedCollateral.borrower?.fullName || 'N/A'}
+                        InputProps={{ readOnly: true }}
+                        variant="filled"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="ID Number"
+                        value={selectedCollateral.borrower?.idNumber || 'N/A'}
+                        InputProps={{ readOnly: true }}
+                        variant="filled"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Phone Number"
+                        value={selectedCollateral.borrower?.phoneNumber || 'N/A'}
+                        InputProps={{ readOnly: true }}
+                        variant="filled"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Item ID"
+                        value={selectedCollateral.id || 'N/A'}
+                        InputProps={{ readOnly: true }}
+                        variant="filled"
+                      />
+                    </Grid>
+                  </Grid>
+
+                  {/* Prefilled Item Details (Read-only) */}
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: 'primary.main' }}>
+                    Item Details (Prefilled)
+                  </Typography>
+                  <Grid container spacing={2} sx={{ mb: 3 }}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Item Name"
+                        value={selectedCollateral.itemName || 'N/A'}
+                        InputProps={{ readOnly: true }}
+                        variant="filled"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Model Number"
+                        value={selectedCollateral.modelNumber || 'N/A'}
+                        InputProps={{ readOnly: true }}
+                        variant="filled"
+                      />
+                    </Grid>
+                  </Grid>
+
+                  {/* Editable Sale Details */}
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: 'success.main' }}>
+                    Sale Details (Enter Below)
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Amount Issued (KES)"
+                        type="number"
+                        required
+                        value={soldFormData.amountIssued}
+                        onChange={(e) => setSoldFormData({...soldFormData, amountIssued: e.target.value})}
+                        inputProps={{ min: 0, step: 0.01 }}
+                        helperText="Original loan principal amount"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Amount Payable (KES)"
+                        type="number"
+                        required
+                        value={soldFormData.amountPayable}
+                        onChange={(e) => setSoldFormData({...soldFormData, amountPayable: e.target.value})}
+                        inputProps={{ min: 0, step: 0.01 }}
+                        helperText="Total amount due (principal + interest)"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Amount Sold For (KES)"
+                        type="number"
+                        required
+                        value={soldFormData.soldPrice}
+                        onChange={(e) => setSoldFormData({...soldFormData, soldPrice: e.target.value})}
+                        inputProps={{ min: 0, step: 0.01 }}
+                        helperText="Actual sale price of the item"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Date Sold"
+                        type="date"
+                        required
+                        value={soldFormData.soldDate}
+                        onChange={(e) => setSoldFormData({...soldFormData, soldDate: e.target.value})}
+                        InputLabelProps={{ shrink: true }}
+                        helperText="Date the item was sold"
+                      />
+                    </Grid>
+                  </Grid>
+                </>
+              )}
+            </DialogContent>
+            <DialogActions sx={{ p: 2 }}>
+              <Button onClick={handleCloseSoldDialog} variant="outlined">Cancel</Button>
+              <Button type="submit" variant="contained" color="success">
+                Confirm Sale
               </Button>
             </DialogActions>
           </form>

@@ -16,6 +16,12 @@ const createCollateral = async (req, res) => {
 const getCollaterals = async (req, res) => {
   try {
     const { page, limit, offset } = getPaginationParams(req.query);
+    const { borrowerIdNumber } = req.query;
+
+    // Build where clause - exclude returned collaterals (loan was paid, collateral returned to borrower)
+    const whereClause = {
+      status: { [Op.ne]: 'returned' }
+    };
 
     // Build include array
     const includeArray = [];
@@ -27,32 +33,46 @@ const getCollaterals = async (req, res) => {
       attributes: ['id', 'fullName', 'phoneNumber', 'idNumber', 'location']
     };
 
+    // Filter by borrower ID number if provided
+    if (borrowerIdNumber) {
+      borrowerInclude.where = {
+        ...(borrowerInclude.where || {}),
+        idNumber: { [Op.like]: `%${borrowerIdNumber}%` }
+      };
+      borrowerInclude.required = true;
+    }
+
     // Filter by employee's assigned location
     // Support multiple locations separated by comma (e.g., "JUJA,HIGHPOINT")
     if (req.user && req.user.role === 'employee' && req.user.assignedLocation) {
       const locations = req.user.assignedLocation.split(',').map(loc => loc.trim());
-      borrowerInclude.where = { location: { [Op.in]: locations } };
+      borrowerInclude.where = {
+        ...(borrowerInclude.where || {}),
+        location: { [Op.in]: locations }
+      };
       borrowerInclude.required = true;
     }
 
     includeArray.push(borrowerInclude);
 
-    // Only show collaterals with at least one approved loan
+    // Only show collaterals with at least one approved loan - include loan data for display
     includeArray.push({
       model: Loan,
       as: 'loans',
       where: { agreementStatus: 'approved' },
       required: true, // Inner join - only collaterals with approved loans
-      attributes: [] // Don't return loan data, just filter
+      attributes: ['id', 'amountIssued', 'totalAmount', 'status'] // Include loan ID for display
     });
 
     // Get total count for pagination (with all filters)
     const total = await Collateral.count({
+      where: whereClause,
       include: includeArray,
       distinct: true
     });
 
     const collaterals = await Collateral.findAll({
+      where: whereClause,
       include: includeArray,
       order: [['createdAt', 'DESC']],
       limit,

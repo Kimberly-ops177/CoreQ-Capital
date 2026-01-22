@@ -432,13 +432,16 @@ router.post('/:id/approve', auth, async (req, res) => {
 
                 <p>Please ensure payment is made on or before the due date to avoid penalties.</p>
 
-                <p>Thank you for choosing Core Q Capital.</p>
+                <p>For any inquiries or assistance, feel free to contact us at <strong>0797637074</strong> / <a href="mailto:coreqcapital@gmail.com">coreqcapital@gmail.com</a>.</p>
 
-                <p>Best regards,<br>
-                <strong>Core Q Capital Team</strong></p>
+                <p>Thank you for choosing Core Capital. We appreciate your continued partnership.</p>
+
+                <p>Kind regards,<br>
+                <strong>Core Q Capital</strong><br>
+                0797637074</p>
               </div>
               <div class="footer">
-                This is an automated message from Core Q Capital.
+                Core Q Capital | 0797637074 | coreqcapital@gmail.com
               </div>
             </div>
           </body>

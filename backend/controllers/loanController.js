@@ -513,7 +513,7 @@ const makePayment = async (req, res) => {
       status: newStatus
     });
 
-    // If loan was just paid off, update borrower's repaid count
+    // If loan was just paid off, update borrower's repaid count and return collateral
     if (wasJustPaid) {
       const borrower = await Borrower.findByPk(loan.borrowerId);
       if (borrower) {
@@ -521,6 +521,17 @@ const makePayment = async (req, res) => {
           loansRepaid: (borrower.loansRepaid || 0) + 1
         });
         console.log(`✅ Loan ${loan.id} paid in full. Updated borrower ${borrower.id} repaid count to ${borrower.loansRepaid + 1}`);
+      }
+
+      // Mark the collateral as returned since the loan is paid
+      if (loan.collateralId) {
+        const collateral = await Collateral.findByPk(loan.collateralId);
+        if (collateral && collateral.status === 'held') {
+          await collateral.update({
+            status: 'returned'
+          });
+          console.log(`✅ Collateral ${collateral.id} (${collateral.itemName}) marked as returned for paid loan ${loan.id}`);
+        }
       }
     }
 
