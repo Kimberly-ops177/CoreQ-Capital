@@ -4,6 +4,65 @@ const Expense = require('../models/Expense');
 const Collateral = require('../models/Collateral');
 const Borrower = require('../models/Borrower');
 
+// Business rules constants
+const GRACE_PERIOD_DAYS = 7;
+const DAILY_PENALTY_RATE = 3; // 3% per day
+
+/**
+ * Compute effective penalties based on current date
+ */
+const computeEffectivePenalties = (loan) => {
+  const now = new Date();
+  const dueDate = new Date(loan.dueDate);
+  const gracePeriodEnd = new Date(loan.gracePeriodEnd);
+  const storedPenalties = parseFloat(loan.penalties || 0);
+
+  if (now <= dueDate) {
+    return storedPenalties;
+  }
+
+  const outstandingAmount = parseFloat(loan.totalAmount) - parseFloat(loan.amountRepaid || 0);
+
+  if (outstandingAmount <= 0) {
+    return storedPenalties;
+  }
+
+  let daysOverdue;
+  if (now > gracePeriodEnd) {
+    daysOverdue = GRACE_PERIOD_DAYS;
+  } else {
+    daysOverdue = Math.floor((now - dueDate) / (1000 * 60 * 60 * 24));
+    daysOverdue = Math.min(daysOverdue, GRACE_PERIOD_DAYS);
+  }
+
+  if (daysOverdue <= 0) {
+    return storedPenalties;
+  }
+
+  const dailyPenaltyAmount = outstandingAmount * (DAILY_PENALTY_RATE / 100);
+  const calculatedPenalties = dailyPenaltyAmount * daysOverdue;
+
+  return Math.max(storedPenalties, calculatedPenalties);
+};
+
+/**
+ * Compute effective loan status based on current date
+ */
+const computeEffectiveStatus = (loan) => {
+  const now = new Date();
+  const dueDate = new Date(loan.dueDate);
+  const gracePeriodEnd = new Date(loan.gracePeriodEnd);
+  const effectivePenalties = computeEffectivePenalties(loan);
+  const totalDue = parseFloat(loan.totalAmount) + effectivePenalties;
+  const amountRepaid = parseFloat(loan.amountRepaid || 0);
+
+  if (amountRepaid >= totalDue) return 'paid';
+  if (now > gracePeriodEnd) return 'defaulted';
+  if (now > dueDate) return 'pastDue';
+  if (now.toDateString() === dueDate.toDateString()) return 'due';
+  return 'active';
+};
+
 const getPnL = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
@@ -76,7 +135,7 @@ const getAdminDashboardData = async (req, res) => {
     const totalLoanedPrincipal = parseFloat(totalLoanedResult?.total || 0);
     console.log('Total Loaned Principal:', totalLoanedPrincipal);
 
-    // Total Outstanding Receivables
+    // Total Outstanding Receivables - use effective penalties
     const outstandingLoans = await Loan.findAll({
       where: {
         status: { [Op.ne]: 'paid' },
@@ -86,22 +145,30 @@ const getAdminDashboardData = async (req, res) => {
     console.log('Outstanding Loans Count:', outstandingLoans.length);
     const totalOutstanding = outstandingLoans.reduce((sum, loan) => {
       const principalPlusInterest = parseFloat(loan.totalAmount) || 0;
-      const penalties = parseFloat(loan.penalties || 0);
+      const effectivePenalties = computeEffectivePenalties(loan);
       const repaid = parseFloat(loan.amountRepaid || 0);
-      const totalDue = principalPlusInterest + penalties;
+      const totalDue = principalPlusInterest + effectivePenalties;
       const outstanding = Math.max(0, totalDue - repaid);
-      console.log(`  Loan #${loan.loanId}: Total=${principalPlusInterest}, Penalties=${penalties}, Repaid=${repaid}, Outstanding=${outstanding}`);
+      console.log(`  Loan #${loan.loanId}: Total=${principalPlusInterest}, Penalties=${effectivePenalties}, Repaid=${repaid}, Outstanding=${outstanding}`);
       return sum + outstanding;
     }, 0);
     console.log('Total Outstanding Receivables:', totalOutstanding);
 
-    // Active Loans
-    const activeLoansCount = await Loan.count({ where: { status: 'active', agreementStatus: 'approved' } });
-    console.log('Active Loans Count:', activeLoansCount);
+    // Active and Defaulted Loans - compute effective status dynamically
+    const allApprovedLoans = await Loan.findAll({
+      where: { agreementStatus: 'approved' },
+      attributes: ['id', 'status', 'dueDate', 'gracePeriodEnd', 'totalAmount', 'penalties', 'amountRepaid']
+    });
 
-    // Defaulted Loans
-    const defaultedLoansCount = await Loan.count({ where: { status: 'defaulted', agreementStatus: 'approved' } });
-    console.log('Defaulted Loans Count:', defaultedLoansCount);
+    const loansWithEffectiveStatus = allApprovedLoans.map(loan => ({
+      ...loan.toJSON(),
+      effectiveStatus: computeEffectiveStatus(loan)
+    }));
+
+    const activeLoansCount = loansWithEffectiveStatus.filter(l => l.effectiveStatus === 'active').length;
+    const defaultedLoansCount = loansWithEffectiveStatus.filter(l => l.effectiveStatus === 'defaulted').length;
+    console.log('Active Loans Count (computed):', activeLoansCount);
+    console.log('Defaulted Loans Count (computed):', defaultedLoansCount);
 
     // Month-to-Date Profit/Loss
     const monthPnL = await getPnLData(monthStart, now);
@@ -231,7 +298,7 @@ const getEmployeeDashboardData = async (req, res) => {
       totalLoanedPrincipal = parseFloat(loanedResult || 0);
     }
 
-    // Total Outstanding Receivables (filtered by location for employees)
+    // Total Outstanding Receivables (filtered by location for employees) - use effective penalties
     const outstandingLoans = await Loan.findAll({
       where: {
         status: { [Op.ne]: 'paid' },
@@ -248,34 +315,32 @@ const getEmployeeDashboardData = async (req, res) => {
     });
     const totalOutstanding = outstandingLoans.reduce((sum, loan) => {
       const principalPlusInterest = parseFloat(loan.totalAmount) || 0;
-      const penalties = parseFloat(loan.penalties || 0);
+      const effectivePenalties = computeEffectivePenalties(loan);
       const repaid = parseFloat(loan.amountRepaid || 0);
-      const totalDue = principalPlusInterest + penalties;
+      const totalDue = principalPlusInterest + effectivePenalties;
       const outstanding = Math.max(0, totalDue - repaid);
       return sum + outstanding;
     }, 0);
 
-    // Active Loans (filtered by location for employees)
-    const activeLoansCount = await Loan.count({
-      where: { status: 'active', agreementStatus: 'approved' },
+    // Active and Defaulted Loans - compute effective status dynamically (filtered by location for employees)
+    const allApprovedLoans = await Loan.findAll({
+      where: { agreementStatus: 'approved' },
+      attributes: ['id', 'status', 'dueDate', 'gracePeriodEnd', 'totalAmount', 'penalties', 'amountRepaid'],
       include: hasLocationFilter ? [{
         model: Borrower,
         as: 'borrower',
         where: locationFilter,
-        attributes: []
+        attributes: ['id']
       }] : []
     });
 
-    // Defaulted Loans (filtered by location for employees)
-    const defaultedLoansCount = await Loan.count({
-      where: { status: 'defaulted', agreementStatus: 'approved' },
-      include: hasLocationFilter ? [{
-        model: Borrower,
-        as: 'borrower',
-        where: locationFilter,
-        attributes: []
-      }] : []
-    });
+    const loansWithEffectiveStatus = allApprovedLoans.map(loan => ({
+      ...loan.toJSON(),
+      effectiveStatus: computeEffectiveStatus(loan)
+    }));
+
+    const activeLoansCount = loansWithEffectiveStatus.filter(l => l.effectiveStatus === 'active').length;
+    const defaultedLoansCount = loansWithEffectiveStatus.filter(l => l.effectiveStatus === 'defaulted').length;
 
     // Month-to-Date Expenses (filtered by location for employees if applicable)
     let totalMonthExpenses = 0;
