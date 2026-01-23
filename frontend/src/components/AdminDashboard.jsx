@@ -144,11 +144,20 @@ const AdminDashboard = () => {
           </Grid>
         </Grid>
 
-        <Box sx={{ mt: { xs: 4, md: 6 }, textAlign: 'center' }}>
+        <Box
+          sx={{
+            mt: { xs: 4, md: 6 },
+            textAlign: 'center',
+            bgcolor: '#000000',
+            borderRadius: 3,
+            py: 4,
+            px: 3,
+          }}
+        >
           <Typography
             variant="h5"
             sx={{
-              color: palette.green,
+              color: '#FFFFFF',
               fontWeight: 800,
               mb: 2.5,
               letterSpacing: 0.4,
@@ -168,7 +177,7 @@ const AdminDashboard = () => {
             {[
               { label: 'Manage Borrowers', path: '/borrowers', color: 'linear-gradient(135deg, #00f7b2 0%, #00d7ff 100%)' },
               { label: 'Process Loans', path: '/loans', color: 'linear-gradient(135deg, #00f7b2 0%, #00d7ff 100%)' },
-              { label: 'Record Repayment', path: '/loans?action=payment', color: 'linear-gradient(135deg, #f6b041 0%, #ff8c00 100%)' },
+              { label: 'Repay Loan', path: '/loans?action=payment', color: 'linear-gradient(135deg, #f6b041 0%, #ff8c00 100%)' },
               { label: 'View Reports', path: '/reports', color: 'linear-gradient(135deg, #00f7b2 0%, #00d7ff 100%)' },
             ].map((action) => (
               <Box
