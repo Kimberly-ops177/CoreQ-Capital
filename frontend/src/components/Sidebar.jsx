@@ -10,6 +10,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import logo from '../assets/logo.png';
 
 const DRAWER_WIDTH = 260;
 const COLLAPSED_WIDTH = 70;
@@ -150,17 +151,16 @@ const Sidebar = ({ children }) => {
         )}
         <AccountBalance sx={{ color: '#00FF9D', fontSize: 28 }} />
         {!isCollapsed && (
-          <Typography
-            variant="h6"
+          <Box
+            component="img"
+            src={logo}
+            alt="Core Q Capital"
             sx={{
-              color: '#FFFFFF',
-              fontWeight: 700,
-              fontSize: '1.1rem',
-              whiteSpace: 'nowrap',
+              height: 36,
+              maxWidth: '100%',
+              objectFit: 'contain',
             }}
-          >
-            Core Q Capital
-          </Typography>
+          />
         )}
         {isMobile && !isCollapsed && (
           <IconButton
@@ -349,16 +349,15 @@ const Sidebar = ({ children }) => {
             <MenuIcon />
           </IconButton>
           <AccountBalance sx={{ color: '#00FF9D', fontSize: 26 }} />
-          <Typography
-            variant="h6"
+          <Box
+            component="img"
+            src={logo}
+            alt="Core Q Capital"
             sx={{
-              color: '#FFFFFF',
-              fontWeight: 700,
-              fontSize: '1rem',
+              height: 32,
+              objectFit: 'contain',
             }}
-          >
-            Core Q Capital
-          </Typography>
+          />
         </Box>
       )}
 
