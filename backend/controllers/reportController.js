@@ -11,6 +11,57 @@ const sequelize = require('../config/database');
  * Strict implementation of all 8 required reports from instructions
  */
 
+// Business rules constants
+const GRACE_PERIOD_DAYS = 7;
+const DAILY_PENALTY_RATE = 3; // 3% per day
+
+/**
+ * Compute effective penalties based on current date
+ * This ensures penalties are accurate regardless of stored database value
+ * Penalty = 3% per day on outstanding amount during grace period (max 7 days = 21%)
+ */
+const computeEffectivePenalties = (loan) => {
+  const now = new Date();
+  const dueDate = new Date(loan.dueDate);
+  const gracePeriodEnd = new Date(loan.gracePeriodEnd);
+  const storedPenalties = parseFloat(loan.penalties || 0);
+
+  // No penalty before due date
+  if (now <= dueDate) {
+    return storedPenalties;
+  }
+
+  // Calculate outstanding amount (principal + interest - repaid)
+  const outstandingAmount = parseFloat(loan.totalAmount) - parseFloat(loan.amountRepaid || 0);
+
+  // If already fully paid, no additional penalties needed
+  if (outstandingAmount <= 0) {
+    return storedPenalties;
+  }
+
+  // Calculate days overdue (capped at grace period days for penalty calculation)
+  let daysOverdue;
+  if (now > gracePeriodEnd) {
+    // For defaulted loans, penalties accumulated for full grace period
+    daysOverdue = GRACE_PERIOD_DAYS;
+  } else {
+    // For pastDue loans, calculate actual days overdue
+    daysOverdue = Math.floor((now - dueDate) / (1000 * 60 * 60 * 24));
+    daysOverdue = Math.min(daysOverdue, GRACE_PERIOD_DAYS);
+  }
+
+  if (daysOverdue <= 0) {
+    return storedPenalties;
+  }
+
+  // Calculate penalty: 3% per day on outstanding amount
+  const dailyPenaltyAmount = outstandingAmount * (DAILY_PENALTY_RATE / 100);
+  const calculatedPenalties = dailyPenaltyAmount * daysOverdue;
+
+  // Return the higher of stored or calculated penalties
+  return Math.max(storedPenalties, calculatedPenalties);
+};
+
 /**
  * Compute effective loan status based on current date
  * This ensures status is always accurate regardless of stored database value
@@ -19,7 +70,9 @@ const computeEffectiveStatus = (loan) => {
   const now = new Date();
   const dueDate = new Date(loan.dueDate);
   const gracePeriodEnd = new Date(loan.gracePeriodEnd);
-  const totalDue = parseFloat(loan.totalAmount) + parseFloat(loan.penalties || 0);
+  // Use effective penalties for paid calculation
+  const effectivePenalties = computeEffectivePenalties(loan);
+  const totalDue = parseFloat(loan.totalAmount) + effectivePenalties;
   const amountRepaid = parseFloat(loan.amountRepaid || 0);
 
   // If paid in full
@@ -244,7 +297,9 @@ const getDefaultersReport = async (req, res) => {
     const defaultedLoans = allLoans.filter(loan => computeEffectiveStatus(loan) === 'defaulted');
 
     const defaulters = defaultedLoans.map(loan => {
-      const totalDue = parseFloat(loan.totalAmount) + parseFloat(loan.penalties || 0);
+      // Use effective penalties (computed dynamically based on grace period)
+      const effectivePenalties = computeEffectivePenalties(loan);
+      const totalDue = parseFloat(loan.totalAmount) + effectivePenalties;
       const amountRepaid = parseFloat(loan.amountRepaid || 0);
       const outstandingBalance = totalDue - amountRepaid;
 
@@ -262,7 +317,7 @@ const getDefaultersReport = async (req, res) => {
           amountIssued: parseFloat(loan.amountIssued),
           interestRate: parseFloat(loan.interestRate),
           totalAmount: parseFloat(loan.totalAmount),
-          penalties: parseFloat(loan.penalties || 0),
+          penalties: effectivePenalties,
           amountRepaid: amountRepaid,
           outstandingBalance: outstandingBalance,
           dateIssued: loan.dateIssued,
