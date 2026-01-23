@@ -160,9 +160,12 @@ const LoanManagement = () => {
     }
   }, [formData.amountIssued, formData.loanPeriod, interestRates, businessRules]);
 
-  // Filter to show only active and pastDue loans
+  // Filter to show only payable loans (active, due, or pastDue)
   // Paid loans go to Paid Loans report, defaulted loans go to Defaulters report
-  const activeLoans = loans.filter(loan => loan.status === 'active' || loan.status === 'pastDue');
+  // Defaulted loans cannot accept payments - collateral may be sold
+  const activeLoans = loans.filter(loan =>
+    loan.status === 'active' || loan.status === 'due' || loan.status === 'pastDue'
+  );
 
   const filteredLoans = activeLoans.filter((loan) => {
     if (!searchTerm) return true;
@@ -1131,12 +1134,12 @@ const LoanManagement = () => {
               sx={{ my: 2 }}
             />
             <List sx={{ maxHeight: 400, overflow: 'auto' }}>
-              {filteredLoans.filter(loan => loan.status !== 'paid').length === 0 ? (
+              {filteredLoans.length === 0 ? (
                 <ListItem>
-                  <ListItemText primary="No outstanding loans found" secondary="All loans have been paid" />
+                  <ListItemText primary="No payable loans found" secondary="All loans have been paid or defaulted" />
                 </ListItem>
               ) : (
-                filteredLoans.filter(loan => loan.status !== 'paid').map((loan) => (
+                filteredLoans.map((loan) => (
                   <ListItemButton
                     key={loan.id}
                     onClick={() => {
