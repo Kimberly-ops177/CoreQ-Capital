@@ -12,6 +12,29 @@ const sequelize = require('../config/database');
  */
 
 /**
+ * Compute effective loan status based on current date
+ * This ensures status is always accurate regardless of stored database value
+ */
+const computeEffectiveStatus = (loan) => {
+  const now = new Date();
+  const dueDate = new Date(loan.dueDate);
+  const gracePeriodEnd = new Date(loan.gracePeriodEnd);
+  const totalDue = parseFloat(loan.totalAmount) + parseFloat(loan.penalties || 0);
+  const amountRepaid = parseFloat(loan.amountRepaid || 0);
+
+  // If paid in full
+  if (amountRepaid >= totalDue) return 'paid';
+  // If beyond grace period and not paid
+  if (now > gracePeriodEnd) return 'defaulted';
+  // If past due date but within grace period
+  if (now > dueDate) return 'pastDue';
+  // If due today
+  if (now.toDateString() === dueDate.toDateString()) return 'due';
+  // Otherwise active
+  return 'active';
+};
+
+/**
  * 1. Loans Issued Report
  * List of all loans, filterable by time period (daily, weekly, monthly, etc.)
  */
@@ -128,16 +151,22 @@ const getLoanStatusReport = async (req, res) => {
       order: [['status', 'ASC'], ['dueDate', 'ASC']]
     });
 
+    // Use dynamic status computation for accurate categorization
+    const loansWithEffectiveStatus = loans.map(loan => ({
+      ...loan.toJSON(),
+      status: computeEffectiveStatus(loan)
+    }));
+
     const report = {
-      active: loans.filter(l => l.status === 'active'),
-      due: loans.filter(l => l.status === 'due'),
-      pastDue: loans.filter(l => l.status === 'pastDue'),
-      paid: loans.filter(l => l.status === 'paid'),
-      defaulted: loans.filter(l => l.status === 'defaulted')
+      active: loansWithEffectiveStatus.filter(l => l.status === 'active'),
+      due: loansWithEffectiveStatus.filter(l => l.status === 'due'),
+      pastDue: loansWithEffectiveStatus.filter(l => l.status === 'pastDue'),
+      paid: loansWithEffectiveStatus.filter(l => l.status === 'paid'),
+      defaulted: loansWithEffectiveStatus.filter(l => l.status === 'defaulted')
     };
 
     const summary = {
-      totalLoans: loans.length,
+      totalLoans: loansWithEffectiveStatus.length,
       activeCount: report.active.length,
       dueCount: report.due.length,
       pastDueCount: report.pastDue.length,
@@ -160,11 +189,13 @@ const getLoanStatusReport = async (req, res) => {
 /**
  * 3. Defaulters Report
  * Specific list of borrowers in "Defaulted" status with contact details and outstanding balance
+ * Uses dynamic status computation to ensure accuracy regardless of stored database value
  */
 const getDefaultersReport = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    const whereClause = { status: 'defaulted' };
+    // Don't filter by stored status - we'll compute effective status dynamically
+    const whereClause = {};
 
     // Filter by date range if provided
     if (startDate && endDate) {
@@ -203,11 +234,14 @@ const getDefaultersReport = async (req, res) => {
       });
     }
 
-    const defaultedLoans = await Loan.findAll({
+    const allLoans = await Loan.findAll({
       where: whereClause,
       include: includeOptions,
       order: [['dueDate', 'ASC']]
     });
+
+    // Filter to only defaulted loans using dynamic status computation
+    const defaultedLoans = allLoans.filter(loan => computeEffectiveStatus(loan) === 'defaulted');
 
     const defaulters = defaultedLoans.map(loan => {
       const totalDue = parseFloat(loan.totalAmount) + parseFloat(loan.penalties || 0);
@@ -287,11 +321,11 @@ const getDefaultedItemsReport = async (req, res) => {
     }
 
     // Defaulted Items (Unsold) - Query from Loan with collateral relationship
-    const unsoldLoans = await Loan.findAll({
+    // Fetch all loans with seized unsold collateral, then filter by dynamic status
+    const allUnsoldLoans = await Loan.findAll({
       where: {
         ...whereClause,
-        ...dateFilter,
-        status: 'defaulted'
+        ...dateFilter
       },
       include: [
         { model: Borrower, as: 'borrower' },
@@ -306,6 +340,8 @@ const getDefaultedItemsReport = async (req, res) => {
       ],
       order: [['updatedAt', 'DESC']]
     });
+    // Filter by dynamic status
+    const unsoldLoans = allUnsoldLoans.filter(loan => computeEffectiveStatus(loan) === 'defaulted');
 
     // Defaulted Items (Sold) - Query from Loan with sold collateral
     const soldDateFilter = {};
@@ -323,10 +359,10 @@ const getDefaultedItemsReport = async (req, res) => {
       };
     }
 
-    const soldLoans = await Loan.findAll({
+    // Fetch all loans with sold collateral, then filter by dynamic status
+    const allSoldLoans = await Loan.findAll({
       where: {
-        ...whereClause,
-        status: 'defaulted'
+        ...whereClause
       },
       include: [
         { model: Borrower, as: 'borrower' },
@@ -341,6 +377,8 @@ const getDefaultedItemsReport = async (req, res) => {
       ],
       order: [[{ model: Collateral, as: 'collateral' }, 'soldDate', 'DESC']]
     });
+    // Filter by dynamic status
+    const soldLoans = allSoldLoans.filter(loan => computeEffectiveStatus(loan) === 'defaulted');
 
     const totalRevenue = soldLoans.reduce((sum, loan) => sum + parseFloat(loan.collateral.soldPrice || 0), 0);
 
@@ -395,9 +433,8 @@ const getDefaultedItemsReport = async (req, res) => {
 const getBalancesReport = async (req, res) => {
   try {
     const { startDate, endDate, branchId } = req.query;
-    const whereClause = {
-      status: { [Op.ne]: 'paid' }
-    };
+    // Don't filter by stored status - we'll compute effective status dynamically
+    const whereClause = {};
 
     // Filter by date range if provided
     if (startDate && endDate) {
@@ -421,13 +458,21 @@ const getBalancesReport = async (req, res) => {
       whereClause.branchId = branchId;
     }
 
-    const outstandingLoans = await Loan.findAll({
+    const allLoans = await Loan.findAll({
       where: whereClause,
       include: [
         { model: Borrower, as: 'borrower' },
         { model: Collateral, as: 'collateral' }
       ]
     });
+
+    // Apply dynamic status and filter out paid loans
+    const outstandingLoans = allLoans
+      .map(loan => ({
+        ...loan.toJSON(),
+        status: computeEffectiveStatus(loan)
+      }))
+      .filter(loan => loan.status !== 'paid');
 
     let totalPrincipal = 0;
     let totalInterest = 0;
@@ -484,9 +529,8 @@ const getBalancesReport = async (req, res) => {
 const getNotYetPaidReport = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    const whereClause = {
-      status: { [Op.in]: ['active', 'due', 'pastDue'] }
-    };
+    // Don't filter by stored status - we'll compute effective status dynamically
+    const whereClause = {};
 
     // Filter by date range if provided
     if (startDate && endDate) {
@@ -525,10 +569,16 @@ const getNotYetPaidReport = async (req, res) => {
       });
     }
 
-    const notPaidLoans = await Loan.findAll({
+    const allLoans = await Loan.findAll({
       where: whereClause,
       include: includeOptions,
       order: [['dueDate', 'ASC']]
+    });
+
+    // Filter to only loans that are active, due, or pastDue using dynamic status
+    const notPaidLoans = allLoans.filter(loan => {
+      const effectiveStatus = computeEffectiveStatus(loan);
+      return ['active', 'due', 'pastDue'].includes(effectiveStatus);
     });
 
     const loansWithBalances = notPaidLoans.map(loan => {
@@ -538,6 +588,7 @@ const getNotYetPaidReport = async (req, res) => {
 
       return {
         ...loan.toJSON(),
+        status: computeEffectiveStatus(loan),
         totalDue,
         balance
       };

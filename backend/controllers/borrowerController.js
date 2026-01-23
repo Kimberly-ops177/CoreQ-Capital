@@ -3,6 +3,29 @@ const Loan = require('../models/Loan');
 const { getPaginationParams, formatPaginatedResponse } = require('../utils/pagination');
 const { Op } = require('sequelize');
 
+/**
+ * Compute effective loan status based on current date
+ * This ensures status is always accurate regardless of stored database value
+ */
+const computeEffectiveStatus = (loan) => {
+  const now = new Date();
+  const dueDate = new Date(loan.dueDate);
+  const gracePeriodEnd = new Date(loan.gracePeriodEnd);
+  const totalDue = parseFloat(loan.totalAmount) + parseFloat(loan.penalties || 0);
+  const amountRepaid = parseFloat(loan.amountRepaid || 0);
+
+  // If paid in full
+  if (amountRepaid >= totalDue) return 'paid';
+  // If beyond grace period and not paid
+  if (now > gracePeriodEnd) return 'defaulted';
+  // If past due date but within grace period
+  if (now > dueDate) return 'pastDue';
+  // If due today
+  if (now.toDateString() === dueDate.toDateString()) return 'due';
+  // Otherwise active
+  return 'active';
+};
+
 const createBorrower = async (req, res) => {
   try {
     const borrower = await Borrower.create(req.body);
@@ -36,38 +59,53 @@ const getBorrowers = async (req, res) => {
     }
 
     // Build loan filter - only show borrowers with approved loans
+    // Don't filter by stored status - we'll compute effective status dynamically
     const loanWhereClause = { agreementStatus: 'approved' };
-
-    // Filter by loan status if specified (active, paid, defaulted, pastDue)
-    if (loanStatus && loanStatus !== 'all') {
-      loanWhereClause.status = loanStatus;
-    }
 
     const includeLoans = {
       model: Loan,
       as: 'loans',
       where: loanWhereClause,
       required: true, // Inner join - only borrowers with matching loans
-      attributes: ['id', 'status'] // Include loan status for display
+      attributes: ['id', 'status', 'dueDate', 'gracePeriodEnd', 'totalAmount', 'penalties', 'amountRepaid']
     };
 
-    // Get total count for pagination
-    const total = await Borrower.count({
+    // Fetch all borrowers with their loans first
+    const allBorrowers = await Borrower.findAll({
       where: whereClause,
       include: [includeLoans],
+      order: [['createdAt', 'DESC']],
       distinct: true
     });
 
-    const borrowers = await Borrower.findAll({
-      where: whereClause,
-      include: [includeLoans],
-      order: [['createdAt', 'DESC']], // Most recent first
-      limit,
-      offset,
-      distinct: true
+    // Apply effective status to each loan and filter by status if specified
+    let filteredBorrowers = allBorrowers.map(borrower => {
+      const borrowerData = borrower.toJSON();
+      // Compute effective status for each loan
+      borrowerData.loans = borrowerData.loans.map(loan => ({
+        ...loan,
+        status: computeEffectiveStatus(loan)
+      }));
+      return borrowerData;
     });
 
-    res.send(formatPaginatedResponse(borrowers, total, page, limit));
+    // Filter by loan status if specified (using computed effective status)
+    if (loanStatus && loanStatus !== 'all') {
+      filteredBorrowers = filteredBorrowers.filter(borrower =>
+        borrower.loans.some(loan => loan.status === loanStatus)
+      );
+      // Also filter the loans array to only include matching status loans
+      filteredBorrowers = filteredBorrowers.map(borrower => ({
+        ...borrower,
+        loans: borrower.loans.filter(loan => loan.status === loanStatus)
+      }));
+    }
+
+    // Apply pagination manually
+    const total = filteredBorrowers.length;
+    const paginatedBorrowers = filteredBorrowers.slice(offset, offset + limit);
+
+    res.send(formatPaginatedResponse(paginatedBorrowers, total, page, limit));
   } catch (e) {
     res.status(500).send({ error: e.message });
   }
