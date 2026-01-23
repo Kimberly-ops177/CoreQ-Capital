@@ -144,20 +144,11 @@ const AdminDashboard = () => {
           </Grid>
         </Grid>
 
-        <Box
-          sx={{
-            mt: { xs: 4, md: 6 },
-            textAlign: 'center',
-            bgcolor: '#000000',
-            borderRadius: 3,
-            py: 4,
-            px: 3,
-          }}
-        >
+        <Box sx={{ mt: { xs: 4, md: 6 }, textAlign: 'center' }}>
           <Typography
             variant="h5"
             sx={{
-              color: '#FFFFFF',
+              color: palette.green,
               fontWeight: 800,
               mb: 2.5,
               letterSpacing: 0.4,
