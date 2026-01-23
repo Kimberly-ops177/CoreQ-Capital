@@ -7,6 +7,41 @@ const { generateLoanAgreementPDF, sendLoanAgreementEmail } = require('../service
 const { getPaginationParams, formatPaginatedResponse } = require('../utils/pagination');
 
 /**
+ * Compute effective loan status based on current date
+ * This ensures status is always accurate regardless of scheduler
+ */
+const computeEffectiveStatus = (loan) => {
+  const now = new Date();
+  const dueDate = new Date(loan.dueDate);
+  const gracePeriodEnd = new Date(loan.gracePeriodEnd);
+  const totalDue = parseFloat(loan.totalAmount) + parseFloat(loan.penalties || 0);
+  const amountRepaid = parseFloat(loan.amountRepaid || 0);
+
+  // If fully paid, status is 'paid'
+  if (amountRepaid >= totalDue) {
+    return 'paid';
+  }
+
+  // If beyond grace period and not paid, status is 'defaulted'
+  if (now > gracePeriodEnd) {
+    return 'defaulted';
+  }
+
+  // If past due date but within grace period, status is 'pastDue'
+  if (now > dueDate) {
+    return 'pastDue';
+  }
+
+  // If due today, status is 'due'
+  if (now.toDateString() === dueDate.toDateString()) {
+    return 'due';
+  }
+
+  // Otherwise, status is 'active'
+  return 'active';
+};
+
+/**
  * Generate unique loan ID in format: CQC-YYYY-NNNN
  * Example: CQC-2026-0001
  */
@@ -324,7 +359,14 @@ const getLoans = async (req, res) => {
       offset
     });
 
-    res.send(formatPaginatedResponse(loans, total, page, limit));
+    // Compute effective status for each loan based on current date
+    const loansWithEffectiveStatus = loans.map(loan => {
+      const loanData = loan.toJSON();
+      loanData.status = computeEffectiveStatus(loanData);
+      return loanData;
+    });
+
+    res.send(formatPaginatedResponse(loansWithEffectiveStatus, total, page, limit));
   } catch (e) {
     console.error('Error fetching loans:', e);
     res.status(500).send({ error: e.message });
@@ -352,7 +394,11 @@ const getLoan = async (req, res) => {
       return res.status(403).send({ error: 'Access denied to this loan' });
     }
 
-    res.send(loan);
+    // Compute effective status based on current date
+    const loanData = loan.toJSON();
+    loanData.status = computeEffectiveStatus(loanData);
+
+    res.send(loanData);
   } catch (e) {
     console.error('Error fetching loan:', e);
     res.status(500).send({ error: e.message });
