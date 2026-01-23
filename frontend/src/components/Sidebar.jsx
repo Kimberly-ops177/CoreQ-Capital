@@ -149,19 +149,16 @@ const Sidebar = ({ children }) => {
             <MenuIcon />
           </IconButton>
         )}
-        <AccountBalance sx={{ color: '#00FF9D', fontSize: 28 }} />
-        {!isCollapsed && (
-          <Box
-            component="img"
-            src={logo}
-            alt="Core Q Capital"
-            sx={{
-              height: 36,
-              maxWidth: '100%',
-              objectFit: 'contain',
-            }}
-          />
-        )}
+        <Box
+          component="img"
+          src={logo}
+          alt="Core Q Capital"
+          sx={{
+            height: isCollapsed ? 28 : 40,
+            maxWidth: '100%',
+            objectFit: 'contain',
+          }}
+        />
         {isMobile && !isCollapsed && (
           <IconButton
             onClick={handleDrawerToggle}
@@ -348,13 +345,12 @@ const Sidebar = ({ children }) => {
           <IconButton onClick={handleDrawerToggle} sx={{ color: '#B0BEC5', '&:hover': { color: '#00FF9D' } }}>
             <MenuIcon />
           </IconButton>
-          <AccountBalance sx={{ color: '#00FF9D', fontSize: 26 }} />
           <Box
             component="img"
             src={logo}
             alt="Core Q Capital"
             sx={{
-              height: 32,
+              height: 36,
               objectFit: 'contain',
             }}
           />
