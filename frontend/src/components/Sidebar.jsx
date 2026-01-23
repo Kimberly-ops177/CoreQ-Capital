@@ -10,6 +10,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import logo from '../assets/logo.png';
 
 const DRAWER_WIDTH = 260;
 const COLLAPSED_WIDTH = 70;
@@ -130,8 +131,8 @@ const Sidebar = ({ children }) => {
       {/* Header/Logo */}
       <Box
         sx={{
-          p: isCollapsed ? 1.5 : 2,
-          background: 'linear-gradient(135deg, #00FF9D 0%, #00D4FF 100%)',
+          p: isCollapsed ? 1 : 1.5,
+          bgcolor: '#000000',
           display: 'flex',
           alignItems: 'center',
           justifyContent: isCollapsed ? 'center' : 'flex-start',
@@ -142,23 +143,27 @@ const Sidebar = ({ children }) => {
         {!isMobile && (
           <IconButton
             onClick={handleCollapseToggle}
-            sx={{ color: '#0A1628', p: 0.5 }}
+            sx={{ color: '#FFFFFF', p: 0.5 }}
           >
             <MenuIcon />
           </IconButton>
         )}
         {!isCollapsed && (
-          <>
-            <AccountBalance sx={{ fontSize: 28, color: '#0A1628' }} />
-            <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#0A1628', whiteSpace: 'nowrap' }}>
-              Core Q Capital
-            </Typography>
-          </>
+          <Box
+            component="img"
+            src={logo}
+            alt="Core Q Capital"
+            sx={{
+              height: 40,
+              maxWidth: '100%',
+              objectFit: 'contain',
+            }}
+          />
         )}
         {isMobile && !isCollapsed && (
           <IconButton
             onClick={handleDrawerToggle}
-            sx={{ ml: 'auto', color: '#0A1628' }}
+            sx={{ ml: 'auto', color: '#FFFFFF' }}
           >
             <Close />
           </IconButton>
@@ -330,21 +335,26 @@ const Sidebar = ({ children }) => {
             left: 0,
             right: 0,
             zIndex: 1200,
-            background: 'linear-gradient(135deg, #0A1628 0%, #1A2B45 100%)',
-            borderBottom: '1px solid rgba(0, 255, 157, 0.2)',
+            bgcolor: '#000000',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
             display: 'flex',
             alignItems: 'center',
-            p: 1.5,
+            p: 1,
             gap: 1,
           }}
         >
-          <IconButton onClick={handleDrawerToggle} sx={{ color: '#00FF9D' }}>
+          <IconButton onClick={handleDrawerToggle} sx={{ color: '#FFFFFF' }}>
             <MenuIcon />
           </IconButton>
-          <AccountBalance sx={{ color: '#00FF9D' }} />
-          <Typography variant="h6" sx={{ color: 'white', fontWeight: 'bold' }}>
-            Core Q Capital
-          </Typography>
+          <Box
+            component="img"
+            src={logo}
+            alt="Core Q Capital"
+            sx={{
+              height: 36,
+              objectFit: 'contain',
+            }}
+          />
         </Box>
       )}
 
