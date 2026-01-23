@@ -3,7 +3,7 @@ import {
   Container, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Grid, IconButton, Box, Pagination, Skeleton, List, ListItem, ListItemText,
-  ListItemSecondaryAction, Chip, Alert
+  ListItemSecondaryAction, Chip, Alert, Tabs, Tab
 } from '@mui/material';
 import { Edit, Delete } from '@mui/icons-material';
 import axios from 'axios';
@@ -28,11 +28,16 @@ const BorrowerManagement = () => {
     itemName: '', category: '', estimatedValue: '', itemCondition: 'Good'
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [loanStatusFilter, setLoanStatusFilter] = useState('all');
 
-  const fetchBorrowers = async (page = 1) => {
+  const fetchBorrowers = async (page = 1, statusFilter = loanStatusFilter) => {
     try {
       setLoading(true);
-      const res = await axios.get(`/api/borrowers?page=${page}&limit=10`);
+      let url = `/api/borrowers?page=${page}&limit=10`;
+      if (statusFilter && statusFilter !== 'all') {
+        url += `&loanStatus=${statusFilter}`;
+      }
+      const res = await axios.get(url);
       setBorrowers(res.data.data || res.data);
       if (res.data.pagination) {
         setPagination(res.data.pagination);
@@ -57,7 +62,12 @@ const BorrowerManagement = () => {
   };
 
   const handlePageChange = (_event, value) => {
-    fetchBorrowers(value);
+    fetchBorrowers(value, loanStatusFilter);
+  };
+
+  const handleTabChange = (_event, newValue) => {
+    setLoanStatusFilter(newValue);
+    fetchBorrowers(1, newValue);
   };
 
   useEffect(() => {
@@ -196,6 +206,20 @@ const BorrowerManagement = () => {
           <Typography variant="h4">Borrowers</Typography>
           {/* Note: Borrowers are created through the loan application process, not directly */}
         </Grid>
+
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+          <Tabs
+            value={loanStatusFilter}
+            onChange={handleTabChange}
+            textColor="primary"
+            indicatorColor="primary"
+          >
+            <Tab label="All Borrowers" value="all" />
+            <Tab label="Active Loans" value="active" />
+            <Tab label="Paid Loans" value="paid" />
+            <Tab label="Defaulted" value="defaulted" />
+          </Tabs>
+        </Box>
 
         <TextField
           fullWidth

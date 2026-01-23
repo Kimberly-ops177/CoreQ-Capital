@@ -14,7 +14,7 @@ const createBorrower = async (req, res) => {
 
 const getBorrowers = async (req, res) => {
   try {
-    const { idNumber, phoneNumber } = req.query;
+    const { idNumber, phoneNumber, loanStatus } = req.query;
     const { page, limit, offset } = getPaginationParams(req.query);
     let whereClause = {};
 
@@ -35,16 +35,23 @@ const getBorrowers = async (req, res) => {
       whereClause.location = { [Op.in]: locations };
     }
 
-    // Only show borrowers with at least one approved loan
+    // Build loan filter - only show borrowers with approved loans
+    const loanWhereClause = { agreementStatus: 'approved' };
+
+    // Filter by loan status if specified (active, paid, defaulted, pastDue)
+    if (loanStatus && loanStatus !== 'all') {
+      loanWhereClause.status = loanStatus;
+    }
+
     const includeLoans = {
       model: Loan,
       as: 'loans',
-      where: { agreementStatus: 'approved' }, // Only include borrowers with approved loans
-      required: true, // Inner join - only borrowers with at least one approved loan
-      attributes: [] // Don't return loan data, just filter
+      where: loanWhereClause,
+      required: true, // Inner join - only borrowers with matching loans
+      attributes: ['id', 'status'] // Include loan status for display
     };
 
-    // Get total count for pagination (only borrowers with approved loans)
+    // Get total count for pagination
     const total = await Borrower.count({
       where: whereClause,
       include: [includeLoans],
