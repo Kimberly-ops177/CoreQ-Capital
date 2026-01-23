@@ -132,7 +132,7 @@ const Sidebar = ({ children }) => {
       <Box
         sx={{
           p: isCollapsed ? 1 : 1.5,
-          bgcolor: '#000000',
+          background: 'linear-gradient(135deg, #00FF9D 0%, #00D4FF 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: isCollapsed ? 'center' : 'flex-start',
@@ -143,7 +143,7 @@ const Sidebar = ({ children }) => {
         {!isMobile && (
           <IconButton
             onClick={handleCollapseToggle}
-            sx={{ color: '#FFFFFF', p: 0.5 }}
+            sx={{ color: '#0A1628', p: 0.5 }}
           >
             <MenuIcon />
           </IconButton>
@@ -163,7 +163,7 @@ const Sidebar = ({ children }) => {
         {isMobile && !isCollapsed && (
           <IconButton
             onClick={handleDrawerToggle}
-            sx={{ ml: 'auto', color: '#FFFFFF' }}
+            sx={{ ml: 'auto', color: '#0A1628' }}
           >
             <Close />
           </IconButton>
@@ -335,15 +335,15 @@ const Sidebar = ({ children }) => {
             left: 0,
             right: 0,
             zIndex: 1200,
-            bgcolor: '#000000',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            background: 'linear-gradient(135deg, #00FF9D 0%, #00D4FF 100%)',
+            borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
             display: 'flex',
             alignItems: 'center',
             p: 1,
             gap: 1,
           }}
         >
-          <IconButton onClick={handleDrawerToggle} sx={{ color: '#FFFFFF' }}>
+          <IconButton onClick={handleDrawerToggle} sx={{ color: '#0A1628' }}>
             <MenuIcon />
           </IconButton>
           <Box
