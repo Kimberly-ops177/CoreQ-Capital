@@ -376,7 +376,7 @@ const getDefaultedItemsReport = async (req, res) => {
     }
 
     // Defaulted Items (Unsold) - Query from Loan with collateral relationship
-    // Fetch all loans with seized unsold collateral, then filter by dynamic status
+    // Fetch all loans with unsold collateral, then filter by dynamic defaulted status
     const allUnsoldLoans = await Loan.findAll({
       where: {
         ...whereClause,
@@ -388,14 +388,13 @@ const getDefaultedItemsReport = async (req, res) => {
           model: Collateral,
           as: 'collateral',
           where: {
-            isSeized: true,
-            isSold: false
+            isSold: false  // Only filter by not sold - don't require manual seizing
           }
         }
       ],
       order: [['updatedAt', 'DESC']]
     });
-    // Filter by dynamic status
+    // Filter by dynamic status - only show collateral from defaulted loans
     const unsoldLoans = allUnsoldLoans.filter(loan => computeEffectiveStatus(loan) === 'defaulted');
 
     // Defaulted Items (Sold) - Query from Loan with sold collateral
