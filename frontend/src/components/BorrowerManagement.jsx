@@ -216,6 +216,7 @@ const BorrowerManagement = () => {
           >
             <Tab label="All Borrowers" value="all" />
             <Tab label="Active Loans" value="active" />
+            <Tab label="Past Due" value="pastDue" />
             <Tab label="Paid Loans" value="paid" />
             <Tab label="Defaulted" value="defaulted" />
           </Tabs>
