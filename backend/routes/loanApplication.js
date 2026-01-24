@@ -434,7 +434,7 @@ router.post('/:id/approve', auth, async (req, res) => {
 
                 <p>For any inquiries or assistance, feel free to contact us at <strong>0797637074</strong> / <a href="mailto:coreqcapital@gmail.com">coreqcapital@gmail.com</a>.</p>
 
-                <p>Thank you for choosing Core Capital. We appreciate your continued partnership.</p>
+                <p>Thank you for choosing Core Q Capital. We appreciate your continued partnership.</p>
 
                 <p>Kind regards,<br>
                 <strong>Core Q Capital</strong><br>
