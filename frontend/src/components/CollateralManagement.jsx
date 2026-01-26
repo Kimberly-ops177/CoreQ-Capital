@@ -3,7 +3,7 @@ import {
   Container, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Grid, IconButton, Select, MenuItem, FormControl,
-  InputLabel, Chip, Box, Pagination, Tabs, Tab
+  InputLabel, Chip, Box, Pagination, Tabs, Tab, Skeleton
 } from '@mui/material';
 import { Edit, Delete, Sell } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
@@ -24,6 +24,7 @@ const CollateralManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [borrowerIdFilter, setBorrowerIdFilter] = useState('');
   const [loanStatusFilter, setLoanStatusFilter] = useState('all');
+  const [isLoading, setIsLoading] = useState(false);
 
   // Mark as Sold dialog state
   const [soldDialogOpen, setSoldDialogOpen] = useState(false);
@@ -45,6 +46,7 @@ const CollateralManagement = () => {
 
   const fetchCollaterals = async (page = 1, idFilter = '', statusFilter = 'all') => {
     try {
+      setIsLoading(true);
       let url = `/api/collaterals?page=${page}&limit=10`;
       if (idFilter) {
         url += `&borrowerIdNumber=${encodeURIComponent(idFilter)}`;
@@ -59,6 +61,8 @@ const CollateralManagement = () => {
       }
     } catch (err) {
       console.error('Error fetching collaterals:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -371,38 +375,62 @@ const CollateralManagement = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredCollaterals.map((collateral) => (
-                <TableRow key={collateral.id}>
-                  <TableCell>{getLoanId(collateral)}</TableCell>
-                  <TableCell>{collateral.borrower?.fullName || 'N/A'}</TableCell>
-                  <TableCell>{collateral.borrower?.idNumber || 'N/A'}</TableCell>
-                  <TableCell>{collateral.itemName}</TableCell>
-                  <TableCell>{collateral.category || 'N/A'}</TableCell>
-                  <TableCell>
-                    <Chip label={collateral.itemCondition} color={getConditionColor(collateral.itemCondition)} />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={getLoanStatusLabel(collateral)}
-                      color={collateral.isSold ? 'default' : getLoanStatusColor(collateral.loanStatus)}
-                      sx={collateral.isSold ? { bgcolor: 'grey.400', color: 'white' } : {}}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <IconButton onClick={() => handleOpen(collateral)} title="Edit">
-                      <Edit />
-                    </IconButton>
-                    {!collateral.isSold && user?.role === 'admin' && (
-                      <IconButton onClick={() => handleOpenSoldDialog(collateral)} title="Mark as Sold" color="success">
-                        <Sell />
-                      </IconButton>
-                    )}
-                    <IconButton onClick={() => handleDelete(collateral.id)} title="Delete">
-                      <Delete />
-                    </IconButton>
+              {isLoading ? (
+                // Skeleton loading rows
+                [...Array(5)].map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" width={80} /></TableCell>
+                    <TableCell><Skeleton animation="wave" width={120} /></TableCell>
+                    <TableCell><Skeleton animation="wave" width={100} /></TableCell>
+                  </TableRow>
+                ))
+              ) : filteredCollaterals.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No collaterals found
+                    </Typography>
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredCollaterals.map((collateral) => (
+                  <TableRow key={collateral.id}>
+                    <TableCell>{getLoanId(collateral)}</TableCell>
+                    <TableCell>{collateral.borrower?.fullName || 'N/A'}</TableCell>
+                    <TableCell>{collateral.borrower?.idNumber || 'N/A'}</TableCell>
+                    <TableCell>{collateral.itemName}</TableCell>
+                    <TableCell>{collateral.category || 'N/A'}</TableCell>
+                    <TableCell>
+                      <Chip label={collateral.itemCondition} color={getConditionColor(collateral.itemCondition)} />
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={getLoanStatusLabel(collateral)}
+                        color={collateral.isSold ? 'default' : getLoanStatusColor(collateral.loanStatus)}
+                        sx={collateral.isSold ? { bgcolor: 'grey.400', color: 'white' } : {}}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <IconButton onClick={() => handleOpen(collateral)} title="Edit">
+                        <Edit />
+                      </IconButton>
+                      {!collateral.isSold && user?.role === 'admin' && (
+                        <IconButton onClick={() => handleOpenSoldDialog(collateral)} title="Mark as Sold" color="success">
+                          <Sell />
+                        </IconButton>
+                      )}
+                      <IconButton onClick={() => handleDelete(collateral.id)} title="Delete">
+                        <Delete />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </TableContainer>
