@@ -3,7 +3,7 @@ import {
   Container, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Grid, IconButton, Select, MenuItem, FormControl,
-  InputLabel, Chip, Box, Pagination
+  InputLabel, Chip, Box, Pagination, Tabs, Tab
 } from '@mui/material';
 import { Edit, Delete, Sell } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
@@ -23,6 +23,7 @@ const CollateralManagement = () => {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [borrowerIdFilter, setBorrowerIdFilter] = useState('');
+  const [loanStatusFilter, setLoanStatusFilter] = useState('all');
 
   // Mark as Sold dialog state
   const [soldDialogOpen, setSoldDialogOpen] = useState(false);
@@ -42,11 +43,14 @@ const CollateralManagement = () => {
     }
   }, [user, navigate]);
 
-  const fetchCollaterals = async (page = 1, idFilter = '') => {
+  const fetchCollaterals = async (page = 1, idFilter = '', statusFilter = 'all') => {
     try {
       let url = `/api/collaterals?page=${page}&limit=10`;
       if (idFilter) {
         url += `&borrowerIdNumber=${encodeURIComponent(idFilter)}`;
+      }
+      if (statusFilter && statusFilter !== 'all') {
+        url += `&loanStatus=${encodeURIComponent(statusFilter)}`;
       }
       const res = await axios.get(url);
       setCollaterals(res.data.data || res.data);
@@ -68,7 +72,7 @@ const CollateralManagement = () => {
   };
 
   const handlePageChange = (_event, value) => {
-    fetchCollaterals(value, borrowerIdFilter);
+    fetchCollaterals(value, borrowerIdFilter, loanStatusFilter);
   };
 
   const handleBorrowerIdFilterChange = (e) => {
@@ -76,12 +80,17 @@ const CollateralManagement = () => {
   };
 
   const handleFilterByBorrowerId = () => {
-    fetchCollaterals(1, borrowerIdFilter);
+    fetchCollaterals(1, borrowerIdFilter, loanStatusFilter);
   };
 
   const handleClearFilter = () => {
     setBorrowerIdFilter('');
-    fetchCollaterals(1, '');
+    fetchCollaterals(1, '', loanStatusFilter);
+  };
+
+  const handleTabChange = (_event, newValue) => {
+    setLoanStatusFilter(newValue);
+    fetchCollaterals(1, borrowerIdFilter, newValue);
   };
 
   useEffect(() => {
@@ -248,6 +257,34 @@ const CollateralManagement = () => {
     return 'N/A';
   };
 
+  // Loan status badge helpers
+  const getLoanStatusColor = (status) => {
+    switch (status) {
+      case 'active': return 'primary';
+      case 'pastDue': return 'warning';
+      case 'defaulted': return 'error';
+      case 'paid': return 'success';
+      default: return 'default';
+    }
+  };
+
+  const getLoanStatusLabel = (collateral) => {
+    if (collateral.isSold) {
+      return 'Sold';
+    }
+
+    const status = collateral.loanStatus;
+    const daysOverdue = collateral.daysOverdue || 0;
+
+    switch (status) {
+      case 'active': return 'Active';
+      case 'pastDue': return `Past Due (${daysOverdue} day${daysOverdue !== 1 ? 's' : ''})`;
+      case 'defaulted': return 'Defaulted';
+      case 'paid': return 'Paid';
+      default: return 'Unknown';
+    }
+  };
+
   // Show loading while user data is being fetched
   if (loading) {
     return null;
@@ -263,6 +300,18 @@ const CollateralManagement = () => {
           <Typography variant="h4">Collaterals</Typography>
           {/* Note: Collaterals are added through the loan application process */}
         </Grid>
+
+        {/* Loan Status Filter Tabs */}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs value={loanStatusFilter} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
+            <Tab label="All Items" value="all" />
+            <Tab label="Active" value="active" />
+            <Tab label="Past Due" value="pastDue" />
+            <Tab label="Defaulted" value="defaulted" />
+            <Tab label="Paid" value="paid" />
+            <Tab label="Sold" value="sold" />
+          </Tabs>
+        </Box>
 
         <Grid container spacing={2} sx={{ mb: 2 }}>
           <Grid item xs={12} sm={6}>
@@ -316,7 +365,7 @@ const CollateralManagement = () => {
                 <TableCell>Item Name</TableCell>
                 <TableCell>Category</TableCell>
                 <TableCell>Condition</TableCell>
-                <TableCell>Status</TableCell>
+                <TableCell>Loan Status</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -333,8 +382,9 @@ const CollateralManagement = () => {
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={getStatusLabel(collateral.isSold)}
-                      color={getStatusColor(collateral.isSold)}
+                      label={getLoanStatusLabel(collateral)}
+                      color={collateral.isSold ? 'default' : getLoanStatusColor(collateral.loanStatus)}
+                      sx={collateral.isSold ? { bgcolor: 'grey.400', color: 'white' } : {}}
                     />
                   </TableCell>
                   <TableCell>

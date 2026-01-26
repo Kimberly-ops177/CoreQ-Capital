@@ -16,7 +16,7 @@ const createCollateral = async (req, res) => {
 const getCollaterals = async (req, res) => {
   try {
     const { page, limit, offset } = getPaginationParams(req.query);
-    const { borrowerIdNumber } = req.query;
+    const { borrowerIdNumber, loanStatus } = req.query;
 
     // Build where clause - exclude returned collaterals (loan was paid, collateral returned to borrower)
     const whereClause = {
@@ -55,13 +55,13 @@ const getCollaterals = async (req, res) => {
 
     includeArray.push(borrowerInclude);
 
-    // Only show collaterals with at least one approved loan - include loan data for display
+    // Only show collaterals with at least one approved loan - include loan data with all needed fields
     includeArray.push({
       model: Loan,
       as: 'loans',
       where: { agreementStatus: 'approved' },
       required: true, // Inner join - only collaterals with approved loans
-      attributes: ['id', 'amountIssued', 'totalAmount', 'status'] // Include loan ID for display
+      attributes: ['id', 'amountIssued', 'totalAmount', 'status', 'dueDate', 'gracePeriodEnd', 'amountRepaid', 'penalties'] // Include all fields needed for status computation
     });
 
     // Get total count for pagination (with all filters)
@@ -80,7 +80,54 @@ const getCollaterals = async (req, res) => {
       distinct: true
     });
 
-    res.send(formatPaginatedResponse(collaterals, total, page, limit));
+    // Compute dynamic loan status for each collateral
+    const collateralsWithStatus = collaterals.map(collateral => {
+      const collateralJSON = collateral.toJSON();
+
+      // Compute status for all associated loans
+      if (collateralJSON.loans && collateralJSON.loans.length > 0) {
+        collateralJSON.loans = collateralJSON.loans.map(loan => {
+          const effectiveStatus = computeEffectiveStatus(loan);
+
+          // Calculate days overdue for pastDue status
+          let daysOverdue = 0;
+          if (effectiveStatus === 'pastDue') {
+            const now = new Date();
+            const dueDate = new Date(loan.dueDate);
+            daysOverdue = Math.floor((now - dueDate) / (1000 * 60 * 60 * 24));
+          }
+
+          return {
+            ...loan,
+            effectiveStatus,
+            daysOverdue
+          };
+        });
+
+        // Set the primary loan status (use first loan's status)
+        collateralJSON.loanStatus = collateralJSON.loans[0].effectiveStatus;
+        collateralJSON.daysOverdue = collateralJSON.loans[0].daysOverdue;
+      } else {
+        collateralJSON.loanStatus = 'unknown';
+        collateralJSON.daysOverdue = 0;
+      }
+
+      return collateralJSON;
+    });
+
+    // Filter by loan status if provided
+    let filteredCollaterals = collateralsWithStatus;
+    if (loanStatus && loanStatus !== 'all') {
+      if (loanStatus === 'sold') {
+        // Filter sold items
+        filteredCollaterals = collateralsWithStatus.filter(c => c.isSold === true);
+      } else {
+        // Filter by loan status (active, pastDue, defaulted, paid)
+        filteredCollaterals = collateralsWithStatus.filter(c => c.loanStatus === loanStatus);
+      }
+    }
+
+    res.send(formatPaginatedResponse(filteredCollaterals, filteredCollaterals.length, page, limit));
   } catch (e) {
     res.status(500).send({ error: e.message });
   }
