@@ -130,8 +130,27 @@ const deleteCollateral = async (req, res) => {
 };
 
 /**
+ * Dynamic status computation helper
+ */
+const computeEffectiveStatus = (loan) => {
+  const now = new Date();
+  const dueDate = new Date(loan.dueDate);
+  const gracePeriodEnd = new Date(loan.gracePeriodEnd);
+
+  const totalDue = parseFloat(loan.totalAmount) + parseFloat(loan.penalties || 0);
+  const amountRepaid = parseFloat(loan.amountRepaid || 0);
+
+  if (amountRepaid >= totalDue) return 'paid';
+  if (now > gracePeriodEnd) return 'defaulted';
+  if (now > dueDate) return 'pastDue';
+  if (now.toDateString() === dueDate.toDateString()) return 'due';
+  return 'active';
+};
+
+/**
  * Mark collateral as sold (Admin only)
  * Updates isSold status, soldPrice, and soldDate
+ * Hybrid approach: Allow if EITHER manually seized OR loan is dynamically defaulted
  */
 const markCollateralAsSold = async (req, res) => {
   try {
@@ -147,19 +166,18 @@ const markCollateralAsSold = async (req, res) => {
     }
 
     const collateral = await Collateral.findByPk(id, {
-      include: [{ model: Borrower, as: 'borrower' }]
+      include: [
+        { model: Borrower, as: 'borrower' },
+        {
+          model: Loan,
+          as: 'loans',
+          attributes: ['id', 'dueDate', 'gracePeriodEnd', 'totalAmount', 'amountRepaid', 'penalties']
+        }
+      ]
     });
 
     if (!collateral) {
       return res.status(404).send({ error: 'Collateral not found' });
-    }
-
-    // Check if collateral is seized (defaulted)
-    if (!collateral.isSeized) {
-      return res.status(400).send({
-        error: 'Collateral not defaulted',
-        message: 'Only seized/defaulted collateral can be marked as sold'
-      });
     }
 
     // Check if already sold
@@ -167,6 +185,31 @@ const markCollateralAsSold = async (req, res) => {
       return res.status(400).send({
         error: 'Already sold',
         message: 'This collateral has already been marked as sold'
+      });
+    }
+
+    // Hybrid validation: Allow if EITHER seized OR loan is dynamically defaulted
+    let isAllowedToSell = collateral.isSeized; // Check manual seizing first
+
+    if (!isAllowedToSell && collateral.loans && collateral.loans.length > 0) {
+      // Check if any associated loan is dynamically defaulted
+      for (const loan of collateral.loans) {
+        const effectiveStatus = computeEffectiveStatus(loan);
+        if (effectiveStatus === 'defaulted') {
+          isAllowedToSell = true;
+          // Auto-seize if not already seized
+          if (!collateral.isSeized) {
+            await collateral.update({ isSeized: true });
+          }
+          break;
+        }
+      }
+    }
+
+    if (!isAllowedToSell) {
+      return res.status(400).send({
+        error: 'Collateral not defaulted',
+        message: 'Only seized/defaulted collateral can be marked as sold'
       });
     }
 
