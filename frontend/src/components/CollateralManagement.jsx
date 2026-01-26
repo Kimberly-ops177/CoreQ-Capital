@@ -307,9 +307,9 @@ const CollateralManagement = () => {
             <Tab label="All Items" value="all" />
             <Tab label="Active" value="active" />
             <Tab label="Past Due" value="pastDue" />
+            <Tab label="Paid" value="paid" />
             <Tab label="Defaulted" value="defaulted" />
             <Tab label="Defaulted - Unsold" value="defaultedUnsold" />
-            <Tab label="Paid" value="paid" />
             <Tab label="Sold" value="sold" />
           </Tabs>
         </Box>
