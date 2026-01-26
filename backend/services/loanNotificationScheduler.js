@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const { Op } = require('sequelize');
 const Loan = require('../models/Loan');
 const Borrower = require('../models/Borrower');
+const Collateral = require('../models/Collateral');
 const {
   send3DaysBeforeReminder,
   sendOnDueDateReminder,
@@ -152,6 +153,72 @@ const check1WeekPastDueNotifications = async () => {
 };
 
 /**
+ * Dynamic status computation helper
+ */
+const computeEffectiveStatus = (loan) => {
+  const now = new Date();
+  const dueDate = new Date(loan.dueDate);
+  const gracePeriodEnd = new Date(loan.gracePeriodEnd);
+
+  const totalDue = parseFloat(loan.totalAmount) + parseFloat(loan.penalties || 0);
+  const amountRepaid = parseFloat(loan.amountRepaid || 0);
+
+  if (amountRepaid >= totalDue) return 'paid';
+  if (now > gracePeriodEnd) return 'defaulted';
+  if (now > dueDate) return 'pastDue';
+  if (now.toDateString() === dueDate.toDateString()) return 'due';
+  return 'active';
+};
+
+/**
+ * Automatically seize collateral for defaulted loans
+ */
+const autoSeizeDefaultedCollateral = async () => {
+  try {
+    console.log(`[Collateral Seizer] Checking for defaulted loans to auto-seize collateral...`);
+
+    // Find all approved loans with collateral that hasn't been seized yet
+    const loans = await Loan.findAll({
+      where: {
+        agreementStatus: 'approved'
+      },
+      include: [
+        {
+          model: Collateral,
+          as: 'collateral',
+          where: {
+            isSeized: false
+          },
+          required: true
+        }
+      ],
+      attributes: ['id', 'dueDate', 'gracePeriodEnd', 'totalAmount', 'amountRepaid', 'penalties']
+    });
+
+    console.log(`[Collateral Seizer] Found ${loans.length} loans with unseized collateral to check`);
+
+    let seizedCount = 0;
+
+    for (const loan of loans) {
+      const effectiveStatus = computeEffectiveStatus(loan);
+
+      if (effectiveStatus === 'defaulted') {
+        // Automatically seize the collateral
+        await loan.collateral.update({ isSeized: true });
+        console.log(`[Collateral Seizer] ✓ Auto-seized collateral #${loan.collateral.id} for defaulted loan #${loan.id}`);
+        seizedCount++;
+      }
+    }
+
+    console.log(`[Collateral Seizer] Auto-seized ${seizedCount} collateral items`);
+    return { success: true, count: seizedCount };
+  } catch (error) {
+    console.error('[Collateral Seizer] Error auto-seizing collateral:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
  * Initialize the notification scheduler
  * Runs daily at 9:00 AM to check for notifications
  */
@@ -165,6 +232,7 @@ const initializeNotificationScheduler = () => {
     await check3DaysBeforeNotifications();
     await checkDueDateNotifications();
     await check1WeekPastDueNotifications();
+    await autoSeizeDefaultedCollateral();
 
     console.log('[Notification Scheduler] Daily notification check completed.');
   });
@@ -178,6 +246,7 @@ const initializeNotificationScheduler = () => {
       await check3DaysBeforeNotifications();
       await checkDueDateNotifications();
       await check1WeekPastDueNotifications();
+      await autoSeizeDefaultedCollateral();
     }, 5000); // Wait 5 seconds after server starts
   }
 };
@@ -186,5 +255,6 @@ module.exports = {
   initializeNotificationScheduler,
   check3DaysBeforeNotifications,
   checkDueDateNotifications,
-  check1WeekPastDueNotifications
+  check1WeekPastDueNotifications,
+  autoSeizeDefaultedCollateral
 };
