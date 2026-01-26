@@ -121,6 +121,9 @@ const getCollaterals = async (req, res) => {
       if (loanStatus === 'sold') {
         // Filter sold items
         filteredCollaterals = collateralsWithStatus.filter(c => c.isSold === true);
+      } else if (loanStatus === 'defaultedUnsold') {
+        // Filter defaulted items that are NOT sold (ready to be sold)
+        filteredCollaterals = collateralsWithStatus.filter(c => c.loanStatus === 'defaulted' && c.isSold === false);
       } else {
         // Filter by loan status (active, pastDue, defaulted, paid)
         filteredCollaterals = collateralsWithStatus.filter(c => c.loanStatus === loanStatus);
