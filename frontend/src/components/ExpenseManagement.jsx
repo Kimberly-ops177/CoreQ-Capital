@@ -3,7 +3,7 @@ import {
   Container, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Grid, IconButton, Box, Pagination, Select, MenuItem,
-  FormControl, InputLabel
+  FormControl, InputLabel, Skeleton
 } from '@mui/material';
 import { Add, Edit, Delete } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,6 +15,7 @@ const ExpenseManagement = () => {
   const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalItems: 0 });
   const [open, setOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     category: '', name: '', date: new Date().toISOString().split('T')[0], amount: ''
   });
@@ -24,6 +25,7 @@ const ExpenseManagement = () => {
 
   const fetchExpenses = async (page = 1) => {
     try {
+      setIsLoading(true);
       const res = await axios.get(`/api/expenses?page=${page}&limit=10`);
       setExpenses(res.data.data || res.data);
       if (res.data.pagination) {
@@ -31,6 +33,8 @@ const ExpenseManagement = () => {
       }
     } catch (err) {
       console.error('Error fetching expenses:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -116,25 +120,47 @@ const ExpenseManagement = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {expenses.map((expense) => (
-                <TableRow key={expense.id}>
-                  <TableCell>{expense.category}</TableCell>
-                  <TableCell>{expense.name}</TableCell>
-                  <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
-                  <TableCell>Ksh {expense.amount.toLocaleString()}</TableCell>
-                  <TableCell>{expense.user?.name || 'N/A'}</TableCell>
-                  {canViewAllExpenses && (
-                    <TableCell>
-                      <IconButton onClick={() => handleOpen(expense)}>
-                        <Edit />
-                      </IconButton>
-                      <IconButton onClick={() => handleDelete(expense.id)}>
-                        <Delete />
-                      </IconButton>
-                    </TableCell>
-                  )}
+              {isLoading ? (
+                // Skeleton loading rows
+                [...Array(5)].map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    <TableCell><Skeleton animation="wave" /></TableCell>
+                    {canViewAllExpenses && <TableCell><Skeleton animation="wave" width={100} /></TableCell>}
+                  </TableRow>
+                ))
+              ) : expenses.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={canViewAllExpenses ? 6 : 5} align="center" sx={{ py: 4 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No expenses found
+                    </Typography>
+                  </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                expenses.map((expense) => (
+                  <TableRow key={expense.id}>
+                    <TableCell>{expense.category}</TableCell>
+                    <TableCell>{expense.name}</TableCell>
+                    <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
+                    <TableCell>Ksh {expense.amount.toLocaleString()}</TableCell>
+                    <TableCell>{expense.user?.name || 'N/A'}</TableCell>
+                    {canViewAllExpenses && (
+                      <TableCell>
+                        <IconButton onClick={() => handleOpen(expense)}>
+                          <Edit />
+                        </IconButton>
+                        <IconButton onClick={() => handleDelete(expense.id)}>
+                          <Delete />
+                        </IconButton>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </TableContainer>
