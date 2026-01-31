@@ -1,10 +1,56 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Typography, Grid, Card, CardContent } from '@mui/material';
+import {
+  Container, Typography, Grid, Card, CardContent, Button, Box, Paper
+} from '@mui/material';
+import {
+  Add, Payment, PersonAdd, People, CheckCircle, Warning
+} from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+
+// Action card component
+const ActionCard = ({ icon: IconComponent, title, description, onClick, color = 'primary' }) => (
+  <Card
+    sx={{
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      transition: 'transform 0.2s, box-shadow 0.2s',
+      cursor: 'pointer',
+      '&:hover': {
+        transform: 'translateY(-4px)',
+        boxShadow: 6
+      }
+    }}
+    onClick={onClick}
+  >
+    <CardContent sx={{
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      textAlign: 'center',
+      p: 3
+    }}>
+      <IconComponent sx={{ fontSize: 48, color: `${color}.main`, mb: 2 }} />
+      <Typography variant="h6" gutterBottom>
+        {title}
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        {description}
+      </Typography>
+      <Button variant="contained" color={color} size="small">
+        Go
+      </Button>
+    </CardContent>
+  </Card>
+);
 
 const EmployeeDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [data, setData] = useState({});
 
   useEffect(() => {
@@ -13,129 +59,124 @@ const EmployeeDashboard = () => {
 
   return (
     <Container sx={{ py: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Welcome, {user.name}
+      {/* Welcome Header */}
+      <Typography variant="h4" gutterBottom>
+        Welcome, {user.name}
+      </Typography>
+      <Typography variant="body1" color="text.secondary" gutterBottom sx={{ mb: 3 }}>
+        Location: {user.assignedLocation || 'All Locations'}
+      </Typography>
+
+      {/* Stats Overview Bar */}
+      <Paper elevation={2} sx={{ p: 3, mb: 4, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
+        <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+          Quick Stats Overview
         </Typography>
         <Grid container spacing={3}>
-          {/* Financial Overview Section */}
-          <Grid item xs={12}>
-            <Typography variant="h5" gutterBottom sx={{ mt: 2 }}>
-              Financial Overview
-            </Typography>
+          <Grid item xs={6} md={3}>
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                {data.totalActiveLoans || 0}
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                Active Loans
+              </Typography>
+            </Box>
           </Grid>
-          <Grid item xs={12} md={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">Total Loaned Principal</Typography>
-                <Typography variant="h4">KES {(data.totalLoanedPrincipal || 0).toLocaleString()}</Typography>
-              </CardContent>
-            </Card>
+          <Grid item xs={6} md={3}>
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                {data.totalDefaultedLoans || 0}
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                Defaulted Loans
+              </Typography>
+            </Box>
           </Grid>
-          <Grid item xs={12} md={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">Total Outstanding Receivables</Typography>
-                <Typography variant="h4">KES {(data.totalOutstandingReceivables || 0).toLocaleString()}</Typography>
-              </CardContent>
-            </Card>
+          <Grid item xs={6} md={3}>
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                KES {((data.totalLoanedPrincipal || 0) / 1000).toFixed(0)}K
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                Total Loaned
+              </Typography>
+            </Box>
           </Grid>
-          <Grid item xs={12} md={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">Month-to-Date Profit/Loss</Typography>
-                <Typography variant="h4" color={data.monthToDateProfitLoss >= 0 ? 'success.main' : 'error.main'}>
-                  KES {(data.monthToDateProfitLoss || 0).toLocaleString()}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Loan Status Section */}
-          <Grid item xs={12}>
-            <Typography variant="h5" gutterBottom sx={{ mt: 2 }}>
-              Loan Status
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">Active Loans</Typography>
-                <Typography variant="h4">{data.totalActiveLoans || 0}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">Defaulted Loans</Typography>
-                <Typography variant="h4" color="error.main">{data.totalDefaultedLoans || 0}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">Loans Due This Week</Typography>
-                <Typography variant="h4">{data.loansDueThisWeek || 0}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">Loans in Grace Period</Typography>
-                <Typography variant="h4" color="warning.main">{data.loansInGracePeriod || 0}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Activity Section */}
-          <Grid item xs={12}>
-            <Typography variant="h5" gutterBottom sx={{ mt: 2 }}>
-              Recent Activity
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">New Borrowers Today</Typography>
-                <Typography variant="h4">{data.newBorrowersRegisteredToday || 0}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">Loans Issued Today</Typography>
-                <Typography variant="h4">{data.totalLoansIssuedToday || 0}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">Loans Issued This Week</Typography>
-                <Typography variant="h4">{data.totalLoansIssuedThisWeek || 0}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Expenses Section */}
-          <Grid item xs={12}>
-            <Typography variant="h5" gutterBottom sx={{ mt: 2 }}>
-              Expenses
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">Month-to-Date Expenses</Typography>
-                <Typography variant="h4">KES {(data.monthToDateExpenses || 0).toLocaleString()}</Typography>
-              </CardContent>
-            </Card>
+          <Grid item xs={6} md={3}>
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                KES {((data.totalOutstandingReceivables || 0) / 1000).toFixed(0)}K
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                Outstanding
+              </Typography>
+            </Box>
           </Grid>
         </Grid>
-      </Container>
+      </Paper>
+
+      {/* Quick Actions Section */}
+      <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
+        Quick Actions
+      </Typography>
+      <Grid container spacing={3}>
+        <Grid item xs={12} sm={6} md={4}>
+          <ActionCard
+            icon={Add}
+            title="Issue New Loan"
+            description="Create and approve new loan applications"
+            onClick={() => navigate('/loan-applications')}
+            color="primary"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <ActionCard
+            icon={Payment}
+            title="Repay Loan"
+            description="Record loan repayments"
+            onClick={() => navigate('/loans')}
+            color="success"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <ActionCard
+            icon={PersonAdd}
+            title="Register Borrower"
+            description="Add new client to the system"
+            onClick={() => navigate('/borrowers')}
+            color="info"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <ActionCard
+            icon={People}
+            title="View & Update Borrowers"
+            description="Search and manage borrower details"
+            onClick={() => navigate('/borrowers')}
+            color="secondary"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <ActionCard
+            icon={CheckCircle}
+            title="View Active Loans"
+            description={`${data.totalActiveLoans || 0} active loans for your location`}
+            onClick={() => navigate('/loans')}
+            color="primary"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <ActionCard
+            icon={Warning}
+            title="View Defaulted Loans"
+            description={`${data.totalDefaultedLoans || 0} loans defaulted - Need attention`}
+            onClick={() => navigate('/loans')}
+            color="error"
+          />
+        </Grid>
+      </Grid>
+    </Container>
   );
 };
 
