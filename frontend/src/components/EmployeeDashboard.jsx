@@ -68,7 +68,12 @@ const EmployeeDashboard = () => {
       </Typography>
 
       {/* Stats Overview Bar */}
-      <Paper elevation={2} sx={{ p: 3, mb: 4, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
+      <Paper elevation={2} sx={{
+        p: 3,
+        mb: 4,
+        background: 'linear-gradient(135deg, #1e3a8a 0%, #0d9488 100%)',
+        color: 'white'
+      }}>
         <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
           Quick Stats Overview
         </Typography>
@@ -117,10 +122,10 @@ const EmployeeDashboard = () => {
       </Paper>
 
       {/* Quick Actions Section */}
-      <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
+      <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
         Quick Actions
       </Typography>
-      <Grid container spacing={3}>
+      <Grid container spacing={4}>
         <Grid item xs={12} sm={6} md={4}>
           <ActionCard
             icon={Add}
