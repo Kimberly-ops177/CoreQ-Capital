@@ -608,7 +608,7 @@ const CollateralManagement = () => {
                         required
                         value={soldFormData.amountIssued}
                         onChange={(e) => setSoldFormData({...soldFormData, amountIssued: e.target.value})}
-                        inputProps={{ min: 0, step: 0.01 }}
+                        inputProps={{ min: 0, step: 1 }}
                         helperText="Original loan principal amount"
                       />
                     </Grid>
@@ -620,7 +620,7 @@ const CollateralManagement = () => {
                         required
                         value={soldFormData.amountPayable}
                         onChange={(e) => setSoldFormData({...soldFormData, amountPayable: e.target.value})}
-                        inputProps={{ min: 0, step: 0.01 }}
+                        inputProps={{ min: 0, step: 1 }}
                         helperText="Total amount due (principal + interest)"
                       />
                     </Grid>
@@ -632,7 +632,7 @@ const CollateralManagement = () => {
                         required
                         value={soldFormData.soldPrice}
                         onChange={(e) => setSoldFormData({...soldFormData, soldPrice: e.target.value})}
-                        inputProps={{ min: 0, step: 0.01 }}
+                        inputProps={{ min: 0, step: 1 }}
                         helperText="Actual sale price of the item"
                       />
                     </Grid>
