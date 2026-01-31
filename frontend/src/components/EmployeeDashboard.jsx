@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Container, Typography, Grid, Card, CardContent, Button, Box, Paper
+  Container, Typography, Grid, Card, CardContent, Button, Box, Skeleton
 } from '@mui/material';
 import {
   Add, Payment, PersonAdd, People, CheckCircle, Warning, Schedule
@@ -8,6 +8,50 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+
+// Stat card component
+const StatCard = ({ label, value, color, loading }) => (
+  <Card
+    sx={{
+      height: '100%',
+      boxShadow: 2,
+      borderRadius: 2,
+      transition: 'box-shadow 0.2s',
+      '&:hover': {
+        boxShadow: 4
+      }
+    }}
+  >
+    <CardContent sx={{ textAlign: 'center', py: 3 }}>
+      <Typography
+        variant="subtitle2"
+        sx={{ color: 'text.secondary', fontWeight: 600, mb: 1 }}
+      >
+        {label}
+      </Typography>
+      {loading ? (
+        <Skeleton
+          animation="wave"
+          variant="text"
+          width="60%"
+          height={40}
+          sx={{ mx: 'auto' }}
+        />
+      ) : (
+        <Typography
+          variant="h4"
+          sx={{
+            color,
+            fontWeight: 700,
+            fontSize: { xs: '1.75rem', md: '2rem' }
+          }}
+        >
+          {value}
+        </Typography>
+      )}
+    </CardContent>
+  </Card>
+);
 
 // Action card component
 const ActionCard = ({ icon: IconComponent, title, description, onClick, color = 'primary' }) => (
@@ -53,9 +97,12 @@ const EmployeeDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [data, setData] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('/api/financial/dashboard/employee').then(res => setData(res.data));
+    axios.get('/api/financial/dashboard/employee')
+      .then(res => setData(res.data))
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -68,69 +115,52 @@ const EmployeeDashboard = () => {
         Location: {user.assignedLocation || 'All Locations'}
       </Typography>
 
-      {/* Stats Overview Bar */}
-      <Paper elevation={2} sx={{
-        p: 3,
-        mb: 4,
-        background: 'linear-gradient(135deg, #1e3a8a 0%, #0d9488 100%)',
-        color: 'white'
-      }}>
-        <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-          Quick Stats Overview
-        </Typography>
-        <Grid container spacing={3}>
-          <Grid item xs={6} md={2.4}>
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                {data.totalActiveLoans || 0}
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Active Loans
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={6} md={2.4}>
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                {data.totalPastDueLoans || 0}
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Past Due
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={6} md={2.4}>
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                {data.totalDefaultedLoans || 0}
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Defaulted Loans
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={6} md={2.4}>
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                KES {((data.totalLoanedPrincipal || 0) / 1000).toFixed(0)}K
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Total Loaned
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={6} md={2.4}>
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                KES {((data.totalOutstandingReceivables || 0) / 1000).toFixed(0)}K
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Outstanding
-              </Typography>
-            </Box>
-          </Grid>
+      {/* Stats Overview Section */}
+      <Typography variant="h5" gutterBottom sx={{ mb: 2, fontWeight: 600 }}>
+        Quick Stats Overview
+      </Typography>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={6} sm={6} md={2.4}>
+          <StatCard
+            label="Active Loans"
+            value={data.totalActiveLoans || 0}
+            color="#1976d2"
+            loading={loading}
+          />
         </Grid>
-      </Paper>
+        <Grid item xs={6} sm={6} md={2.4}>
+          <StatCard
+            label="Past Due"
+            value={data.totalPastDueLoans || 0}
+            color="#ed6c02"
+            loading={loading}
+          />
+        </Grid>
+        <Grid item xs={6} sm={6} md={2.4}>
+          <StatCard
+            label="Defaulted Loans"
+            value={data.totalDefaultedLoans || 0}
+            color="#d32f2f"
+            loading={loading}
+          />
+        </Grid>
+        <Grid item xs={6} sm={6} md={2.4}>
+          <StatCard
+            label="Total Loaned"
+            value={`KES ${((data.totalLoanedPrincipal || 0) / 1000).toFixed(0)}K`}
+            color="#2e7d32"
+            loading={loading}
+          />
+        </Grid>
+        <Grid item xs={6} sm={6} md={2.4}>
+          <StatCard
+            label="Outstanding"
+            value={`KES ${((data.totalOutstandingReceivables || 0) / 1000).toFixed(0)}K`}
+            color="#0288d1"
+            loading={loading}
+          />
+        </Grid>
+      </Grid>
 
       {/* Quick Actions Section */}
       <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
