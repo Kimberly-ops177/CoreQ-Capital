@@ -14,6 +14,7 @@ const ActionCard = ({ icon: IconComponent, title, description, onClick, color = 
   <Card
     sx={{
       height: '100%',
+      minHeight: 220,
       display: 'flex',
       flexDirection: 'column',
       transition: 'transform 0.2s, box-shadow 0.2s',
@@ -32,16 +33,16 @@ const ActionCard = ({ icon: IconComponent, title, description, onClick, color = 
       alignItems: 'center',
       justifyContent: 'center',
       textAlign: 'center',
-      p: 3
+      p: 4
     }}>
-      <IconComponent sx={{ fontSize: 48, color: `${color}.main`, mb: 2 }} />
-      <Typography variant="h6" gutterBottom>
+      <IconComponent sx={{ fontSize: 56, color: `${color}.main`, mb: 2 }} />
+      <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
         {title}
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2, flexGrow: 1 }}>
         {description}
       </Typography>
-      <Button variant="contained" color={color} size="small">
+      <Button variant="contained" color={color} size="medium">
         Go
       </Button>
     </CardContent>
@@ -126,6 +127,16 @@ const EmployeeDashboard = () => {
         Quick Actions
       </Typography>
       <Grid container spacing={4}>
+        {/* Loan Processing Workflow */}
+        <Grid item xs={12} sm={6} md={4}>
+          <ActionCard
+            icon={PersonAdd}
+            title="Register Borrower"
+            description="Add new client to the system"
+            onClick={() => navigate('/borrowers')}
+            color="info"
+          />
+        </Grid>
         <Grid item xs={12} sm={6} md={4}>
           <ActionCard
             icon={Add}
@@ -144,15 +155,8 @@ const EmployeeDashboard = () => {
             color="success"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <ActionCard
-            icon={PersonAdd}
-            title="Register Borrower"
-            description="Add new client to the system"
-            onClick={() => navigate('/borrowers')}
-            color="info"
-          />
-        </Grid>
+
+        {/* Management & Monitoring Workflow */}
         <Grid item xs={12} sm={6} md={4}>
           <ActionCard
             icon={People}
