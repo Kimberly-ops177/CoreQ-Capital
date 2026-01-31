@@ -118,6 +118,15 @@ const AdminDashboard = () => {
 
           <Grid item xs={12} sm={6} md={3}>
             <StatCard
+              label="⏰ Past Due Loans"
+              value={data.totalPastDueLoans || 0}
+              color={palette.amber}
+              loading={loading}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
               label="⚠️ Defaulted Loans"
               value={data.totalDefaultedLoans || 0}
               color={palette.red}

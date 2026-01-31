@@ -166,8 +166,10 @@ const getAdminDashboardData = async (req, res) => {
     }));
 
     const activeLoansCount = loansWithEffectiveStatus.filter(l => l.effectiveStatus === 'active').length;
+    const pastDueLoansCount = loansWithEffectiveStatus.filter(l => l.effectiveStatus === 'pastDue').length;
     const defaultedLoansCount = loansWithEffectiveStatus.filter(l => l.effectiveStatus === 'defaulted').length;
     console.log('Active Loans Count (computed):', activeLoansCount);
+    console.log('Past Due Loans Count (computed):', pastDueLoansCount);
     console.log('Defaulted Loans Count (computed):', defaultedLoansCount);
 
     // Month-to-Date Profit/Loss
@@ -187,6 +189,7 @@ const getAdminDashboardData = async (req, res) => {
       totalLoanedPrincipal,
       totalOutstandingReceivables: totalOutstanding,
       totalActiveLoans: activeLoansCount,
+      totalPastDueLoans: pastDueLoansCount,
       totalDefaultedLoans: defaultedLoansCount,
       monthToDateProfitLoss: monthPnL.netProfitLoss,
       monthToDateExpenses: totalMonthExpenses
@@ -340,6 +343,7 @@ const getEmployeeDashboardData = async (req, res) => {
     }));
 
     const activeLoansCount = loansWithEffectiveStatus.filter(l => l.effectiveStatus === 'active').length;
+    const pastDueLoansCount = loansWithEffectiveStatus.filter(l => l.effectiveStatus === 'pastDue').length;
     const defaultedLoansCount = loansWithEffectiveStatus.filter(l => l.effectiveStatus === 'defaulted').length;
 
     // Month-to-Date Expenses (filtered by location for employees if applicable)
@@ -394,6 +398,7 @@ const getEmployeeDashboardData = async (req, res) => {
       totalLoanedPrincipal,
       totalOutstandingReceivables: totalOutstanding,
       totalActiveLoans: activeLoansCount,
+      totalPastDueLoans: pastDueLoansCount,
       totalDefaultedLoans: defaultedLoansCount,
       monthToDateProfitLoss,
       monthToDateExpenses: totalMonthExpenses

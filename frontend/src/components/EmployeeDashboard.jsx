@@ -3,7 +3,7 @@ import {
   Container, Typography, Grid, Card, CardContent, Button, Box, Paper
 } from '@mui/material';
 import {
-  Add, Payment, PersonAdd, People, CheckCircle, Warning
+  Add, Payment, PersonAdd, People, CheckCircle, Warning, Schedule
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -79,7 +79,7 @@ const EmployeeDashboard = () => {
           Quick Stats Overview
         </Typography>
         <Grid container spacing={3}>
-          <Grid item xs={6} md={3}>
+          <Grid item xs={6} md={2.4}>
             <Box>
               <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
                 {data.totalActiveLoans || 0}
@@ -89,7 +89,17 @@ const EmployeeDashboard = () => {
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={6} md={3}>
+          <Grid item xs={6} md={2.4}>
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                {data.totalPastDueLoans || 0}
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                Past Due
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={6} md={2.4}>
             <Box>
               <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
                 {data.totalDefaultedLoans || 0}
@@ -99,7 +109,7 @@ const EmployeeDashboard = () => {
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={6} md={3}>
+          <Grid item xs={6} md={2.4}>
             <Box>
               <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
                 KES {((data.totalLoanedPrincipal || 0) / 1000).toFixed(0)}K
@@ -109,7 +119,7 @@ const EmployeeDashboard = () => {
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={6} md={3}>
+          <Grid item xs={6} md={2.4}>
             <Box>
               <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
                 KES {((data.totalOutstandingReceivables || 0) / 1000).toFixed(0)}K
@@ -173,6 +183,15 @@ const EmployeeDashboard = () => {
             description={`${data.totalActiveLoans || 0} active loans for your location`}
             onClick={() => navigate('/loans')}
             color="primary"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <ActionCard
+            icon={Schedule}
+            title="View Past Due Loans"
+            description={`${data.totalPastDueLoans || 0} loans in 7-day grace period`}
+            onClick={() => navigate('/loans')}
+            color="warning"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
