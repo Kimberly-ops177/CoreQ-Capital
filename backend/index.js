@@ -17,6 +17,7 @@ const customFieldRoutes = require('./routes/customField');
 const loanAgreementRoutes = require('./routes/loanAgreement');
 const loanApplicationRoutes = require('./routes/loanApplication');
 const emergencyCleanupRoutes = require('./routes/emergency-cleanup');
+const fixDuplicatePaymentRoutes = require('./routes/fix-duplicate-payment');
 const { initializeScheduler } = require('./services/scheduler');
 const { initializeNotificationScheduler } = require('./services/loanNotificationScheduler');
 const { ensureBorrowersColumns } = require('./startup-migration');
@@ -144,6 +145,7 @@ app.use('/api/custom-fields', customFieldRoutes);
 app.use('/api/loan-agreements', loanAgreementRoutes);
 app.use('/api/loan-applications', loanApplicationRoutes);
 app.use('/api/emergency', emergencyCleanupRoutes);
+app.use('/api/fix-duplicate-payment', fixDuplicatePaymentRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
