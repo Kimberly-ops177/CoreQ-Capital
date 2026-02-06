@@ -18,12 +18,12 @@ const calculatePenalty = (loan) => {
   const gracePeriodEnd = new Date(loan.gracePeriodEnd);
 
   // No penalty before due date
-  if (now < dueDate) {
+  if (now <= dueDate) {
     return 0;
   }
 
   // No additional penalty after grace period (loan is defaulted)
-  if (now > gracePeriodEnd) {
+  if (now >= gracePeriodEnd) {
     return parseFloat(loan.penalties || 0);
   }
 
@@ -76,14 +76,14 @@ const updateLoanStatus = async (loan) => {
     }
   }
   // If beyond grace period and not paid, status is 'defaulted'
-  else if (now > gracePeriodEnd) {
+  else if (now >= gracePeriodEnd) {
     if (loan.status !== 'defaulted') {
       newStatus = 'defaulted';
       statusChanged = true;
     }
   }
   // If past due date but within grace period, status is 'pastDue'
-  else if (now > dueDate) {
+  else if (now >= dueDate) {
     if (loan.status !== 'pastDue') {
       newStatus = 'pastDue';
       statusChanged = true;

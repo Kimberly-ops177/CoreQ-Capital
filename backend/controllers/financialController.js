@@ -28,7 +28,7 @@ const computeEffectivePenalties = (loan) => {
   }
 
   let daysOverdue;
-  if (now > gracePeriodEnd) {
+  if (now >= gracePeriodEnd) {
     daysOverdue = GRACE_PERIOD_DAYS;
   } else {
     daysOverdue = Math.floor((now - dueDate) / (1000 * 60 * 60 * 24));
@@ -57,8 +57,8 @@ const computeEffectiveStatus = (loan) => {
   const amountRepaid = parseFloat(loan.amountRepaid || 0);
 
   if (amountRepaid >= totalDue) return 'paid';
-  if (now > gracePeriodEnd) return 'defaulted';
-  if (now > dueDate) return 'pastDue';
+  if (now >= gracePeriodEnd) return 'defaulted';
+  if (now >= dueDate) return 'pastDue';
   if (now.toDateString() === dueDate.toDateString()) return 'due';
   return 'active';
 };

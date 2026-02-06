@@ -36,7 +36,7 @@ const computeEffectivePenalties = (loan) => {
 
   // Calculate days overdue (capped at grace period days for penalty calculation)
   let daysOverdue;
-  if (now > gracePeriodEnd) {
+  if (now >= gracePeriodEnd) {
     // For defaulted loans, penalties accumulated for full grace period
     daysOverdue = GRACE_PERIOD_DAYS;
   } else {
@@ -76,12 +76,12 @@ const computeEffectiveStatus = (loan) => {
   }
 
   // If beyond grace period and not paid, status is 'defaulted'
-  if (now > gracePeriodEnd) {
+  if (now >= gracePeriodEnd) {
     return 'defaulted';
   }
 
   // If past due date but within grace period, status is 'pastDue'
-  if (now > dueDate) {
+  if (now >= dueDate) {
     return 'pastDue';
   }
 
@@ -266,8 +266,9 @@ const createLoan = async (req, res) => {
     dueDate.setDate(dueDate.getDate() + (loanPeriod * 7));
 
     // Calculate grace period end date
+    // Add 1 extra day so loan defaults AFTER the 7-day grace period (on day 8)
     const gracePeriodEnd = new Date(dueDate);
-    gracePeriodEnd.setDate(gracePeriodEnd.getDate() + gracePeriodDays);
+    gracePeriodEnd.setDate(gracePeriodEnd.getDate() + gracePeriodDays + 1);
 
     // Generate unique loan ID
     const uniqueLoanId = await generateUniqueLoanId();
@@ -516,10 +517,10 @@ const updateLoan = async (req, res) => {
     const dueDate = new Date(newDateIssued);
     dueDate.setDate(dueDate.getDate() + (newLoanPeriod * 7));
 
-    // Grace period end: keep existing delta (defaults to 7 days) if present
+    // Grace period end: 7-day grace period + 1 day so loan defaults AFTER the 7 days
     const graceDays = 7;
     const gracePeriodEnd = new Date(dueDate);
-    gracePeriodEnd.setDate(gracePeriodEnd.getDate() + graceDays);
+    gracePeriodEnd.setDate(gracePeriodEnd.getDate() + graceDays + 1);
 
     await loan.update({
       ...req.body,
