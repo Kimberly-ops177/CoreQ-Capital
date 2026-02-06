@@ -5,7 +5,7 @@ import {
   TextField, Grid, IconButton, Box, Pagination, Skeleton, List, ListItem, ListItemText,
   ListItemSecondaryAction, Chip, Alert, Tabs, Tab
 } from '@mui/material';
-import { Edit, Delete } from '@mui/icons-material';
+import { Edit, Delete, ViewList } from '@mui/icons-material';
 import axios from 'axios';
 
 const BorrowerManagement = () => {
@@ -142,6 +142,22 @@ const BorrowerManagement = () => {
   };
 
   // Open dialog to show borrower's loans for deletion
+  // View all loans for a borrower
+  const handleViewLoans = async (borrower) => {
+    try {
+      setDeleteError('');
+      setSelectedBorrowerName(borrower.fullName);
+      // Fetch all loans for this borrower (including all statuses)
+      const res = await axios.get(`/api/loans?borrowerId=${borrower.id}&limit=100`);
+      const loans = res.data.data || res.data;
+      setSelectedBorrowerLoans(loans);
+      setLoanDeleteDialogOpen(true);
+    } catch (err) {
+      console.error('Error fetching borrower loans:', err);
+      alert('Error fetching loans for this borrower');
+    }
+  };
+
   const handleDeleteClick = async (borrower) => {
     try {
       setDeleteError('');
@@ -300,8 +316,11 @@ const BorrowerManagement = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <IconButton onClick={() => handleOpen(borrower)} size="small">
+                        <IconButton onClick={() => handleOpen(borrower)} size="small" title="Edit Borrower">
                           <Edit />
+                        </IconButton>
+                        <IconButton onClick={() => handleViewLoans(borrower)} size="small" title="View All Loans">
+                          <ViewList />
                         </IconButton>
                         <IconButton onClick={() => handleDeleteClick(borrower)} size="small" title="Manage Loans">
                           <Delete />
@@ -462,9 +481,9 @@ const BorrowerManagement = () => {
           </form>
         </Dialog>
 
-        {/* Loan Deletion Dialog */}
+        {/* View/Manage Loans Dialog */}
         <Dialog open={loanDeleteDialogOpen} onClose={() => setLoanDeleteDialogOpen(false)} maxWidth="md" fullWidth>
-          <DialogTitle>Manage Loans for {selectedBorrowerName}</DialogTitle>
+          <DialogTitle>Loans for {selectedBorrowerName}</DialogTitle>
           <DialogContent>
             {deleteError && (
               <Alert severity="error" sx={{ mb: 2 }}>{deleteError}</Alert>
