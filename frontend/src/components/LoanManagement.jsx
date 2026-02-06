@@ -47,6 +47,7 @@ const LoanManagement = () => {
     paymentDate: new Date().toISOString().split('T')[0],
     paymentMethod: 'cash'
   });
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [borrowerSearchTerm, setBorrowerSearchTerm] = useState('');
   const [validationErrors, setValidationErrors] = useState([]);
@@ -347,10 +348,18 @@ const LoanManagement = () => {
   const handlePaymentClose = () => {
     setPaymentOpen(false);
     setSelectedLoan(null);
+    setPaymentProcessing(false);
   };
 
   const handlePayment = async (e) => {
     e.preventDefault();
+
+    // Prevent double submission
+    if (paymentProcessing) {
+      return;
+    }
+
+    setPaymentProcessing(true);
     try {
       const res = await axios.post(`/api/loans/${selectedLoan.id}/payment`, paymentData);
       if (res.data.success) {
@@ -361,6 +370,8 @@ const LoanManagement = () => {
     } catch (err) {
       console.error('Error making payment:', err);
       alert(err.response?.data?.error || 'Error making payment');
+    } finally {
+      setPaymentProcessing(false);
     }
   };
 
@@ -1112,9 +1123,9 @@ const LoanManagement = () => {
               </Grid>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handlePaymentClose}>Cancel</Button>
-              <Button type="submit" variant="contained">
-                Record Payment
+              <Button onClick={handlePaymentClose} disabled={paymentProcessing}>Cancel</Button>
+              <Button type="submit" variant="contained" disabled={paymentProcessing}>
+                {paymentProcessing ? 'Processing...' : 'Record Payment'}
               </Button>
             </DialogActions>
           </form>
