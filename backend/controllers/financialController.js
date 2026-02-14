@@ -174,8 +174,8 @@ const getAdminDashboardData = async (req, res) => {
     console.log('Past Due Loans Count (computed):', pastDueLoansCount);
     console.log('Defaulted Loans Count (computed):', defaultedLoansCount);
 
-    // Month-to-Date Profit/Loss
-    const monthPnL = await getPnLData(monthStart, now);
+    // Month-to-Date Profit/Loss (includes all current month data)
+    const monthPnL = await getPnLData(monthStart, monthEnd);
     console.log('Month-to-Date P/L:', monthPnL);
     console.log('=== END DASHBOARD DEBUG ===');
 
@@ -369,12 +369,12 @@ const getEmployeeDashboardData = async (req, res) => {
       totalMonthExpenses = monthExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
     }
 
-    // Month-to-Date Revenue (filtered by location for employees)
+    // Month-to-Date Revenue (filtered by location for employees, includes all current month data)
     const paidLoansThisMonth = await Loan.findAll({
       where: {
         status: 'paid',
         agreementStatus: 'approved',
-        lastPaymentDate: { [Op.between]: [monthStart, now] }
+        lastPaymentDate: { [Op.between]: [monthStart, monthEnd] }
       },
       include: hasLocationFilter ? [{
         model: Borrower,
