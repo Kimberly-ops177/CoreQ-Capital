@@ -12,6 +12,7 @@ const BorrowerManagement = () => {
   const [borrowers, setBorrowers] = useState([]);
   const [collaterals, setCollaterals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalItems: 0 });
   const [collateralPagination, setCollateralPagination] = useState({ currentPage: 1, totalPages: 1, totalItems: 0 });
   const [open, setOpen] = useState(false);
@@ -115,7 +116,12 @@ const BorrowerManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Prevent double-click submissions
+    if (submitting) return;
+
     try {
+      setSubmitting(true);
       if (editingBorrower) {
         await axios.patch(`/api/borrowers/${editingBorrower.id}`, formData);
       } else {
@@ -138,6 +144,8 @@ const BorrowerManagement = () => {
     } catch (err) {
       console.error('Error saving borrower:', err);
       alert('Error saving borrower');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -473,9 +481,9 @@ const BorrowerManagement = () => {
               </Grid>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleClose}>Cancel</Button>
-              <Button type="submit" variant="contained">
-                {editingBorrower ? 'Update' : 'Add'}
+              <Button onClick={handleClose} disabled={submitting}>Cancel</Button>
+              <Button type="submit" variant="contained" disabled={submitting}>
+                {submitting ? 'Saving...' : (editingBorrower ? 'Update' : 'Add')}
               </Button>
             </DialogActions>
           </form>

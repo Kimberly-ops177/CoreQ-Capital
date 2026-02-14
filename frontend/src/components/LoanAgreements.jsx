@@ -47,6 +47,7 @@ const LoanAgreements = () => {
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [notes, setNotes] = useState('');
+  const [processingLoanIds, setProcessingLoanIds] = useState(new Set());
 
   useEffect(() => {
     fetchAgreements();
@@ -170,6 +171,9 @@ const LoanAgreements = () => {
   };
 
   const handleApprove = async () => {
+    // Prevent double-click submissions
+    if (loading) return;
+
     try {
       setLoading(true);
       await axios.post(`/api/loan-applications/${selectedLoan.id}/approve`, {
@@ -188,6 +192,9 @@ const LoanAgreements = () => {
   };
 
   const handleReject = async () => {
+    // Prevent double-click submissions
+    if (loading) return;
+
     try {
       setLoading(true);
       await axios.post(`/api/loan-applications/${selectedLoan.id}/reject`, {
@@ -370,21 +377,32 @@ const LoanAgreements = () => {
                                     size="small"
                                     variant="contained"
                                     color="success"
+                                    disabled={processingLoanIds.has(loan.id)}
                                     onClick={async () => {
+                                      // Prevent double-click
+                                      if (processingLoanIds.has(loan.id)) return;
+
                                       if (window.confirm(`Approve loan agreement #${loan.id}?`)) {
                                         try {
+                                          setProcessingLoanIds(prev => new Set(prev).add(loan.id));
                                           await axios.post(`/api/loan-applications/${loan.id}/approve`, { notes: null });
                                           setSuccess(`Loan agreement #${loan.id} approved!`);
                                           fetchAgreements();
                                         } catch (err) {
                                           setError(err.response?.data?.error || 'Failed to approve');
+                                        } finally {
+                                          setProcessingLoanIds(prev => {
+                                            const newSet = new Set(prev);
+                                            newSet.delete(loan.id);
+                                            return newSet;
+                                          });
                                         }
                                       }
                                     }}
-                                    startIcon={<CheckCircle />}
+                                    startIcon={processingLoanIds.has(loan.id) ? <CircularProgress size={16} /> : <CheckCircle />}
                                     sx={{ ml: 1 }}
                                   >
-                                    Approve
+                                    {processingLoanIds.has(loan.id) ? 'Processing...' : 'Approve'}
                                   </Button>
                                   <Button
                                     size="small"

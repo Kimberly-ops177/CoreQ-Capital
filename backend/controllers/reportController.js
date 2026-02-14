@@ -94,7 +94,10 @@ const computeEffectiveStatus = (loan) => {
 const getLoansIssuedReport = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    const whereClause = {};
+    const whereClause = {
+      // Only include approved loans in the report
+      agreementStatus: 'approved'
+    };
 
     // Filter by date range if provided
     if (startDate && endDate) {

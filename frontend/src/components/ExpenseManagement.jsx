@@ -16,6 +16,7 @@ const ExpenseManagement = () => {
   const [open, setOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     category: '', name: '', date: new Date().toISOString().split('T')[0], amount: ''
   });
@@ -71,7 +72,12 @@ const ExpenseManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Prevent double-click submissions
+    if (submitting) return;
+
     try {
+      setSubmitting(true);
       if (editingExpense) {
         await axios.patch(`/api/expenses/${editingExpense.id}`, formData);
       } else {
@@ -82,6 +88,8 @@ const ExpenseManagement = () => {
     } catch (err) {
       console.error('Error saving expense:', err);
       alert('Error saving expense');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -227,9 +235,9 @@ const ExpenseManagement = () => {
                 </Grid>
               </DialogContent>
               <DialogActions>
-                <Button onClick={handleClose}>Cancel</Button>
-                <Button type="submit" variant="contained">
-                  {editingExpense ? 'Update' : 'Add'}
+                <Button onClick={handleClose} disabled={submitting}>Cancel</Button>
+                <Button type="submit" variant="contained" disabled={submitting}>
+                  {submitting ? 'Saving...' : (editingExpense ? 'Update' : 'Add')}
                 </Button>
               </DialogActions>
             </form>

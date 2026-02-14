@@ -12,6 +12,7 @@ const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [open, setOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', role: 'employee',
     assignedLocation: '',
@@ -89,7 +90,12 @@ const UserManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Prevent double-click submissions
+    if (submitting) return;
+
     try {
+      setSubmitting(true);
       if (editingUser) {
         await axios.patch(`/api/users/${editingUser.id}`, formData);
       } else {
@@ -100,6 +106,8 @@ const UserManagement = () => {
     } catch (err) {
       console.error('Error saving user:', err);
       alert('Error saving user: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -324,9 +332,9 @@ const UserManagement = () => {
               </Grid>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleClose}>Cancel</Button>
-              <Button type="submit" variant="contained">
-                {editingUser ? 'Update' : 'Add'}
+              <Button onClick={handleClose} disabled={submitting}>Cancel</Button>
+              <Button type="submit" variant="contained" disabled={submitting}>
+                {submitting ? 'Saving...' : (editingUser ? 'Update' : 'Add')}
               </Button>
             </DialogActions>
           </form>

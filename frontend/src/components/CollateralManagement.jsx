@@ -25,11 +25,13 @@ const CollateralManagement = () => {
   const [borrowerIdFilter, setBorrowerIdFilter] = useState('');
   const [loanStatusFilter, setLoanStatusFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   // Mark as Sold dialog state
   const [soldDialogOpen, setSoldDialogOpen] = useState(false);
   const [selectedCollateral, setSelectedCollateral] = useState(null);
   const [loanDetails, setLoanDetails] = useState(null);
+  const [submittingSold, setSubmittingSold] = useState(false);
   const [soldFormData, setSoldFormData] = useState({
     soldPrice: '',
     soldDate: new Date().toISOString().split('T')[0],
@@ -144,7 +146,12 @@ const CollateralManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Prevent double-click submissions
+    if (submitting) return;
+
     try {
+      setSubmitting(true);
       if (editingCollateral) {
         await axios.patch(`/api/collaterals/${editingCollateral.id}`, formData);
       } else {
@@ -155,6 +162,8 @@ const CollateralManagement = () => {
     } catch (err) {
       console.error('Error saving collateral:', err);
       alert('Error saving collateral');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -219,7 +228,11 @@ const CollateralManagement = () => {
     e.preventDefault();
     if (!selectedCollateral) return;
 
+    // Prevent double-click submissions
+    if (submittingSold) return;
+
     try {
+      setSubmittingSold(true);
       await axios.post(`/api/collaterals/${selectedCollateral.id}/mark-sold`, {
         soldPrice: parseFloat(soldFormData.soldPrice),
         soldDate: soldFormData.soldDate,
@@ -232,6 +245,8 @@ const CollateralManagement = () => {
     } catch (err) {
       console.error('Error marking collateral as sold:', err);
       alert(err.response?.data?.message || err.response?.data?.error || 'Error marking collateral as sold');
+    } finally {
+      setSubmittingSold(false);
     }
   };
 
@@ -510,9 +525,9 @@ const CollateralManagement = () => {
               </Grid>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleClose}>Cancel</Button>
-              <Button type="submit" variant="contained">
-                {editingCollateral ? 'Update' : 'Add'}
+              <Button onClick={handleClose} disabled={submitting}>Cancel</Button>
+              <Button type="submit" variant="contained" disabled={submitting}>
+                {submitting ? 'Saving...' : (editingCollateral ? 'Update' : 'Add')}
               </Button>
             </DialogActions>
           </form>
@@ -653,9 +668,9 @@ const CollateralManagement = () => {
               )}
             </DialogContent>
             <DialogActions sx={{ p: 2 }}>
-              <Button onClick={handleCloseSoldDialog} variant="outlined">Cancel</Button>
-              <Button type="submit" variant="contained" color="success">
-                Confirm Sale
+              <Button onClick={handleCloseSoldDialog} variant="outlined" disabled={submittingSold}>Cancel</Button>
+              <Button type="submit" variant="contained" color="success" disabled={submittingSold}>
+                {submittingSold ? 'Processing...' : 'Confirm Sale'}
               </Button>
             </DialogActions>
           </form>

@@ -326,6 +326,9 @@ const LoanApplicationForm = () => {
   };
 
   const handleSubmit = async () => {
+    // Prevent double-click submissions
+    if (loading) return;
+
     try {
       setLoading(true);
       setError(null);

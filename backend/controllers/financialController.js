@@ -121,10 +121,12 @@ const getAdminDashboardData = async (req, res) => {
   try {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0); // Last day of current month
 
     console.log('=== DASHBOARD DEBUG ===');
     console.log('Current Date:', now.toISOString());
     console.log('Month Start:', monthStart.toISOString());
+    console.log('Month End:', monthEnd.toISOString());
 
     // Total Loaned Principal
     const totalLoanedResult = await Loan.findOne({
@@ -177,10 +179,10 @@ const getAdminDashboardData = async (req, res) => {
     console.log('Month-to-Date P/L:', monthPnL);
     console.log('=== END DASHBOARD DEBUG ===');
 
-    // Month-to-Date Expenses
+    // Month-to-Date Expenses (includes all expenses in current month)
     const monthExpenses = await Expense.findAll({
       where: {
-        date: { [Op.between]: [monthStart, now] }
+        date: { [Op.between]: [monthStart, monthEnd] }
       }
     });
     const totalMonthExpenses = monthExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
@@ -208,6 +210,7 @@ const getEmployeeDashboardData = async (req, res) => {
     const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0); // Last day of current month
 
     // Build location filter for employees
     // Support multiple locations separated by comma (e.g., "JUJA,HIGHPOINT")
@@ -346,21 +349,21 @@ const getEmployeeDashboardData = async (req, res) => {
     const pastDueLoansCount = loansWithEffectiveStatus.filter(l => l.effectiveStatus === 'pastDue').length;
     const defaultedLoansCount = loansWithEffectiveStatus.filter(l => l.effectiveStatus === 'defaulted').length;
 
-    // Month-to-Date Expenses (filtered by location for employees if applicable)
+    // Month-to-Date Expenses (includes all expenses in current month)
     let totalMonthExpenses = 0;
     if (hasLocationFilter) {
       // For now, include all expenses since expenses aren't tied to location
       // In future, you could add location tracking to expenses
       const monthExpenses = await Expense.findAll({
         where: {
-          date: { [Op.between]: [monthStart, now] }
+          date: { [Op.between]: [monthStart, monthEnd] }
         }
       });
       totalMonthExpenses = monthExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
     } else {
       const monthExpenses = await Expense.findAll({
         where: {
-          date: { [Op.between]: [monthStart, now] }
+          date: { [Op.between]: [monthStart, monthEnd] }
         }
       });
       totalMonthExpenses = monthExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
