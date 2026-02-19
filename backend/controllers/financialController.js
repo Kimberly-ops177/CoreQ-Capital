@@ -14,7 +14,10 @@ const DAILY_PENALTY_RATE = 3; // 3% per day
 const computeEffectivePenalties = (loan) => {
   const now = new Date();
   const dueDate = new Date(loan.dueDate);
-  const gracePeriodEnd = new Date(loan.gracePeriodEnd);
+  // If gracePeriodEnd is not stored, compute it from dueDate + grace period days
+  const gracePeriodEnd = loan.gracePeriodEnd
+    ? new Date(loan.gracePeriodEnd)
+    : new Date(dueDate.getTime() + GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000);
   const storedPenalties = parseFloat(loan.penalties || 0);
 
   if (now <= dueDate) {
