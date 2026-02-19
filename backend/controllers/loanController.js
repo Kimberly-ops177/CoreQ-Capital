@@ -18,10 +18,12 @@ const DAILY_PENALTY_RATE = 3; // 3% per day
 const computeEffectivePenalties = (loan) => {
   const now = new Date();
   const dueDate = new Date(loan.dueDate);
-  // If gracePeriodEnd is not stored, compute it from dueDate + grace period days
+  const GRACE_DAYS = parseInt(process.env.GRACE_PERIOD_DAYS) || 7;
+  // If gracePeriodEnd is not stored, compute it from dueDate + grace period days + 1
+  // (+1 so loan defaults AFTER the grace period has fully elapsed, on day 8 of a 7-day grace)
   const gracePeriodEnd = loan.gracePeriodEnd
     ? new Date(loan.gracePeriodEnd)
-    : new Date(dueDate.getTime() + GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000);
+    : new Date(dueDate.getTime() + (GRACE_DAYS + 1) * 24 * 60 * 60 * 1000);
   const storedPenalties = parseFloat(loan.penalties || 0);
 
   // No penalty before due date
@@ -41,11 +43,11 @@ const computeEffectivePenalties = (loan) => {
   let daysOverdue;
   if (now >= gracePeriodEnd) {
     // For defaulted loans, penalties accumulated for full grace period
-    daysOverdue = GRACE_PERIOD_DAYS;
+    daysOverdue = GRACE_DAYS;
   } else {
     // For pastDue loans, calculate actual days overdue
     daysOverdue = Math.floor((now - dueDate) / (1000 * 60 * 60 * 24));
-    daysOverdue = Math.min(daysOverdue, GRACE_PERIOD_DAYS);
+    daysOverdue = Math.min(daysOverdue, GRACE_DAYS);
   }
 
   if (daysOverdue <= 0) {
@@ -68,10 +70,11 @@ const computeEffectiveStatus = (loan) => {
   const now = new Date();
   const dueDate = new Date(loan.dueDate);
   const GRACE_DAYS = parseInt(process.env.GRACE_PERIOD_DAYS) || 7;
-  // If gracePeriodEnd is not stored, compute it from dueDate + grace period days
+  // If gracePeriodEnd is not stored, compute it from dueDate + grace period days + 1
+  // (+1 so loan defaults AFTER the grace period has fully elapsed, on day 8 of a 7-day grace)
   const gracePeriodEnd = loan.gracePeriodEnd
     ? new Date(loan.gracePeriodEnd)
-    : new Date(dueDate.getTime() + GRACE_DAYS * 24 * 60 * 60 * 1000);
+    : new Date(dueDate.getTime() + (GRACE_DAYS + 1) * 24 * 60 * 60 * 1000);
   // Use effective penalties for paid calculation
   const effectivePenalties = computeEffectivePenalties(loan);
   const totalDue = parseFloat(loan.totalAmount) + effectivePenalties;
@@ -201,9 +204,11 @@ const createLoan = async (req, res) => {
       loanPeriod,
       interestRate: customInterestRate,
       isNegotiable,
-      dateIssued,
-      gracePeriodDays = 7
+      dateIssued
     } = req.body;
+
+    // Always use server-side env var for grace period (never from client)
+    const gracePeriodDays = parseInt(process.env.GRACE_PERIOD_DAYS) || 7;
 
     const userRole = req.user.role;
 
@@ -524,8 +529,8 @@ const updateLoan = async (req, res) => {
     const dueDate = new Date(newDateIssued);
     dueDate.setDate(dueDate.getDate() + (newLoanPeriod * 7));
 
-    // Grace period end: 7-day grace period + 1 day so loan defaults AFTER the 7 days
-    const graceDays = 7;
+    // Grace period end: use env var + 1 day so loan defaults AFTER the grace period
+    const graceDays = parseInt(process.env.GRACE_PERIOD_DAYS) || 7;
     const gracePeriodEnd = new Date(dueDate);
     gracePeriodEnd.setDate(gracePeriodEnd.getDate() + graceDays + 1);
 

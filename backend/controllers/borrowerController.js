@@ -4,7 +4,6 @@ const { getPaginationParams, formatPaginatedResponse } = require('../utils/pagin
 const { Op } = require('sequelize');
 
 // Business rules constants
-const GRACE_PERIOD_DAYS = 7;
 const DAILY_PENALTY_RATE = 3; // 3% per day
 
 /**
@@ -15,7 +14,10 @@ const DAILY_PENALTY_RATE = 3; // 3% per day
 const computeEffectivePenalties = (loan) => {
   const now = new Date();
   const dueDate = new Date(loan.dueDate);
-  const gracePeriodEnd = new Date(loan.gracePeriodEnd);
+  const GRACE_DAYS = parseInt(process.env.GRACE_PERIOD_DAYS) || 7;
+  const gracePeriodEnd = loan.gracePeriodEnd
+    ? new Date(loan.gracePeriodEnd)
+    : new Date(dueDate.getTime() + (GRACE_DAYS + 1) * 24 * 60 * 60 * 1000);
   const storedPenalties = parseFloat(loan.penalties || 0);
 
   // No penalty before due date
@@ -35,11 +37,11 @@ const computeEffectivePenalties = (loan) => {
   let daysOverdue;
   if (now > gracePeriodEnd) {
     // For defaulted loans, penalties accumulated for full grace period
-    daysOverdue = GRACE_PERIOD_DAYS;
+    daysOverdue = GRACE_DAYS;
   } else {
     // For pastDue loans, calculate actual days overdue
     daysOverdue = Math.floor((now - dueDate) / (1000 * 60 * 60 * 24));
-    daysOverdue = Math.min(daysOverdue, GRACE_PERIOD_DAYS);
+    daysOverdue = Math.min(daysOverdue, GRACE_DAYS);
   }
 
   if (daysOverdue <= 0) {
@@ -61,7 +63,10 @@ const computeEffectivePenalties = (loan) => {
 const computeEffectiveStatus = (loan) => {
   const now = new Date();
   const dueDate = new Date(loan.dueDate);
-  const gracePeriodEnd = new Date(loan.gracePeriodEnd);
+  const GRACE_DAYS = parseInt(process.env.GRACE_PERIOD_DAYS) || 7;
+  const gracePeriodEnd = loan.gracePeriodEnd
+    ? new Date(loan.gracePeriodEnd)
+    : new Date(dueDate.getTime() + (GRACE_DAYS + 1) * 24 * 60 * 60 * 1000);
   // Use effective penalties for paid calculation
   const effectivePenalties = computeEffectivePenalties(loan);
   const totalDue = parseFloat(loan.totalAmount) + effectivePenalties;

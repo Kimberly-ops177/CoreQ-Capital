@@ -185,7 +185,10 @@ const deleteCollateral = async (req, res) => {
 const computeEffectiveStatus = (loan) => {
   const now = new Date();
   const dueDate = new Date(loan.dueDate);
-  const gracePeriodEnd = new Date(loan.gracePeriodEnd);
+  const GRACE_DAYS = parseInt(process.env.GRACE_PERIOD_DAYS) || 7;
+  const gracePeriodEnd = loan.gracePeriodEnd
+    ? new Date(loan.gracePeriodEnd)
+    : new Date(dueDate.getTime() + (GRACE_DAYS + 1) * 24 * 60 * 60 * 1000);
 
   const totalDue = parseFloat(loan.totalAmount) + parseFloat(loan.penalties || 0);
   const amountRepaid = parseFloat(loan.amountRepaid || 0);
