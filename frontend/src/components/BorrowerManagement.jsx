@@ -527,8 +527,8 @@ const BorrowerManagement = () => {
                           <>
                             Amount: KSH {parseFloat(loan.amountIssued).toLocaleString()} |
                             Total: KSH {parseFloat(loan.totalAmount).toLocaleString()} |
-                            Due: {new Date(loan.dueDate).toLocaleDateString()} |
-                            Issued: {new Date(loan.dateIssued).toLocaleDateString()}
+                            Due: {new Date(loan.dueDate).toLocaleDateString('en-GB', { timeZone: 'UTC' })} |
+                            Issued: {new Date(loan.dateIssued).toLocaleDateString('en-GB', { timeZone: 'UTC' })}
                           </>
                         }
                       />

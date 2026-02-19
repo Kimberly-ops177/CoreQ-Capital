@@ -84,7 +84,8 @@ const Reporting = () => {
     return new Date(date).toLocaleDateString('en-KE', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
+      timeZone: 'UTC'
     });
   };
 

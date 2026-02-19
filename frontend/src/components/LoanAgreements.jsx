@@ -325,7 +325,7 @@ const LoanAgreements = () => {
                         <TableCell>#{loan.id}</TableCell>
                         <TableCell>{loan.borrower?.fullName}</TableCell>
                         <TableCell>KSH {parseFloat(loan.amountIssued).toLocaleString()}</TableCell>
-                        <TableCell>{new Date(loan.dateIssued).toLocaleDateString()}</TableCell>
+                        <TableCell>{new Date(loan.dateIssued).toLocaleDateString('en-GB', { timeZone: 'UTC' })}</TableCell>
                         <TableCell>{getStatusChip(loan.agreementStatus)}</TableCell>
                         <TableCell align="center">
                           <Tooltip title="Download Unsigned Agreement">

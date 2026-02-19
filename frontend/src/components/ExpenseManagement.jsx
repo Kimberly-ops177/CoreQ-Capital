@@ -153,7 +153,7 @@ const ExpenseManagement = () => {
                   <TableRow key={expense.id}>
                     <TableCell>{expense.category}</TableCell>
                     <TableCell>{expense.name}</TableCell>
-                    <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(expense.date).toLocaleDateString('en-GB', { timeZone: 'UTC' })}</TableCell>
                     <TableCell>Ksh {expense.amount.toLocaleString()}</TableCell>
                     <TableCell>{expense.user?.name || 'N/A'}</TableCell>
                     {canViewAllExpenses && (

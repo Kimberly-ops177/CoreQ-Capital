@@ -304,7 +304,7 @@ const LoanManagement = () => {
 
         const res = await axios.post('/api/loan-applications', payload);
         if (res.data.success || res.data.loan) {
-          alert(`Loan created successfully!\n\nLoan ID: ${res.data.loan?.id}\nPrincipal: KSH ${parseFloat(formData.amountIssued).toLocaleString()}\nDue Date: ${new Date(res.data.loan?.dueDate).toLocaleDateString()}`);
+          alert(`Loan created successfully!\n\nLoan ID: ${res.data.loan?.id}\nPrincipal: KSH ${parseFloat(formData.amountIssued).toLocaleString()}\nDue Date: ${new Date(res.data.loan?.dueDate).toLocaleDateString('en-GB', { timeZone: 'UTC' })}`);
           fetchLoans();
           fetchCollaterals(); // Refresh collaterals list
           handleClose();
@@ -519,7 +519,7 @@ const LoanManagement = () => {
                     <TableCell sx={{ fontWeight: 'bold', color: calculateRemainingBalance(loan) > 0 ? '#ff4d6a' : '#16f2a3' }}>
                       KSH {calculateRemainingBalance(loan).toLocaleString()}
                     </TableCell>
-                    <TableCell>{new Date(loan.dueDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(loan.dueDate).toLocaleDateString('en-GB', { timeZone: 'UTC' })}</TableCell>
                     <TableCell>
                       <Chip label={loan.status} color={getStatusColor(loan.status)} />
                     </TableCell>
@@ -1166,7 +1166,7 @@ const LoanManagement = () => {
                   >
                     <ListItemText
                       primary={`#${loan.id} - ${loan.borrower?.fullName || 'N/A'} (${loan.borrower?.idNumber || 'N/A'})`}
-                      secondary={`Balance: KSH ${calculateRemainingBalance(loan).toLocaleString()} | Due: ${new Date(loan.dueDate).toLocaleDateString()} | Status: ${loan.status}`}
+                      secondary={`Balance: KSH ${calculateRemainingBalance(loan).toLocaleString()} | Due: ${new Date(loan.dueDate).toLocaleDateString('en-GB', { timeZone: 'UTC' })} | Status: ${loan.status}`}
                     />
                   </ListItemButton>
                 ))
@@ -1221,7 +1221,7 @@ const LoanManagement = () => {
                             <TableCell sx={{ color: balance > 0 ? '#ff4d6a' : '#16f2a3', fontWeight: 'bold' }}>
                               KSH {balance.toLocaleString()}
                             </TableCell>
-                            <TableCell sx={{ color: '#ffffff' }}>{new Date(loan.dueDate).toLocaleDateString()}</TableCell>
+                            <TableCell sx={{ color: '#ffffff' }}>{new Date(loan.dueDate).toLocaleDateString('en-GB', { timeZone: 'UTC' })}</TableCell>
                             <TableCell>
                               <Chip label={loan.status} color={getStatusColor(loan.status)} size="small" />
                             </TableCell>

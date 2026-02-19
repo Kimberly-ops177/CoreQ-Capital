@@ -140,7 +140,7 @@ const LoanApplicationForm = () => {
       // Populate loan data
       setLoanData({
         amountIssued: loan.amountIssued || '',
-        dateIssued: loan.dateIssued ? new Date(loan.dateIssued).toISOString().split('T')[0] : '',
+        dateIssued: loan.dateIssued ? loan.dateIssued.toString().split('T')[0].split(' ')[0] : '',
         loanPeriod: loan.loanPeriod || '',
         interestRate: loan.interestRate || '',
         isNegotiable: loan.isNegotiable || false
