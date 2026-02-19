@@ -4,7 +4,7 @@ import {
   TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Grid, IconButton, Select, MenuItem, FormControl,
   InputLabel, Chip, Box, Alert, Divider, Pagination, List, ListItem, ListItemButton, ListItemText,
-  InputAdornment, Skeleton
+  InputAdornment, Skeleton, Tabs, Tab
 } from '@mui/material';
 import { Add, Edit, Delete, Payment, Calculate, Search, Person, ViewList } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
@@ -49,6 +49,7 @@ const LoanManagement = () => {
   });
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [borrowerSearchTerm, setBorrowerSearchTerm] = useState('');
   const [validationErrors, setValidationErrors] = useState([]);
   const [loanCalculation, setLoanCalculation] = useState(null);
@@ -161,14 +162,17 @@ const LoanManagement = () => {
     }
   }, [formData.amountIssued, formData.loanPeriod, interestRates, businessRules]);
 
-  // Filter to show only payable loans (active, due, or pastDue)
-  // Paid loans go to Paid Loans report, defaulted loans go to Defaulters report
-  // Defaulted loans cannot accept payments - collateral may be sold
-  const activeLoans = loans.filter(loan =>
-    loan.status === 'active' || loan.status === 'due' || loan.status === 'pastDue'
-  );
+  // Filter loans by selected status tab
+  // Paid loans go to Paid Loans report (excluded from 'all' view)
+  const statusFilteredLoans = loans.filter(loan => {
+    if (statusFilter === 'all') return loan.status === 'active' || loan.status === 'due' || loan.status === 'pastDue';
+    if (statusFilter === 'active') return loan.status === 'active' || loan.status === 'due';
+    if (statusFilter === 'pastDue') return loan.status === 'pastDue';
+    if (statusFilter === 'defaulted') return loan.status === 'defaulted';
+    return true;
+  });
 
-  const filteredLoans = activeLoans.filter((loan) => {
+  const filteredLoans = statusFilteredLoans.filter((loan) => {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
     return (
@@ -457,6 +461,20 @@ const LoanManagement = () => {
             • These rates are <strong>fixed and non-negotiable</strong> for all borrowers
           </Typography>
         </Paper>
+
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+          <Tabs
+            value={statusFilter}
+            onChange={(_e, val) => { setStatusFilter(val); setSearchTerm(''); }}
+            textColor="primary"
+            indicatorColor="primary"
+          >
+            <Tab label="All Loans" value="all" />
+            <Tab label="Active" value="active" />
+            <Tab label="Past Due" value="pastDue" />
+            <Tab label="Defaulted" value="defaulted" />
+          </Tabs>
+        </Box>
 
         <TextField
           fullWidth
