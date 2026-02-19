@@ -51,7 +51,11 @@ const computeEffectivePenalties = (loan) => {
 const computeEffectiveStatus = (loan) => {
   const now = new Date();
   const dueDate = new Date(loan.dueDate);
-  const gracePeriodEnd = new Date(loan.gracePeriodEnd);
+  const GRACE_DAYS = parseInt(process.env.GRACE_PERIOD_DAYS) || 7;
+  // If gracePeriodEnd is not stored, compute it from dueDate + grace period days
+  const gracePeriodEnd = loan.gracePeriodEnd
+    ? new Date(loan.gracePeriodEnd)
+    : new Date(dueDate.getTime() + GRACE_DAYS * 24 * 60 * 60 * 1000);
   const effectivePenalties = computeEffectivePenalties(loan);
   const totalDue = parseFloat(loan.totalAmount) + effectivePenalties;
   const amountRepaid = parseFloat(loan.amountRepaid || 0);
