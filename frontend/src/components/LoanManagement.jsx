@@ -162,6 +162,14 @@ const LoanManagement = () => {
     }
   }, [formData.amountIssued, formData.loanPeriod, interestRates, businessRules]);
 
+  // Tab counts (from full dataset, not affected by current tab selection)
+  const tabCounts = {
+    all: loans.filter(l => l.status === 'active' || l.status === 'due' || l.status === 'pastDue').length,
+    active: loans.filter(l => l.status === 'active' || l.status === 'due').length,
+    pastDue: loans.filter(l => l.status === 'pastDue').length,
+    defaulted: loans.filter(l => l.status === 'defaulted').length,
+  };
+
   // Filter loans by selected status tab
   // Paid loans go to Paid Loans report (excluded from 'all' view)
   const statusFilteredLoans = loans.filter(loan => {
@@ -469,10 +477,10 @@ const LoanManagement = () => {
             textColor="primary"
             indicatorColor="primary"
           >
-            <Tab label="All Loans" value="all" />
-            <Tab label="Active" value="active" />
-            <Tab label="Past Due" value="pastDue" />
-            <Tab label="Defaulted" value="defaulted" />
+            <Tab label={`All Loans (${tabCounts.all})`} value="all" />
+            <Tab label={`Active (${tabCounts.active})`} value="active" />
+            <Tab label={`Past Due (${tabCounts.pastDue})`} value="pastDue" />
+            <Tab label={`Defaulted (${tabCounts.defaulted})`} value="defaulted" />
           </Tabs>
         </Box>
 
